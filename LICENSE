@@ -1,0 +1,8 @@
+PLACEHOLDER — replace before first commit.
+
+Use GitHub's own inserter so the text is exact:
+  Repo -> Add file -> Create new file -> type "LICENSE" -> "Choose a license
+  template" -> Apache License 2.0.
+
+Chosen deliberately over MIT for the explicit patent grant, and over AGPL
+because AGPL blocks the corporate and self-hosting adoption this project needs.

@@ -1,0 +1,16 @@
+node_modules/
+out/
+dist/
+coverage/
+*.sef.json
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+PRIVATE_*
+*.wpi
+.DS_Store
+.vscode/
+.idea/

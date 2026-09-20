@@ -1,0 +1,25 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22', cache: npm }
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - run: npm ci
+      - run: pip install factur-x pikepdf lxml
+      - run: npm run typecheck
+      - run: npm run test
+      - name: Build sample and validate against official schemas
+        run: |
+          npm run build:sample
+          python3 tools/validate.py
+          python3 tools/pdfa_audit.py
+      - name: Determinism check
+        run: |
+          npm run build:sample && sha256sum out/invoice.pdf > a.txt
+          npm run build:sample && sha256sum out/invoice.pdf > b.txt
+          diff a.txt b.txt || (echo "PDF output is not deterministic" && exit 1)

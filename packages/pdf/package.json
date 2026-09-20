@@ -1,0 +1,12 @@
+{
+  "name": "@invoice-engine/pdf",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "pdf-lib": "^1.17.1"
+  }
+}

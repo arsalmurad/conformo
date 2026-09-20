@@ -1,0 +1,35 @@
+{
+  "number": "INV-2026-0001",
+  "typeCode": "380",
+  "issueDate": "2026-09-20",
+  "dueDate": "2026-10-20",
+  "currency": "EUR",
+  "buyerReference": "PO-99871",
+  "businessProcess": "B1",
+  "paymentTerms": "Net 30 days",
+  "notes": [
+    { "text": "Thank you for your business." },
+    { "text": "Escompte pour paiement anticipe: neant.", "subjectCode": "AAB" },
+    { "text": "En cas de retard de paiement, penalites au taux de 3 fois le taux d'interet legal.", "subjectCode": "PMD" },
+    { "text": "Indemnite forfaitaire pour frais de recouvrement: 40 EUR.", "subjectCode": "PMT" }
+  ],
+  "seller": {
+    "name": "Northwind Studio SARL", "legalId": "552100554", "legalIdScheme": "0002",
+    "vatId": "FR32552100554", "street": "12 Rue de Rivoli", "city": "Paris",
+    "postcode": "75004", "country": "FR",
+    "electronicAddress": "facturation@northwind.example", "electronicAddressScheme": "EM"
+  },
+  "buyer": {
+    "name": "Handelsgesellschaft Muster GmbH", "legalId": "HRB12345", "legalIdScheme": "0198",
+    "vatId": "DE123456789", "street": "Hauptstrasse 8", "city": "Berlin",
+    "postcode": "10115", "country": "DE",
+    "electronicAddress": "ap@muster.example", "electronicAddressScheme": "EM"
+  },
+  "payment": { "meansCode": "58", "iban": "FR7630006000011234567890189" },
+  "lines": [
+    { "name": "Website design", "description": "Discovery, wireframes and UI design", "quantity": 1, "unitPriceMinor": 480000, "unitCode": "C62", "taxCategory": "S", "taxRate": 20 },
+    { "name": "Frontend build", "description": "Implementation and QA", "quantity": 12, "unitPriceMinor": 9500, "unitCode": "HUR", "taxCategory": "S", "taxRate": 20 },
+    { "name": "Hosting setup", "description": "One-off configuration", "quantity": 1, "unitPriceMinor": 25000, "unitCode": "C62", "taxCategory": "S", "taxRate": 20 }
+  ],
+  "prepaidMinor": 200000
+}
