@@ -13,9 +13,11 @@
     "validate": "node tools/py.mjs tools/validate.py && node tools/py.mjs tools/pdfa_audit.py",
     "schematron:compile": "bash tools/compile-schematron.sh",
     "saxonjs:fetch": "node tools/fetch-saxonjs.mjs",
-    "cli": "tsx packages/cli/src/cli.ts"
+    "cli": "tsx packages/cli/src/cli.ts",
+    "e2e": "playwright test"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@types/node": "^22.0.0",
     "fake-indexeddb": "^6.2.5",
     "happy-dom": "^20.14.5",

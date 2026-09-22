@@ -40,8 +40,11 @@ export function LogoUpload({ logo, onChange }: Props) {
 
   return (
     <div className="logo-upload">
-      <label className="field-label">Logo (optional, shown on the PDF)</label>
+      <label className="field-label" htmlFor="logo-upload-input">
+        Logo (optional, shown on the PDF)
+      </label>
       <input
+        id="logo-upload-input"
         type="file"
         accept="image/png,image/jpeg,image/webp"
         onChange={(e) => void handleFile(e.target.files?.[0])}

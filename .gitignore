@@ -17,3 +17,7 @@ PRIVATE_*
 tools/artefacts/
 __pycache__/
 *.pyc
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/

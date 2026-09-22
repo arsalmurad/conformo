@@ -20,8 +20,15 @@ export function NumberField({ value, onChange, errors }: Props) {
   const { config, setConfig, provider, assignNext, assigning, error } = useNumbering();
   const [showSettings, setShowSettings] = useState(false);
 
+  // A plain <div>, not <label>: this field holds several independent
+  // buttons (assign, change source) alongside the value, and a <label>
+  // wrapping more than the one form control it names produces a confused
+  // accessible name — confirmed by Playwright's own accessibility snapshot
+  // during e2e/create-invoice.spec.ts, which showed the "Assign next
+  // number" button's name swallowing unrelated sibling text ("Change
+  // numbering source", the BR-02 error) rather than just its own label.
   return (
-    <label className={`field ${errors?.length || error ? 'field-invalid' : ''}`}>
+    <div className={`field ${errors?.length || error ? 'field-invalid' : ''}`}>
       <span className="field-label">Invoice number</span>
       {value ? (
         <input value={value} readOnly aria-readonly title="Assigned from the numbering sequence — not editable" />
@@ -59,6 +66,6 @@ export function NumberField({ value, onChange, errors }: Props) {
       )}
       <FieldErrors errors={errors} />
       {error && <p className="field-hint">Couldn't assign a number: {error}</p>}
-    </label>
+    </div>
   );
 }

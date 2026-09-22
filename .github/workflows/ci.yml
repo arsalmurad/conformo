@@ -14,9 +14,8 @@ jobs:
       - run: npm run typecheck
       - name: Compile the validator's Schematron -> SEF artefacts (gitignored, not committed)
         run: npm run schematron:compile
-      - name: Fetch the SaxonJS browser runtime (gitignored, not committed; test skips itself if this fails)
+      - name: Fetch the SaxonJS browser runtime (gitignored, not committed)
         run: npm run saxonjs:fetch
-        continue-on-error: true
       - run: npm run test
       - name: Build sample and validate against official schemas
         run: |
@@ -28,3 +27,7 @@ jobs:
           npm run build:sample && sha256sum out/invoice.pdf > a.txt
           npm run build:sample && sha256sum out/invoice.pdf > b.txt
           diff a.txt b.txt || (echo "PDF output is not deterministic" && exit 1)
+      - name: Install Playwright's Chromium (+ system deps)
+        run: npx playwright install --with-deps chromium
+      - name: End-to-end gate  - create an invoice through the real UI, assert the downloaded PDF passes tools/validate.py
+        run: npm run e2e
