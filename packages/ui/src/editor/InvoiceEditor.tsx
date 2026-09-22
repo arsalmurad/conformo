@@ -8,6 +8,7 @@ import { FieldErrors } from './FieldErrors.js';
 import { ProfilePicker } from './ProfilePicker.js';
 import { MoneyInput } from './MoneyInput.js';
 import { BillingPanel } from './BillingPanel.js';
+import { NumberField } from './NumberField.js';
 
 /** Client-side hints (IBAN checksum, VAT format) run instantly, unlike the
  * Schematron round trip — no point waiting 350ms and a WASM-ish transform to
@@ -58,9 +59,7 @@ export function InvoiceEditor({ invoice, onChange, validation, profiles, onSaveP
   return (
     <form className="editor" onSubmit={(e) => e.preventDefault()}>
       <section className="editor-row">
-        <Field label="Invoice number" errors={byField.number}>
-          <input value={invoice.number} onChange={(e) => set('number', e.target.value)} placeholder="INV-2026-0001" />
-        </Field>
+        <NumberField value={invoice.number} onChange={(number) => set('number', number)} errors={byField.number} />
         <Field label="Currency" errors={byField.currency}>
           <input value={invoice.currency} onChange={(e) => set('currency', e.target.value.toUpperCase())} maxLength={3} />
         </Field>
