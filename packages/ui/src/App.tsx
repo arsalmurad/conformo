@@ -9,7 +9,8 @@ import { UnlockScreen } from './UnlockScreen.js';
 import './App.css';
 
 export default function App() {
-  const { invoice, setInvoice, lock, protectedSince, protect, unlock, discardLockedDraft } = useInvoiceDraft();
+  const { invoice, setInvoice, profiles, saveProfile, deleteProfile, lock, protectedSince, protect, unlock, discardLockedDraft } =
+    useInvoiceDraft();
   const [country, setCountry] = useState<'FR' | undefined>(undefined);
   const [template, setTemplate] = useState<TemplateId>('classic');
   const [exporting, setExporting] = useState(false);
@@ -65,9 +66,21 @@ export default function App() {
         </div>
       </header>
 
-      <ValidationSummary checking={validation.checking} ready={validation.ready} errorCount={validation.errorCount} />
+      <ValidationSummary
+        checking={validation.checking}
+        ready={validation.ready}
+        errorCount={validation.errorCount}
+        structuralError={validation.structuralError}
+      />
 
-      <InvoiceEditor invoice={invoice} onChange={setInvoice} validation={validation} />
+      <InvoiceEditor
+        invoice={invoice}
+        onChange={setInvoice}
+        validation={validation}
+        profiles={profiles}
+        onSaveProfile={saveProfile}
+        onDeleteProfile={deleteProfile}
+      />
 
       <footer className="app-footer">
         {!protectedSince && (
@@ -86,7 +99,20 @@ export default function App() {
   );
 }
 
-function ValidationSummary({ checking, ready, errorCount }: { checking: boolean; ready: boolean; errorCount: number }) {
+function ValidationSummary({
+  checking,
+  ready,
+  errorCount,
+  structuralError,
+}: {
+  checking: boolean;
+  ready: boolean;
+  errorCount: number;
+  structuralError?: string;
+}) {
+  if (structuralError) {
+    return <p className="validation-summary validation-bad">Can't build this invoice yet: {structuralError}</p>;
+  }
   if (!ready) return <p className="validation-summary">Validating…</p>;
   if (errorCount === 0) {
     return <p className="validation-summary validation-ok">✓ Passes EN 16931{checking ? ' (rechecking…)' : ''}</p>;

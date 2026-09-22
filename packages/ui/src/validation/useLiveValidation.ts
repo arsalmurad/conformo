@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Invoice } from '@invoice-engine/core';
-import { buildCII } from '@invoice-engine/formats';
+import { buildCII, InvoiceInputError } from '@invoice-engine/formats';
 import type { RuleResult } from '@invoice-engine/validate/browser';
 import { validateInvoiceXml } from './browserValidator.js';
 import { targetFor, type Section } from './fieldMap.js';
@@ -15,6 +15,13 @@ export interface LiveValidation {
   byField: Record<string, RuleResult[]>;
   bySection: Partial<Record<Section, RuleResult[]>>;
   errorCount: number;
+  /** Set when the invoice couldn't even be serialized to XML — e.g. an
+   * electronic address with no scheme code that isn't an e-mail address
+   * (see InvoiceInputError in @invoice-engine/formats). This is a REAL
+   * problem the user needs to see, not the same as "still typing": silently
+   * reporting zero issues here would show a false "passes EN 16931" for a
+   * document that doesn't even have a body yet. */
+  structuralError?: string;
 }
 
 const EMPTY: LiveValidation = { checking: false, ready: false, byField: {}, bySection: {}, errorCount: 0 };
@@ -41,11 +48,17 @@ export function useLiveValidation(invoice: Invoice, country: 'FR' | undefined): 
         }
         outcome = { checking: false, ready: true, byField, bySection, errorCount: failures.length };
       } catch (err) {
-        // A mid-edit invoice (e.g. an empty required field the type system
-        // doesn't catch at runtime) can still fail to serialize at all; treat
-        // that as "can't tell yet" rather than crashing the editor.
-        console.warn('live validation skipped:', err);
-        outcome = { ...EMPTY, ready: true };
+        if (err instanceof InvoiceInputError) {
+          // A real, actionable problem — surface it rather than hiding it
+          // behind a false "0 issues".
+          outcome = { ...EMPTY, ready: true, errorCount: 1, structuralError: err.message };
+        } else {
+          // Something else went wrong (e.g. the validator's own assets
+          // haven't loaded yet); don't crash the editor over it, but don't
+          // claim a clean pass either.
+          console.warn('live validation skipped:', err);
+          outcome = { ...EMPTY, ready: false };
+        }
       }
       if (myGeneration === generation.current) setResult(outcome);
     }, DEBOUNCE_MS);

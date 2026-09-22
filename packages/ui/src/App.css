@@ -125,6 +125,39 @@ fieldset.party legend {
   gap: 2px;
 }
 
+.field-hint {
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  color: var(--bad);
+}
+
+.profile-picker {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.profile-picker select {
+  flex: 1;
+  padding: 6px 7px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.profile-picker button {
+  font-size: 12px;
+  padding: 6px 9px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: white;
+}
+
+.profile-picker .profile-delete {
+  color: var(--bad);
+  border-color: var(--bad);
+}
+
 .editor-lines h3 {
   font-size: 13px;
   margin: 0 0 10px;

@@ -2,7 +2,12 @@ import { useState } from 'react';
 import type { Invoice, Line, Party, TaxCategory } from '@invoice-engine/core';
 import { fromMajor, toMajor } from '@invoice-engine/core';
 import type { LiveValidation } from '../validation/useLiveValidation.js';
+import type { PartyProfile } from '../profiles/types.js';
+import { checkIban } from '../profiles/iban.js';
+import { checkVatFormat } from '../profiles/vat.js';
+import { EAS_CODES } from '../profiles/eas.js';
 import { FieldErrors } from './FieldErrors.js';
+import { ProfilePicker } from './ProfilePicker.js';
 
 /** A plain `value={toMajor(minor)}` input reformats to a fixed 2-decimal
  * string on every keystroke, which fights the cursor mid-edit (typing "1000"
@@ -29,6 +34,21 @@ function MoneyInput({ minor, onChange, className }: { minor: number; onChange: (
   );
 }
 
+/** Client-side hints (IBAN checksum, VAT format) run instantly, unlike the
+ * Schematron round trip — no point waiting 350ms and a WASM-ish transform to
+ * tell someone they transposed two IBAN digits. */
+function ibanHint(iban: string | undefined): string | undefined {
+  if (!iban) return undefined;
+  const result = checkIban(iban);
+  return result.valid ? undefined : `This IBAN ${result.reason}.`;
+}
+
+function vatHint(vatId: string | undefined): string | undefined {
+  if (!vatId) return undefined;
+  const result = checkVatFormat(vatId);
+  return result.valid ? undefined : `This VAT number ${result.reason}.`;
+}
+
 const TAX_CATEGORIES: { value: TaxCategory; label: string }[] = [
   { value: 'S', label: 'S — Standard rated' },
   { value: 'Z', label: 'Z — Zero rated' },
@@ -43,9 +63,12 @@ interface Props {
   invoice: Invoice;
   onChange: (invoice: Invoice) => void;
   validation: LiveValidation;
+  profiles: PartyProfile[];
+  onSaveProfile: (profile: PartyProfile) => void;
+  onDeleteProfile: (id: string) => void;
 }
 
-export function InvoiceEditor({ invoice, onChange, validation }: Props) {
+export function InvoiceEditor({ invoice, onChange, validation, profiles, onSaveProfile, onDeleteProfile }: Props) {
   const { byField, bySection } = validation;
 
   const set = <K extends keyof Invoice>(key: K, value: Invoice[K]) => onChange({ ...invoice, [key]: value });
@@ -75,8 +98,26 @@ export function InvoiceEditor({ invoice, onChange, validation }: Props) {
       </section>
 
       <section className="editor-parties">
-        <PartyFields title="Seller" side="seller" party={invoice.seller} onChange={(p) => setParty('seller', p)} byField={byField} />
-        <PartyFields title="Buyer" side="buyer" party={invoice.buyer} onChange={(p) => setParty('buyer', p)} byField={byField} />
+        <PartyFields
+          title="Seller"
+          side="seller"
+          party={invoice.seller}
+          onChange={(p) => setParty('seller', p)}
+          byField={byField}
+          profiles={profiles}
+          onSaveProfile={onSaveProfile}
+          onDeleteProfile={onDeleteProfile}
+        />
+        <PartyFields
+          title="Buyer"
+          side="buyer"
+          party={invoice.buyer}
+          onChange={(p) => setParty('buyer', p)}
+          byField={byField}
+          profiles={profiles}
+          onSaveProfile={onSaveProfile}
+          onDeleteProfile={onDeleteProfile}
+        />
       </section>
 
       <section className="editor-lines">
@@ -134,7 +175,7 @@ export function InvoiceEditor({ invoice, onChange, validation }: Props) {
       </section>
 
       <section className="editor-row">
-        <Field label="IBAN" errors={bySection.payment}>
+        <Field label="IBAN" errors={bySection.payment} hint={ibanHint(invoice.payment.iban)}>
           <input
             value={invoice.payment.iban ?? ''}
             onChange={(e) => set('payment', { ...invoice.payment, iban: e.target.value.toUpperCase() })}
@@ -154,16 +195,24 @@ function PartyFields({
   party,
   onChange,
   byField,
+  profiles,
+  onSaveProfile,
+  onDeleteProfile,
 }: {
   title: string;
   side: 'seller' | 'buyer';
   party: Party;
   onChange: (patch: Partial<Party>) => void;
   byField: LiveValidation['byField'];
+  profiles: PartyProfile[];
+  onSaveProfile: (profile: PartyProfile) => void;
+  onDeleteProfile: (id: string) => void;
 }) {
+  const isEmail = (party.electronicAddress ?? '').includes('@');
   return (
     <fieldset className="party">
       <legend>{title}</legend>
+      <ProfilePicker party={party} profiles={profiles} onLoad={onChange} onSave={onSaveProfile} onDelete={onDeleteProfile} />
       <Field label="Name" errors={byField[`${side}.name`]}>
         <input value={party.name} onChange={(e) => onChange({ name: e.target.value })} />
       </Field>
@@ -186,19 +235,52 @@ function PartyFields({
           />
         </Field>
       </div>
-      <Field label="VAT number" errors={byField[`${side}.vatId`]}>
+      <Field label="VAT number" errors={byField[`${side}.vatId`]} hint={vatHint(party.vatId)}>
         <input value={party.vatId ?? ''} onChange={(e) => onChange({ vatId: e.target.value.toUpperCase() || undefined })} />
       </Field>
+      <Field label="Electronic address" errors={byField[`${side}.electronicAddress`]}>
+        <input
+          value={party.electronicAddress ?? ''}
+          placeholder="name@example.com, or a scheme-specific ID"
+          onChange={(e) => onChange({ electronicAddress: e.target.value || undefined })}
+        />
+      </Field>
+      {!isEmail && party.electronicAddress && (
+        <Field label="Address scheme" hint={!party.electronicAddressScheme ? 'Required for a non-email address (BT-34/BT-49).' : undefined}>
+          <select
+            value={party.electronicAddressScheme ?? ''}
+            onChange={(e) => onChange({ electronicAddressScheme: e.target.value || undefined })}
+          >
+            <option value="">Select a scheme…</option>
+            {EAS_CODES.map((c) => (
+              <option key={c.code} value={c.code}>
+                {c.label}
+              </option>
+            ))}
+          </select>
+        </Field>
+      )}
     </fieldset>
   );
 }
 
-function Field({ label, errors, children }: { label: string; errors?: import('@invoice-engine/validate/browser').RuleResult[]; children: React.ReactNode }) {
+function Field({
+  label,
+  errors,
+  hint,
+  children,
+}: {
+  label: string;
+  errors?: import('@invoice-engine/validate/browser').RuleResult[];
+  hint?: string;
+  children: React.ReactNode;
+}) {
   return (
-    <label className={`field ${errors?.length ? 'field-invalid' : ''}`}>
+    <label className={`field ${errors?.length || hint ? 'field-invalid' : ''}`}>
       <span className="field-label">{label}</span>
       {children}
       <FieldErrors errors={errors} />
+      {hint && <p className="field-hint">{hint}</p>}
     </label>
   );
 }
