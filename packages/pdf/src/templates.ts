@@ -75,13 +75,23 @@ const PAGE_WIDTH = 595.28;
 const PAGE_HEIGHT = 841.89;
 const MARGIN = 48;
 
-export function renderInvoicePage(
+export interface RenderOptions {
+  /** Not part of the EN 16931 model (see packages/ui/src/editor/LogoUpload.tsx
+   * and PaymentLinkField.tsx for why) — presentation-only extras drawn on
+   * the page but never reflected in the embedded XML. `logo.bytes` must be
+   * PNG or JPEG; pdf-lib has no WebP embedder. */
+  logo?: { bytes: Uint8Array; kind: 'png' | 'jpeg' };
+  paymentLink?: string;
+}
+
+export async function renderInvoicePage(
   pdf: PDFDocument,
   fonts: TemplateFonts,
   invoice: Invoice,
   totals: Totals,
   templateId: TemplateId = 'classic',
-): PDFPage {
+  options: RenderOptions = {},
+): Promise<PDFPage> {
   const theme = TEMPLATES[templateId];
   const { regular: reg, bold } = fonts;
   const ink = rgb(...theme.ink);
@@ -112,17 +122,32 @@ export function renderInvoicePage(
   const hr = (y: number, x0 = M, x1 = W - M) =>
     page.drawLine({ start: { x: x0, y }, end: { x: x1, y }, thickness: 0.7, color: line });
 
-  let y = PAGE_HEIGHT - 51;
+  const logoImage = options.logo
+    ? options.logo.kind === 'png'
+      ? await pdf.embedPng(options.logo.bytes)
+      : await pdf.embedJpg(options.logo.bytes)
+    : undefined;
+  const headerShift = logoImage ? 30 : 0;
+  const bandHeight = 96 + headerShift;
+
+  let y = PAGE_HEIGHT - 51 - headerShift;
+
+  if (logoImage) {
+    const maxW = 90, maxH = 36;
+    const scale = Math.min(maxW / logoImage.width, maxH / logoImage.height, 1);
+    const w = logoImage.width * scale, h = logoImage.height * scale;
+    page.drawImage(logoImage, { x: W - M - w, y: PAGE_HEIGHT - 20 - h, width: w, height: h });
+  }
 
   if (theme.headerBand) {
-    page.drawRectangle({ x: 0, y: PAGE_HEIGHT - 96, width: W, height: 96, color: accent });
+    page.drawRectangle({ x: 0, y: PAGE_HEIGHT - bandHeight, width: W, height: bandHeight, color: accent });
     draw('INVOICE', M, y, { f: bold, size: 22, color: rgb(1, 1, 1) });
     right(invoice.number, W - M, y + 4, { f: bold, size: 11, color: rgb(1, 1, 1) });
     right(`Issued ${invoice.issueDate}${invoice.dueDate ? `   Due ${invoice.dueDate}` : ''}`, W - M, y - 10, {
       size: 8.5,
       color: rgb(0.85, 0.9, 1),
     });
-    y = PAGE_HEIGHT - 96 - 24;
+    y = PAGE_HEIGHT - bandHeight - 24;
   } else {
     draw('INVOICE', M, y, { f: bold, size: 22 });
     right(invoice.number, W - M, y + 4, { f: bold, size: 11 });
@@ -193,6 +218,17 @@ export function renderInvoicePage(
   draw('PAYMENT', M, y, { size: 7.5, color: mute, f: bold });
   if (invoice.payment.iban) draw(`Bank transfer to IBAN ${invoice.payment.iban}`, M, y - 14, { size: 9 });
   draw(`Reference ${invoice.number}.${invoice.paymentTerms ? ` ${invoice.paymentTerms}.` : ''}`, M, y - 26, { size: 9, color: mute });
+  y -= 26;
+  if (options.paymentLink) {
+    draw(`Pay online: ${options.paymentLink}`, M, y - 12, { size: 9, color: accent });
+    y -= 12;
+  }
+
+  const note = invoice.notes?.[0]?.text;
+  if (note) {
+    draw(note, M, y - 24, { size: 8, color: mute });
+  }
+
   draw('This PDF contains a Factur-X / EN 16931 electronic invoice embedded as XML.', M, 56, { size: 7.5, color: mute });
 
   return page;

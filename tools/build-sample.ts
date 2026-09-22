@@ -27,7 +27,7 @@ pdf.registerFontkit(fontkit);
 const regular = await pdf.embedFont(fs.readFileSync(`${FONTS}/WorkSans-Regular.ttf`), { subset: true });
 const bold = await pdf.embedFont(fs.readFileSync(`${FONTS}/WorkSans-Bold.ttf`), { subset: true });
 
-renderInvoicePage(pdf, { regular, bold }, invoice, t, TEMPLATE);
+await renderInvoicePage(pdf, { regular, bold }, invoice, t, TEMPLATE);
 
 await finalizePDFA(pdf, {
   xml, xmlFilename: 'factur-x.xml', conformanceLevel: 'EN 16931',

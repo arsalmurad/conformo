@@ -4,7 +4,7 @@ import { TEMPLATES } from '@invoice-engine/pdf';
 import { useInvoiceDraft } from './state/useInvoiceDraft.js';
 import { useLiveValidation } from './validation/useLiveValidation.js';
 import { InvoiceEditor } from './editor/InvoiceEditor.js';
-import { buildInvoicePdf, downloadPdf } from './pdf/exportPdf.js';
+import { buildInvoicePdf, downloadPdf, type EmbeddableLogo } from './pdf/exportPdf.js';
 import { UnlockScreen } from './UnlockScreen.js';
 import './App.css';
 
@@ -14,6 +14,8 @@ export default function App() {
   const [country, setCountry] = useState<'FR' | undefined>(undefined);
   const [template, setTemplate] = useState<TemplateId>('classic');
   const [exporting, setExporting] = useState(false);
+  const [paymentLink, setPaymentLink] = useState('');
+  const [logo, setLogo] = useState<EmbeddableLogo | undefined>(undefined);
   const validation = useLiveValidation(invoice, country);
 
   if (lock.status === 'checking') return null;
@@ -24,7 +26,7 @@ export default function App() {
   async function exportPdf() {
     setExporting(true);
     try {
-      const bytes = await buildInvoicePdf(invoice, template);
+      const bytes = await buildInvoicePdf(invoice, template, { logo, paymentLink: paymentLink || undefined });
       downloadPdf(bytes, `${invoice.number || 'invoice'}.pdf`);
     } finally {
       setExporting(false);
@@ -80,6 +82,10 @@ export default function App() {
         profiles={profiles}
         onSaveProfile={saveProfile}
         onDeleteProfile={deleteProfile}
+        paymentLink={paymentLink}
+        onPaymentLinkChange={setPaymentLink}
+        logo={logo}
+        onLogoChange={setLogo}
       />
 
       <footer className="app-footer">

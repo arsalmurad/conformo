@@ -3,7 +3,9 @@ import fontkit from '@pdf-lib/fontkit';
 import { totals } from '@invoice-engine/core';
 import type { Invoice } from '@invoice-engine/core';
 import { buildCII } from '@invoice-engine/formats';
-import { finalizePDFA, renderInvoicePage, type TemplateId } from '@invoice-engine/pdf';
+import { finalizePDFA, renderInvoicePage, type TemplateId, type RenderOptions } from '@invoice-engine/pdf';
+
+export type EmbeddableLogo = NonNullable<RenderOptions['logo']>;
 
 let fontCache: { regularBytes: ArrayBuffer; boldBytes: ArrayBuffer; iccBytes: ArrayBuffer } | undefined;
 
@@ -22,7 +24,11 @@ async function loadAssets() {
  * in Node, from the same @invoice-engine/pdf renderer — proving the "renders
  * identically in the browser and in Node" hard requirement by construction,
  * not by eyeballing two implementations. */
-export async function buildInvoicePdf(invoice: Invoice, templateId: TemplateId): Promise<Uint8Array> {
+export async function buildInvoicePdf(
+  invoice: Invoice,
+  templateId: TemplateId,
+  options: RenderOptions = {},
+): Promise<Uint8Array> {
   const { regularBytes, boldBytes, iccBytes } = await loadAssets();
   const t = totals(invoice);
   const xml = buildCII(invoice);
@@ -32,7 +38,7 @@ export async function buildInvoicePdf(invoice: Invoice, templateId: TemplateId):
   const regular = await pdf.embedFont(regularBytes, { subset: true });
   const bold = await pdf.embedFont(boldBytes, { subset: true });
 
-  renderInvoicePage(pdf, { regular, bold }, invoice, t, templateId);
+  await renderInvoicePage(pdf, { regular, bold }, invoice, t, templateId, options);
 
   await finalizePDFA(pdf, {
     xml,

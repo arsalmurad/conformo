@@ -1,6 +1,7 @@
 import type { Invoice, Line, Party, TaxCategory } from '@invoice-engine/core';
 import type { LiveValidation } from '../validation/useLiveValidation.js';
 import type { PartyProfile } from '../profiles/types.js';
+import type { EmbeddableLogo } from '../pdf/exportPdf.js';
 import { checkIban } from '../profiles/iban.js';
 import { checkVatFormat } from '../profiles/vat.js';
 import { EAS_CODES } from '../profiles/eas.js';
@@ -9,6 +10,9 @@ import { ProfilePicker } from './ProfilePicker.js';
 import { MoneyInput } from './MoneyInput.js';
 import { BillingPanel } from './BillingPanel.js';
 import { NumberField } from './NumberField.js';
+import { NotesField } from './NotesField.js';
+import { PaymentLinkField } from './PaymentLinkField.js';
+import { LogoUpload } from './LogoUpload.js';
 
 /** Client-side hints (IBAN checksum, VAT format) run instantly, unlike the
  * Schematron round trip — no point waiting 350ms and a WASM-ish transform to
@@ -42,9 +46,24 @@ interface Props {
   profiles: PartyProfile[];
   onSaveProfile: (profile: PartyProfile) => void;
   onDeleteProfile: (id: string) => void;
+  paymentLink: string;
+  onPaymentLinkChange: (link: string) => void;
+  logo: EmbeddableLogo | undefined;
+  onLogoChange: (logo: EmbeddableLogo | undefined) => void;
 }
 
-export function InvoiceEditor({ invoice, onChange, validation, profiles, onSaveProfile, onDeleteProfile }: Props) {
+export function InvoiceEditor({
+  invoice,
+  onChange,
+  validation,
+  profiles,
+  onSaveProfile,
+  onDeleteProfile,
+  paymentLink,
+  onPaymentLinkChange,
+  logo,
+  onLogoChange,
+}: Props) {
   const { byField, bySection } = validation;
 
   const set = <K extends keyof Invoice>(key: K, value: Invoice[K]) => onChange({ ...invoice, [key]: value });
@@ -161,6 +180,13 @@ export function InvoiceEditor({ invoice, onChange, validation, profiles, onSaveP
           <input value={invoice.paymentTerms ?? ''} onChange={(e) => set('paymentTerms', e.target.value || undefined)} />
         </Field>
       </section>
+
+      <section className="editor-row">
+        <PaymentLinkField value={paymentLink} onChange={onPaymentLinkChange} />
+        <LogoUpload logo={logo} onChange={onLogoChange} />
+      </section>
+
+      <NotesField invoice={invoice} onChange={onChange} />
     </form>
   );
 }
