@@ -1,6 +1,4 @@
-import { useState } from 'react';
 import type { Invoice, Line, Party, TaxCategory } from '@invoice-engine/core';
-import { fromMajor, toMajor } from '@invoice-engine/core';
 import type { LiveValidation } from '../validation/useLiveValidation.js';
 import type { PartyProfile } from '../profiles/types.js';
 import { checkIban } from '../profiles/iban.js';
@@ -8,31 +6,8 @@ import { checkVatFormat } from '../profiles/vat.js';
 import { EAS_CODES } from '../profiles/eas.js';
 import { FieldErrors } from './FieldErrors.js';
 import { ProfilePicker } from './ProfilePicker.js';
-
-/** A plain `value={toMajor(minor)}` input reformats to a fixed 2-decimal
- * string on every keystroke, which fights the cursor mid-edit (typing "1000"
- * renders "1.00" after the first digit, then loses the rest). This keeps its
- * own draft text instead, and only commits a parse back out on each valid
- * keystroke — the display never snaps back to a reformatted string until the
- * field is next remounted (a fresh line, or a freshly loaded invoice). */
-function MoneyInput({ minor, onChange, className }: { minor: number; onChange: (minor: number) => void; className?: string }) {
-  const [text, setText] = useState(() => toMajor(minor));
-  return (
-    <input
-      className={className}
-      type="text"
-      inputMode="decimal"
-      value={text}
-      onChange={(e) => {
-        setText(e.target.value);
-        if (/^\d*\.?\d*$/.test(e.target.value) && e.target.value !== '' && e.target.value !== '.') {
-          onChange(fromMajor(e.target.value));
-        }
-      }}
-      onBlur={() => setText(toMajor(minor))}
-    />
-  );
-}
+import { MoneyInput } from './MoneyInput.js';
+import { BillingPanel } from './BillingPanel.js';
 
 /** Client-side hints (IBAN checksum, VAT format) run instantly, unlike the
  * Schematron round trip — no point waiting 350ms and a WASM-ish transform to
@@ -173,6 +148,8 @@ export function InvoiceEditor({ invoice, onChange, validation, profiles, onSaveP
         <FieldErrors errors={bySection.tax} />
         <FieldErrors errors={bySection.totals} />
       </section>
+
+      <BillingPanel invoice={invoice} onChange={onChange} />
 
       <section className="editor-row">
         <Field label="IBAN" errors={bySection.payment} hint={ibanHint(invoice.payment.iban)}>

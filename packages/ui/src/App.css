@@ -158,6 +158,90 @@ fieldset.party legend {
   border-color: var(--bad);
 }
 
+.billing-panel {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.billing-panel legend {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--mute);
+  font-weight: 600;
+  padding: 0 4px;
+}
+
+.billing-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.billing-percent {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  background: var(--bg);
+  border-radius: 6px;
+}
+
+.billing-percent .field input {
+  max-width: 160px;
+}
+
+.billing-shortcuts {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.billing-shortcuts button {
+  font-size: 12px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: white;
+}
+
+.billing-shortcuts button.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.billing-custom-percent {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--mute);
+}
+
+.billing-custom-percent input {
+  width: 52px;
+  padding: 5px 6px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.billing-computed {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.billing-remaining {
+  font-size: 12px;
+  color: var(--mute);
+  margin: 0;
+}
+
 .editor-lines h3 {
   font-size: 13px;
   margin: 0 0 10px;
