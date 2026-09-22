@@ -10,7 +10,7 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: '3.11' }
       - run: npm ci
-      - run: pip install factur-x pikepdf lxml
+      - run: pip install factur-x pikepdf lxml saxonche
       - run: npm run typecheck
       - run: npm run test
       - name: Build sample and validate against official schemas

@@ -1,0 +1,32 @@
+{
+  "number": "MI-2026-0009",
+  "typeCode": "380",
+  "issueDate": "2026-09-08",
+  "dueDate": "2026-10-08",
+  "currency": "EUR",
+  "buyerReference": "CMD-99",
+  "businessProcess": "S1",
+  "paymentTerms": "Paiement a 30 jours.",
+  "notes": [
+    { "text": "TVA non applicable, article 293 B du CGI." },
+    { "text": "Escompte pour paiement anticipe: neant.", "subjectCode": "AAB" },
+    { "text": "En cas de retard de paiement, penalites au taux de 3 fois le taux d'interet legal.", "subjectCode": "PMD" },
+    { "text": "Indemnite forfaitaire pour frais de recouvrement: 40 EUR.", "subjectCode": "PMT" }
+  ],
+  "seller": {
+    "name": "Camille Exemple, micro-entrepreneur", "legalId": "123456789", "legalIdScheme": "0002",
+    "street": "5 Impasse Exemple", "city": "Nantes", "postcode": "44000", "country": "FR",
+    "electronicAddress": "camille@exemple-conseil.example", "electronicAddressScheme": "EM"
+  },
+  "buyer": {
+    "name": "Association Modele", "legalId": "987654321", "legalIdScheme": "0002",
+    "street": "2 Rue du Modele", "city": "Rennes", "postcode": "35000", "country": "FR",
+    "electronicAddress": "tresorier@association-modele.example", "electronicAddressScheme": "EM"
+  },
+  "payment": { "meansCode": "58", "iban": "FR7630006000011234567890189" },
+  "lines": [
+    { "name": "Atelier de conseil, demi-journee", "quantity": 2, "unitPriceMinor": 30000, "unitCode": "C62",
+      "taxCategory": "O", "taxRate": 0,
+      "exemptionCode": "vatex-eu-o", "exemptionReason": "Not subject to VAT" }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "number": "AX-2026-0777",
+  "typeCode": "380",
+  "issueDate": "2026-09-11",
+  "dueDate": "2026-10-11",
+  "currency": "EUR",
+  "buyerReference": "ORD-DE-2026-19",
+  "paymentTerms": "Zahlbar innerhalb von 30 Tagen.",
+  "seller": {
+    "name": "Alpen Exemple AG", "tradingName": "Alpen Exemple",
+    "additionalLegalInfo": "Aktiengesellschaft mit Sitz in Zuerich",
+    "legalId": "CHE123456789", "legalIdScheme": "0183",
+    "street": "Bahnhofstrasse 99", "city": "Zuerich", "postcode": "8001", "country": "CH",
+    "electronicAddress": "billing@alpen-exemple.example", "electronicAddressScheme": "EM"
+  },
+  "taxRepresentative": {
+    "name": "Steuervertretung Beispiel GmbH", "vatId": "DE123456789",
+    "street": "Friedrichstrasse 1", "city": "Berlin", "postcode": "10117", "country": "DE"
+  },
+  "buyer": {
+    "name": "Werkzeughandel Muster GmbH", "vatId": "DE987654321",
+    "street": "Industriestrasse 12", "city": "Stuttgart", "postcode": "70173", "country": "DE",
+    "electronicAddress": "kreditoren@werkzeughandel-muster.example", "electronicAddressScheme": "EM"
+  },
+  "payment": { "meansCode": "58", "reference": "AX-2026-0777", "iban": "DE89370400440532013000", "accountName": "Steuervertretung Beispiel GmbH" },
+  "lines": [
+    { "name": "Precision gauge set", "description": "Set of 12, calibrated",
+      "sellerAssignedId": "PGS-12", "standardItemId": "5901234123457", "standardItemIdScheme": "0160",
+      "originCountry": "CH", "quantity": 7, "unitPriceMinor": 18990, "unitCode": "C62", "taxCategory": "S", "taxRate": 19 }
+  ],
+  "prepaidMinor": 50000,
+  "roundingMinor": 2
+}

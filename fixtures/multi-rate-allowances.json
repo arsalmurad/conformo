@@ -1,0 +1,39 @@
+{
+  "number": "FA-2026-0217",
+  "typeCode": "380",
+  "issueDate": "2026-09-19",
+  "dueDate": "2026-10-19",
+  "currency": "EUR",
+  "buyerReference": "CMD-2026-311",
+  "businessProcess": "S1",
+  "paymentTerms": "Paiement a 30 jours.",
+  "notes": [
+    { "text": "Escompte pour paiement anticipe: neant.", "subjectCode": "AAB" },
+    { "text": "En cas de retard de paiement, penalites au taux de 3 fois le taux d'interet legal.", "subjectCode": "PMD" },
+    { "text": "Indemnite forfaitaire pour frais de recouvrement: 40 EUR.", "subjectCode": "PMT" }
+  ],
+  "seller": {
+    "name": "Cabinet Exemple SAS", "legalId": "123456789", "legalIdScheme": "0002",
+    "vatId": "FR32123456789", "street": "8 Avenue Exemple", "city": "Lyon",
+    "postcode": "69002", "country": "FR",
+    "electronicAddress": "compta@cabinet-exemple.example", "electronicAddressScheme": "EM"
+  },
+  "buyer": {
+    "name": "Ecole Modele SA", "legalId": "987654321", "legalIdScheme": "0002",
+    "street": "3 Place du Modele", "city": "Grenoble", "postcode": "38000", "country": "FR",
+    "electronicAddress": "achats@ecole-modele.example", "electronicAddressScheme": "EM"
+  },
+  "payment": { "meansCode": "58", "iban": "FR7630006000011234567890189" },
+  "lines": [
+    { "name": "Conseil en organisation", "quantity": 2, "unitPriceMinor": 45000, "unitCode": "DAY", "taxCategory": "S", "taxRate": 20 },
+    { "name": "Formation sur site", "quantity": 1, "unitPriceMinor": 80000, "unitCode": "C62", "taxCategory": "S", "taxRate": 10 },
+    { "name": "Livres pedagogiques", "quantity": 3, "unitPriceMinor": 12000, "unitCode": "C62", "taxCategory": "S", "taxRate": 5.5 }
+  ],
+  "allowances": [
+    { "amountMinor": 5000, "taxCategory": "S", "taxRate": 20, "reason": "Remise commerciale", "reasonCode": "95" },
+    { "amountMinor": 1000, "taxCategory": "S", "taxRate": 5.5, "reason": "Remise fidelite", "reasonCode": "95" }
+  ],
+  "charges": [
+    { "amountMinor": 2500, "taxCategory": "S", "taxRate": 20, "reason": "Frais de livraison", "reasonCode": "FC" }
+  ]
+}

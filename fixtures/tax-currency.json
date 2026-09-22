@@ -1,0 +1,25 @@
+{
+  "number": "SE-2026-0203",
+  "typeCode": "380",
+  "issueDate": "2026-09-09",
+  "dueDate": "2026-10-09",
+  "currency": "EUR",
+  "taxCurrency": "SEK",
+  "taxTotalInTaxCurrencyMinor": 27500000,
+  "buyerReference": "BR-30012",
+  "paymentTerms": "Payable within 30 days.",
+  "seller": {
+    "name": "Exempelbolaget AB", "vatId": "SE123456789001",
+    "street": "Exempelgatan 5", "city": "Stockholm", "postcode": "11122", "country": "SE",
+    "electronicAddress": "faktura@exempelbolaget.example", "electronicAddressScheme": "EM"
+  },
+  "buyer": {
+    "name": "Beispiel Handels GmbH", "vatId": "DE987654321",
+    "street": "Handelsweg 3", "city": "Bremen", "postcode": "28195", "country": "DE",
+    "electronicAddress": "ap@beispiel-handels.example", "electronicAddressScheme": "EM"
+  },
+  "payment": { "meansCode": "58", "iban": "SE4550000000058398257466" },
+  "lines": [
+    { "name": "Licence, annual", "quantity": 1, "unitPriceMinor": 100000, "unitCode": "C62", "taxCategory": "S", "taxRate": 25 }
+  ]
+}

@@ -10,7 +10,6 @@
 import { PDFName, PDFString, PDFHexString, AFRelationship } from 'pdf-lib';
 import type { PDFDocument } from 'pdf-lib';
 import { buildXMP } from './xmp.js';
-import crypto from 'node:crypto';
 
 export interface FinalizeOptions {
   xml: string | Uint8Array;
@@ -21,12 +20,36 @@ export interface FinalizeOptions {
   producer: string;
   creatorTool: string;
   iccProfile: Uint8Array;
-  createDate?: Date;
+  /**
+   * Required, not defaulted. Invariant 5 (deterministic output) bans a clock from
+   * the document; a `new Date()` default is exactly that clock, just one call away
+   * from wherever a future caller forgets the argument. The caller must derive this
+   * from the invoice's own content, e.g. its issue date.
+   */
+  createDate: Date;
+}
+
+function hex(buffer: ArrayBuffer): string {
+  return [...new Uint8Array(buffer)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** Length-prefixes each part so ("ab","c") and ("a","bc") never collide when hashed. */
+function frame(parts: Uint8Array[]): Uint8Array<ArrayBuffer> {
+  const out: Uint8Array<ArrayBuffer> = new Uint8Array(parts.reduce((n, p) => n + 4 + p.length, 0));
+  const view = new DataView(out.buffer);
+  let offset = 0;
+  for (const p of parts) {
+    view.setUint32(offset, p.length, false);
+    offset += 4;
+    out.set(p, offset);
+    offset += p.length;
+  }
+  return out;
 }
 
 export async function finalizePDFA(pdfDoc: PDFDocument, {
   xml, xmlFilename = 'factur-x.xml', conformanceLevel = 'EN 16931',
-  title, author, producer, creatorTool, iccProfile, createDate = new Date(),
+  title, author, producer, creatorTool, iccProfile, createDate,
 }: FinalizeOptions): Promise<PDFDocument> {
   const ctx = pdfDoc.context;
   const catalog = pdfDoc.catalog;
@@ -77,8 +100,25 @@ export async function finalizePDFA(pdfDoc: PDFDocument, {
 
   // 5. Deterministic document ID derived from content, never from a clock.
   //    This is what makes the output byte-reproducible and audit-defensible.
-  const id = crypto.createHash('sha256')
-    .update(String(title) + String(xml)).digest('hex').slice(0, 32).toUpperCase();
+  //    WebCrypto (not node:crypto) so this file has no Node dependency: invariant 4
+  //    requires packages/pdf to run in a browser, and globalThis.crypto.subtle is
+  //    the same API there and in Node 20+. Every input that can vary the *meaning*
+  //    of the document feeds the hash: the XML, the visible metadata, the ICC
+  //    profile and the timestamp. It does not cover page drawing calls (the visual
+  //    layout), so two builds that embed identical XML under a redesigned template
+  //    would still share an ID; that is presentation, not invoice content.
+  const digest = await crypto.subtle.digest('SHA-256', frame([
+    new TextEncoder().encode(xmlFilename),
+    xmlBytes,
+    new TextEncoder().encode(title),
+    new TextEncoder().encode(author),
+    new TextEncoder().encode(producer),
+    new TextEncoder().encode(creatorTool),
+    new TextEncoder().encode(conformanceLevel),
+    new TextEncoder().encode(iso),
+    iccProfile,
+  ]));
+  const id = hex(digest).slice(0, 32).toUpperCase();
   const idObj = PDFHexString.of(id);
   ctx.trailerInfo.ID = ctx.obj([idObj, idObj]);
 

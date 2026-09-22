@@ -14,13 +14,13 @@
     { "text": "Indemnite forfaitaire pour frais de recouvrement: 40 EUR.", "subjectCode": "PMT" }
   ],
   "seller": {
-    "name": "Northwind Studio SARL", "legalId": "552100554", "legalIdScheme": "0002",
-    "vatId": "FR32552100554", "street": "12 Rue de Rivoli", "city": "Paris",
+    "name": "Northwind Studio SARL", "legalId": "123456789", "legalIdScheme": "0002",
+    "vatId": "FR32123456789", "street": "12 Rue Exemple", "city": "Paris",
     "postcode": "75004", "country": "FR",
     "electronicAddress": "facturation@northwind.example", "electronicAddressScheme": "EM"
   },
   "buyer": {
-    "name": "Handelsgesellschaft Muster GmbH", "legalId": "HRB12345", "legalIdScheme": "0198",
+    "name": "Handelsgesellschaft Muster GmbH",
     "vatId": "DE123456789", "street": "Hauptstrasse 8", "city": "Berlin",
     "postcode": "10115", "country": "DE",
     "electronicAddress": "ap@muster.example", "electronicAddressScheme": "EM"

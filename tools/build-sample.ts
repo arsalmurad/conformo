@@ -6,7 +6,7 @@
 import fs from 'node:fs';
 import { PDFDocument, rgb } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
-import { totals, toMajor } from '@invoice-engine/core';
+import { totals, toMajor, lineNet } from '@invoice-engine/core';
 import type { Invoice } from '@invoice-engine/core';
 import { buildCII } from '@invoice-engine/formats';
 import { finalizePDFA } from '@invoice-engine/pdf';
@@ -62,7 +62,7 @@ for (const l of invoice.lines) {
   if (l.description) T(l.description, M, y - 11, { size: 8, color: mute });
   R(String(l.quantity), 360, y);
   R(toMajor(l.unitPriceMinor), 450, y);
-  R(toMajor(Math.round(l.quantity * l.unitPriceMinor)), W - M, y);
+  R(toMajor(lineNet(l)), W - M, y);
   y -= 30;
 }
 page.drawLine({ start: { x: 320, y: y + 8 }, end: { x: W - M, y: y + 8 }, thickness: 0.7, color: line });

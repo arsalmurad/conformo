@@ -1,0 +1,24 @@
+{
+  "number": "F-2026-0088",
+  "typeCode": "380",
+  "issueDate": "2026-09-10",
+  "dueDate": "2026-10-10",
+  "currency": "EUR",
+  "buyerReference": "BUYER-REF-7781",
+  "paymentTerms": "Payable within 30 days.",
+  "seller": {
+    "name": "Boekhandel Voorbeeld BV", "vatId": "BE0123456749",
+    "street": "Voorbeeldstraat 5", "city": "Gent", "postcode": "9000", "country": "BE",
+    "electronicAddress": "0123456749", "electronicAddressScheme": "0208"
+  },
+  "buyer": {
+    "name": "Bibliotheek Exemple", "vatId": "BE0987654394",
+    "street": "Rue de l'Exemple 9", "city": "Bruxelles", "postcode": "1000", "country": "BE",
+    "electronicAddress": "0987654394", "electronicAddressScheme": "0208"
+  },
+  "payment": { "meansCode": "58", "iban": "BE68539007547034" },
+  "lines": [
+    { "name": "Printed atlas, 2026 edition", "quantity": 6, "unitPriceMinor": 4500, "unitCode": "C62", "taxCategory": "Z", "taxRate": 0 },
+    { "name": "Reference dictionary", "quantity": 2, "unitPriceMinor": 3200, "unitCode": "C62", "taxCategory": "Z", "taxRate": 0 }
+  ]
+}

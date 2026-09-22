@@ -1,0 +1,30 @@
+{
+  "number": "GS-2026-0031",
+  "typeCode": "381",
+  "issueDate": "2026-09-16",
+  "dueDate": "2026-09-30",
+  "currency": "EUR",
+  "buyerReference": "992-90009-96",
+  "paymentTerms": "Gutschrift wird mit der naechsten Zahlung verrechnet.",
+  "notes": [
+    { "text": "Gutschrift zu Rechnung RE-2026-0300 wegen Preiskorrektur." }
+  ],
+  "seller": {
+    "name": "Bau Beispiel GmbH", "vatId": "DE123456789",
+    "street": "Musterstrasse 1", "city": "Berlin", "postcode": "10115", "country": "DE",
+    "electronicAddress": "rechnung@bau-beispiel.example", "electronicAddressScheme": "EM",
+    "contact": { "name": "Erika Beispiel", "phone": "+49 30 1234567", "email": "erika.beispiel@bau-beispiel.example" }
+  },
+  "buyer": {
+    "name": "Stadtwerke Beispielstadt", "vatId": "DE987654321",
+    "street": "Rathausplatz 1", "city": "Hamburg", "postcode": "20095", "country": "DE",
+    "electronicAddress": "eingang@stadtwerke-beispielstadt.example", "electronicAddressScheme": "EM"
+  },
+  "precedingInvoices": [ { "number": "RE-2026-0300", "issueDate": "2026-08-20" } ],
+  "periodStart": "2026-08-01",
+  "periodEnd": "2026-08-31",
+  "payment": { "meansCode": "58", "iban": "DE89370400440532013000" },
+  "lines": [
+    { "name": "Preiskorrektur Materialposition 7", "quantity": 4, "unitPriceMinor": 3000, "unitCode": "C62", "taxCategory": "S", "taxRate": 19 }
+  ]
+}

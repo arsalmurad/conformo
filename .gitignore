@@ -14,3 +14,6 @@ PRIVATE_*
 .DS_Store
 .vscode/
 .idea/
+tools/artefacts/
+__pycache__/
+*.pyc

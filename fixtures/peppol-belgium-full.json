@@ -1,0 +1,36 @@
+{
+  "number": "PB-2026-1150",
+  "typeCode": "380",
+  "issueDate": "2026-09-17",
+  "dueDate": "2026-10-17",
+  "currency": "EUR",
+  "buyerReference": "REQ-8841",
+  "orderReference": "PO-2026-5521",
+  "contractReference": "FW-2026-09",
+  "paymentTerms": "Payable within 30 days of the invoice date.",
+  "periodStart": "2026-09-01",
+  "periodEnd": "2026-09-30",
+  "seller": {
+    "name": "Voorbeeld Logistics NV", "tradingName": "VL Logistics",
+    "legalId": "0123456749", "legalIdScheme": "0208", "vatId": "BE0123456749",
+    "street": "Havenlaan 100", "street2": "Unit 4", "city": "Antwerpen", "postcode": "2030", "country": "BE",
+    "electronicAddress": "0123456749", "electronicAddressScheme": "0208",
+    "contact": { "name": "An Voorbeeld", "phone": "+32 3 123 45 67", "email": "an.voorbeeld@vl-logistics.example" }
+  },
+  "buyer": {
+    "name": "Exemple Retail SA", "legalId": "0987654394", "legalIdScheme": "0208", "vatId": "BE0987654394",
+    "street": "Rue du Commerce 50", "city": "Bruxelles", "postcode": "1000", "country": "BE",
+    "electronicAddress": "0987654394", "electronicAddressScheme": "0208",
+    "contact": { "name": "Marie Exemple", "email": "marie.exemple@exemple-retail.example" }
+  },
+  "delivery": { "partyName": "Exemple Retail SA - Warehouse", "date": "2026-09-16",
+                "street": "Zoning Industriel 7", "city": "Charleroi", "postcode": "6000", "country": "BE" },
+  "payment": { "meansCode": "58", "reference": "PB-2026-1150", "iban": "BE68539007547034", "accountName": "Voorbeeld Logistics NV", "bic": "GEBABEBB" },
+  "lines": [
+    { "name": "Pallet transport, Antwerpen to Charleroi", "description": "Full-load, temperature controlled",
+      "sellerAssignedId": "TRN-AC-01", "buyerAssignedId": "SVC-4471", "quantity": 18, "unitPriceMinor": 8500, "unitCode": "C62",
+      "taxCategory": "S", "taxRate": 21 },
+    { "name": "Shrink-wrap film, 500mm", "sellerAssignedId": "FILM-500", "standardItemId": "5901234123457", "standardItemIdScheme": "0160",
+      "originCountry": "BE", "quantity": 12, "unitPriceMinor": 1450, "unitCode": "C62", "taxCategory": "S", "taxRate": 21 }
+  ]
+}

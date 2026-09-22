@@ -5,7 +5,9 @@
 # Measured payload: EN 16931 = 5.1 MB raw / 140 KB gzipped.
 #                   French CTC = 2.7 MB raw / 76 KB gzipped.
 set -euo pipefail
-SRC="$(python3 -c 'import facturx,os;print(os.path.join(os.path.dirname(facturx.__file__),"xsd_and_schematron"))')"
+# `python3` on Windows is the Microsoft Store stub; the real interpreter is `py`.
+if command -v py >/dev/null 2>&1; then PY=py; else PY=python3; fi
+SRC="$($PY -c 'import facturx,os;print(os.path.join(os.path.dirname(facturx.__file__),"xsd_and_schematron"))')"
 mkdir -p packages/validate/artefacts
 npx xslt3 -xsl:"$SRC/facturx-en16931/Factur-X_1.09_EN16931.xsl" \
           -export:packages/validate/artefacts/en16931.sef.json -nogo

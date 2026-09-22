@@ -1,0 +1,29 @@
+{
+  "number": "RE-2026-0412",
+  "typeCode": "380",
+  "issueDate": "2026-09-15",
+  "dueDate": "2026-10-15",
+  "currency": "EUR",
+  "buyerReference": "992-90009-96",
+  "paymentTerms": "Zahlbar innerhalb von 30 Tagen netto.",
+  "notes": [
+    { "text": "Steuerschuldnerschaft des Leistungsempfaengers (Reverse Charge, Paragraf 13b UStG)." }
+  ],
+  "seller": {
+    "name": "Bau Beispiel GmbH", "vatId": "DE123456789",
+    "street": "Musterstrasse 1", "city": "Berlin", "postcode": "10115", "country": "DE",
+    "electronicAddress": "rechnung@bau-beispiel.example", "electronicAddressScheme": "EM",
+    "contact": { "name": "Erika Beispiel", "phone": "+49 30 1234567", "email": "erika.beispiel@bau-beispiel.example" }
+  },
+  "buyer": {
+    "name": "Generalunternehmer Muster AG", "vatId": "DE987654321",
+    "street": "Hauptallee 22", "city": "Hamburg", "postcode": "20095", "country": "DE",
+    "electronicAddress": "eingang@generalunternehmer.example", "electronicAddressScheme": "EM"
+  },
+  "payment": { "meansCode": "58", "iban": "DE89370400440532013000", "accountName": "Bau Beispiel GmbH" },
+  "lines": [
+    { "name": "Rohbauarbeiten Bauabschnitt 2", "quantity": 1, "unitPriceMinor": 500000, "unitCode": "C62",
+      "taxCategory": "AE", "taxRate": 0,
+      "exemptionCode": "vatex-eu-ae", "exemptionReason": "Reverse charge" }
+  ]
+}

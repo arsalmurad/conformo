@@ -1,0 +1,28 @@
+{
+  "number": "F-2026-0091",
+  "typeCode": "380",
+  "issueDate": "2026-09-12",
+  "dueDate": "2026-10-12",
+  "currency": "EUR",
+  "buyerReference": "COURSE-2026-09",
+  "paymentTerms": "Payable within 30 days.",
+  "notes": [
+    { "text": "Exempt from VAT: educational services, Article 132(1)(i) of Directive 2006/112/EC." }
+  ],
+  "seller": {
+    "name": "Opleidingscentrum Voorbeeld VZW", "vatId": "BE0123456749",
+    "street": "Schoolstraat 3", "city": "Leuven", "postcode": "3000", "country": "BE",
+    "electronicAddress": "0123456749", "electronicAddressScheme": "0208"
+  },
+  "buyer": {
+    "name": "Firma Exemple NV", "legalId": "0987654394", "legalIdScheme": "0208",
+    "street": "Industrielaan 14", "city": "Antwerpen", "postcode": "2000", "country": "BE",
+    "electronicAddress": "0987654394", "electronicAddressScheme": "0208"
+  },
+  "payment": { "meansCode": "58", "iban": "BE68539007547034", "reference": "F-2026-0091" },
+  "lines": [
+    { "name": "Vocational course, 3 days", "quantity": 3, "unitPriceMinor": 45000, "unitCode": "DAY",
+      "taxCategory": "E", "taxRate": 0,
+      "exemptionCode": "vatex-eu-132", "exemptionReason": "Exempt based on article 132 of Council Directive 2006/112/EC" }
+  ]
+}

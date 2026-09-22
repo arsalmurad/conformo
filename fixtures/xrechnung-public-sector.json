@@ -1,0 +1,32 @@
+{
+  "number": "2026-0815",
+  "typeCode": "380",
+  "issueDate": "2026-09-14",
+  "dueDate": "2026-10-14",
+  "currency": "EUR",
+  "buyerReference": "04011000-1234512345-06",
+  "orderReference": "BE-2026-77",
+  "contractReference": "RV-2025-114",
+  "paymentTerms": "#SKONTO#TAGE=14#PROZENT=2.00#\n",
+  "periodStart": "2026-08-01",
+  "periodEnd": "2026-08-31",
+  "seller": {
+    "name": "Ingenieurbuero Beispiel", "vatId": "DE111222333", "taxRegistrationId": "12/345/67890",
+    "street": "Werkstrasse 4", "city": "Leipzig", "postcode": "04109", "country": "DE",
+    "electronicAddress": "rechnung@ingenieurbuero-beispiel.example", "electronicAddressScheme": "EM",
+    "contact": { "name": "Max Mustermann", "phone": "+49 341 7654321", "email": "max.mustermann@ingenieurbuero-beispiel.example" }
+  },
+  "buyer": {
+    "name": "Landesamt fuer Beispielwesen",
+    "street": "Amtsweg 10", "city": "Dresden", "postcode": "01067", "country": "DE",
+    "electronicAddress": "04011000-1234512345-06", "electronicAddressScheme": "0204"
+  },
+  "delivery": { "partyName": "Landesamt fuer Beispielwesen", "date": "2026-08-31",
+                "street": "Amtsweg 10", "city": "Dresden", "postcode": "01067", "country": "DE" },
+  "payment": { "meansCode": "58", "reference": "2026-0815", "iban": "DE89370400440532013000",
+               "accountName": "Ingenieurbuero Beispiel", "bic": "COBADEFFXXX" },
+  "lines": [
+    { "name": "Tragwerksplanung, Leistungsphase 3", "quantity": 24.5, "unitPriceMinor": 9500, "unitCode": "HUR", "taxCategory": "S", "taxRate": 19 },
+    { "name": "Fachbuch Baustatik", "quantity": 2, "unitPriceMinor": 6900, "unitCode": "C62", "taxCategory": "S", "taxRate": 7 }
+  ]
+}

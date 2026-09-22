@@ -1,0 +1,33 @@
+{
+  "number": "INV-2026-0042",
+  "typeCode": "380",
+  "issueDate": "2026-09-18",
+  "dueDate": "2026-10-18",
+  "currency": "EUR",
+  "buyerReference": "PO-55120",
+  "businessProcess": "B1",
+  "paymentTerms": "Net 30 days",
+  "notes": [
+    { "text": "Escompte pour paiement anticipe: neant.", "subjectCode": "AAB" },
+    { "text": "En cas de retard de paiement, penalites au taux de 3 fois le taux d'interet legal.", "subjectCode": "PMD" },
+    { "text": "Indemnite forfaitaire pour frais de recouvrement: 40 EUR.", "subjectCode": "PMT" }
+  ],
+  "seller": {
+    "name": "Atelier Exemple SARL", "legalId": "123456789", "legalIdScheme": "0002",
+    "vatId": "FR32123456789", "street": "12 Rue Exemple", "city": "Paris",
+    "postcode": "75004", "country": "FR",
+    "electronicAddress": "facturation@atelier-exemple.example", "electronicAddressScheme": "EM"
+  },
+  "buyer": {
+    "name": "Handelsgesellschaft Muster GmbH", "vatId": "DE123456789",
+    "street": "Hauptstrasse 8", "city": "Berlin", "postcode": "10115", "country": "DE",
+    "electronicAddress": "ap@muster.example", "electronicAddressScheme": "EM"
+  },
+  "delivery": { "date": "2026-09-18", "country": "DE" },
+  "payment": { "meansCode": "58", "iban": "FR7630006000011234567890189" },
+  "lines": [
+    { "name": "Machined bracket, series B", "quantity": 10, "unitPriceMinor": 12000, "unitCode": "C62",
+      "taxCategory": "K", "taxRate": 0,
+      "exemptionCode": "vatex-eu-ic", "exemptionReason": "Intra-Community supply of goods" }
+  ]
+}

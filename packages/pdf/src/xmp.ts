@@ -1,6 +1,16 @@
 // XMP packet for PDF/A-3 + Factur-X. The pdfaExtension schema block is
 // mandatory: validators reject the fx: namespace without a declaration.
+//
+// Every value interpolated into this packet is user-or-invoice-supplied and must
+// be escaped: xmlFilename, conformanceLevel, documentType and version used to go
+// in unescaped, so an invoice.number containing "&" or "<" (xmlFilename can be
+// derived from it) would have produced unparseable XMP.
 const x = (s: unknown): string => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+// The xpacket header requires a literal U+FEFF (BOM) as part of its syntax, not as
+// an encoding artifact. Written as an escape rather than a literal character in the
+// source so an editor or a "normalize whitespace" pass cannot silently strip it.
+const BOM = '﻿';
 
 const prop = (name: string, desc: string): string => `
               <rdf:li rdf:parseType="Resource">
@@ -20,13 +30,13 @@ export function buildXMP({ title, author, producer, creatorTool, createDate,
                            xmlFilename = 'factur-x.xml', conformanceLevel = 'EN 16931',
                            documentType = 'INVOICE', version = '1.0',
                            pdfaPart = '3', pdfaConformance = 'B' }: XMPOptions): string {
-  const d = createDate;
-  return `<?xpacket begin="﻿" id="W5M0MpCehiHzreSzNTczkc9d"?>
+  const d = x(createDate);
+  return `<?xpacket begin="${BOM}" id="W5M0MpCehiHzreSzNTczkc9d"?>
 <x:xmpmeta xmlns:x="adobe:ns:meta/">
   <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
     <rdf:Description rdf:about="" xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/">
-      <pdfaid:part>${pdfaPart}</pdfaid:part>
-      <pdfaid:conformance>${pdfaConformance}</pdfaid:conformance>
+      <pdfaid:part>${x(pdfaPart)}</pdfaid:part>
+      <pdfaid:conformance>${x(pdfaConformance)}</pdfaid:conformance>
     </rdf:Description>
     <rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">
       <dc:title><rdf:Alt><rdf:li xml:lang="x-default">${x(title)}</rdf:li></rdf:Alt></dc:title>
@@ -60,10 +70,10 @@ export function buildXMP({ title, author, producer, creatorTool, createDate,
       </pdfaExtension:schemas>
     </rdf:Description>
     <rdf:Description rdf:about="" xmlns:fx="urn:factur-x:pdfa:CrossIndustryDocument:invoice:1p0#">
-      <fx:DocumentType>${documentType}</fx:DocumentType>
-      <fx:DocumentFileName>${xmlFilename}</fx:DocumentFileName>
-      <fx:Version>${version}</fx:Version>
-      <fx:ConformanceLevel>${conformanceLevel}</fx:ConformanceLevel>
+      <fx:DocumentType>${x(documentType)}</fx:DocumentType>
+      <fx:DocumentFileName>${x(xmlFilename)}</fx:DocumentFileName>
+      <fx:Version>${x(version)}</fx:Version>
+      <fx:ConformanceLevel>${x(conformanceLevel)}</fx:ConformanceLevel>
     </rdf:Description>
   </rdf:RDF>
 </x:xmpmeta>

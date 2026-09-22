@@ -9,7 +9,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "build:sample": "tsx tools/build-sample.ts",
-    "validate": "python3 tools/validate.py && python3 tools/pdfa_audit.py",
+    "build:fixtures": "tsx tools/build-fixtures.ts",
+    "validate": "node tools/py.mjs tools/validate.py && node tools/py.mjs tools/pdfa_audit.py",
     "schematron:compile": "bash tools/compile-schematron.sh"
   },
   "devDependencies": {
