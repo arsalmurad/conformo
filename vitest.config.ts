@@ -6,6 +6,8 @@ export default defineConfig({
       '@invoice-engine/core': fileURLToPath(new URL('./packages/core/src/index.ts', import.meta.url)),
       '@invoice-engine/formats': fileURLToPath(new URL('./packages/formats/src/index.ts', import.meta.url)),
       '@invoice-engine/pdf': fileURLToPath(new URL('./packages/pdf/src/index.ts', import.meta.url)),
+      '@invoice-engine/validate/browser': fileURLToPath(new URL('./packages/validate/src/browser.ts', import.meta.url)),
+      '@invoice-engine/validate': fileURLToPath(new URL('./packages/validate/src/index.ts', import.meta.url)),
     },
   },
 });

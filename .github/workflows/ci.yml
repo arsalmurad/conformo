@@ -12,6 +12,11 @@ jobs:
       - run: npm ci
       - run: pip install factur-x pikepdf lxml saxonche
       - run: npm run typecheck
+      - name: Compile the validator's Schematron -> SEF artefacts (gitignored, not committed)
+        run: npm run schematron:compile
+      - name: Fetch the SaxonJS browser runtime (gitignored, not committed; test skips itself if this fails)
+        run: npm run saxonjs:fetch
+        continue-on-error: true
       - run: npm run test
       - name: Build sample and validate against official schemas
         run: |

@@ -1,0 +1,13 @@
+{
+  "name": "@invoice-engine/validate",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./browser": "./src/browser.ts"
+  },
+  "dependencies": {
+    "saxon-js": "^2.7.0"
+  }
+}

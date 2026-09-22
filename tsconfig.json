@@ -14,7 +14,10 @@
     "paths": {
       "@invoice-engine/core": ["./packages/core/src/index.ts"],
       "@invoice-engine/formats": ["./packages/formats/src/index.ts"],
-      "@invoice-engine/pdf": ["./packages/pdf/src/index.ts"]
+      "@invoice-engine/pdf": ["./packages/pdf/src/index.ts"],
+      "@invoice-engine/validate": ["./packages/validate/src/index.ts"],
+      "@invoice-engine/validate/browser": ["./packages/validate/src/browser.ts"],
+      "@invoice-engine/cli": ["./packages/cli/src/cli.ts"]
     },
     "baseUrl": "."
   },
