@@ -1,7 +1,7 @@
 import { runSchematron, toValidationResult } from "./core.js";
 import type { CompiledSchematron, SaxonJSLike, ValidationResult } from "./types.js";
 
-export type { RuleResult, PlainLanguageMessage, ValidationResult } from "./types.js";
+export type { RuleResult, PlainLanguageMessage, ValidationResult, SaxonJSLike } from "./types.js";
 
 /** The browser entry point. Takes the `SaxonJS` global left by loading
  * `SaxonJS2.rt.js` (the free runtime-only build — no compiler, no Node

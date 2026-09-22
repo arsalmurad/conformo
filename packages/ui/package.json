@@ -1,0 +1,32 @@
+{
+  "name": "@invoice-engine/ui",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "predev": "node scripts/copy-validator-assets.mjs && node scripts/make-icons.mjs",
+    "dev": "vite",
+    "prebuild": "node scripts/copy-validator-assets.mjs && node scripts/make-icons.mjs",
+    "build": "vite build",
+    "typecheck": "tsc -b --noEmit",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@invoice-engine/core": "*",
+    "@invoice-engine/formats": "*",
+    "@invoice-engine/pdf": "*",
+    "@invoice-engine/validate": "*",
+    "@pdf-lib/fontkit": "^1.1.1",
+    "pdf-lib": "^1.17.1",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "typescript": "~6.0.2",
+    "vite": "^8.3.0",
+    "vite-plugin-pwa": "^1.3.0"
+  }
+}

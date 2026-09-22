@@ -7,6 +7,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
+    "@invoice-engine/core": "*",
     "pdf-lib": "^1.17.1"
   }
 }
