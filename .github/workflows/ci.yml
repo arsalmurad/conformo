@@ -31,3 +31,24 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: End-to-end gate  - create an invoice through the real UI, assert the downloaded PDF passes tools/validate.py
         run: npm run e2e
+      - name: Docs site builds 
+        run: |
+          npm run build:compliance-data
+          npm run docs:build
+      - name: Compliance matrix in the README regenerates from the dataset 
+        run: |
+          npm run readme:matrix
+          git diff --exit-code README.md || (echo "README.md's compliance matrix is out of date - run 'npm run build:compliance-data && npm run readme:matrix' and commit the result" && exit 1)
+      - name: Docker image runs and serves the app 
+        run: |
+          docker compose build
+          docker compose up -d
+          for i in $(seq 1 20); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/ || true)
+            [ "$code" = "200" ] && break
+            sleep 1
+          done
+          body=$(curl -s http://localhost:8080/)
+          docker compose down
+          [ "$code" = "200" ] || (echo "Docker container did not respond with 200" && exit 1)
+          echo "$body" | grep -q '<title>invoice-engine</title>' || (echo "Docker container did not serve the app" && exit 1)
