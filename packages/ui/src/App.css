@@ -279,6 +279,40 @@ fieldset.party legend {
   resize: vertical;
 }
 
+.invoice-dropzone {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+}
+
+.invoice-dropzone-active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+
+.invoice-dropzone input[type='file'] {
+  font-size: 12px;
+}
+
+.invoice-dropzone-hint {
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  color: var(--mute);
+}
+
+.invoice-dropzone-error {
+  color: var(--bad);
+}
+
+.invoice-dropzone-success {
+  color: var(--good);
+}
+
 .logo-upload {
   display: flex;
   flex-direction: column;

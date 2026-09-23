@@ -1,0 +1,119 @@
+import { useCallback, useState } from 'react';
+import type { Invoice } from '@invoice-engine/core';
+
+interface Props {
+  onImport: (invoice: Invoice) => void;
+}
+
+// The visible-totals check (packages/parse/src/pdf/visibleTotals.ts) imports
+// this exact specifier itself to read the PDF's text. Configuring the worker
+// here sets it up before that import is ever used — and because it's the
+// same specifier, Vite treats it as the same module instance, so this one
+// assignment is enough for both call sites. Without it, pdfjs throws "No
+// GlobalWorkerOptions.workerSrc specified" in a browser (found by actually
+// loading this page — pdfjs's Node build needs no such setup, which is why
+// packages/parse's own Node tests never hit this). handleFile() awaits this
+// before touching a PDF, so a drop that races the app's own startup can't
+// hit the unconfigured worker either.
+const pdfWorkerReady = import('pdfjs-dist/legacy/build/pdf.mjs').then(async (pdfjs) => {
+  const workerUrl = (await import('pdfjs-dist/legacy/build/pdf.worker.mjs?url')).default;
+  pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+});
+
+// Matches parseXml.ts's own default (20 MB), checked here too so a huge file
+// never even reaches the parser — this is a pre-filter, not a substitute for
+// the parser's own limits (which also cap depth and node count).
+const MAX_BYTES = 20 * 1024 * 1024;
+
+type Status =
+  | { kind: 'idle' }
+  | { kind: 'error'; message: string }
+  | { kind: 'success'; message: string };
+
+function isPdf(bytes: Uint8Array): boolean {
+  return bytes.length >= 5 && new TextDecoder().decode(bytes.subarray(0, 5)) === '%PDF-';
+}
+
+/**
+ * Import a Factur-X/ZUGFeRD PDF, a bare CII XML, a UBL XML or an XRechnung
+ * file, and replace the current draft with it .
+ * A PDF whose visible totals disagree with its own embedded XML is refused
+ * outright rather than imported with a warning: that mismatch is the fraud
+ * vector the phase brief calls out, and a form the user could still submit
+ * despite the warning is not actually a safeguard.
+ */
+export function InvoiceDropzone({ onImport }: Props) {
+  const [status, setStatus] = useState<Status>({ kind: 'idle' });
+  const [dragOver, setDragOver] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const handleFile = useCallback(async (file: File | undefined) => {
+    if (!file) return;
+    setBusy(true);
+    setStatus({ kind: 'idle' });
+    try {
+      if (file.size > MAX_BYTES) {
+        setStatus({ kind: 'error', message: `File is ${(file.size / 1e6).toFixed(1)} MB; the limit is 20 MB.` });
+        return;
+      }
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const { detectXmlFormat, readInvoiceFromPdf } = await import('@invoice-engine/parse');
+
+      if (isPdf(bytes)) {
+        await pdfWorkerReady;
+        const result = await readInvoiceFromPdf(bytes);
+        if (result.visibleTotals.checked && result.visibleTotals.mismatches.length > 0) {
+          const fields = result.visibleTotals.mismatches.map((m) => m.label).join(', ');
+          setStatus({
+            kind: 'error',
+            message: `Refusing to import: this PDF's visible ${fields} do not match its embedded XML. ` +
+              `That can mean the page or the XML was altered after the invoice was issued.`,
+          });
+          return;
+        }
+        onImport(result.invoice);
+        setStatus({
+          kind: 'success',
+          message: `Imported ${result.format.toUpperCase()} invoice ${result.invoice.number} from ${file.name}` +
+            (result.visibleTotals.checked ? ' (visible totals match the embedded XML).' : '.'),
+        });
+      } else {
+        const xml = new TextDecoder().decode(bytes);
+        const result = detectXmlFormat(xml);
+        onImport(result.invoice);
+        setStatus({ kind: 'success', message: `Imported ${result.format} invoice ${result.invoice.number} from ${file.name}.` });
+      }
+    } catch (err) {
+      setStatus({ kind: 'error', message: (err as Error).message });
+    } finally {
+      setBusy(false);
+    }
+  }, [onImport]);
+
+  return (
+    <div
+      className={`invoice-dropzone${dragOver ? ' invoice-dropzone-active' : ''}`}
+      onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setDragOver(false);
+        void handleFile(e.dataTransfer.files?.[0]);
+      }}
+    >
+      <label className="field-label" htmlFor="invoice-import-input">
+        Import an invoice (replaces the current draft)
+      </label>
+      <input
+        id="invoice-import-input"
+        type="file"
+        accept=".xml,.pdf,application/xml,text/xml,application/pdf"
+        disabled={busy}
+        onChange={(e) => void handleFile(e.target.files?.[0])}
+      />
+      <p className="invoice-dropzone-hint">Factur-X/ZUGFeRD PDF, CII, UBL or XRechnung XML. Drag a file here or use the picker.</p>
+      {status.kind === 'error' && <p className="field-hint invoice-dropzone-error">{status.message}</p>}
+      {status.kind === 'success' && <p className="field-hint invoice-dropzone-success">{status.message}</p>}
+    </div>
+  );
+}

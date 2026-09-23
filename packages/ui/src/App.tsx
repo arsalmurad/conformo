@@ -4,6 +4,7 @@ import { TEMPLATES } from '@invoice-engine/pdf';
 import { useInvoiceDraft } from './state/useInvoiceDraft.js';
 import { useLiveValidation } from './validation/useLiveValidation.js';
 import { InvoiceEditor } from './editor/InvoiceEditor.js';
+import { InvoiceDropzone } from './import/InvoiceDropzone.js';
 import { buildInvoicePdf, downloadPdf, type EmbeddableLogo } from './pdf/exportPdf.js';
 import { UnlockScreen } from './UnlockScreen.js';
 import './App.css';
@@ -67,6 +68,8 @@ export default function App() {
           </label>
         </div>
       </header>
+
+      <InvoiceDropzone onImport={setInvoice} />
 
       <ValidationSummary
         checking={validation.checking}
