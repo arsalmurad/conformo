@@ -6,6 +6,8 @@
     "invoice-engine": "./src/cli.ts"
   },
   "dependencies": {
+    "@invoice-engine/core": "*",
+    "@invoice-engine/parse": "*",
     "@invoice-engine/validate": "*"
   }
 }
