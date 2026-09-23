@@ -1,0 +1,12 @@
+.git
+node_modules
+out
+dist
+coverage
+tools/artefacts
+test-results
+playwright-report
+blob-report
+playwright/.cache
+.vscode
+.idea

@@ -1,0 +1,8 @@
+# One command to try the app: `docker compose up --build`, then open
+# http://localhost:8080. The container serves a static build; the app itself
+# needs no backend once loaded (CONTRIBUTING.md invariant 4).
+services:
+  app:
+    build: .
+    ports:
+      - "8080:80"
