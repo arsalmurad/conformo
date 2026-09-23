@@ -8,10 +8,22 @@ own rules. Runs in a browser. No Chromium, no LibreOffice, no Java.
 
 ## Status
 
-The core, the formats, the validator, the app and receiving/parsing are built
-and independently verified. Not yet built: the rest of the distribution
-assets (docs site, standalone validator page, Docker, MCP server) — see
-`the project's own tracker` for exactly where the line is.
+All six originally-planned phases are complete and independently verified:
+the core, the formats, the validator, the app, receiving/parsing, and the
+distribution assets below. See `the project's own tracker` for what's still genuinely
+open (a handful of countries not yet in the compliance dataset, FatturaPA/KSeF
+serializer support, and actually publishing/deploying the packages below).
+
+- **Sourced compliance dataset** (`packages/compliance-data`) — see the table
+  below.
+- **Docs site** (`packages/docs-site`) — static, one page per country,
+  generated from the dataset.
+- **Standalone validator page** (`packages/validator-page`) — no signup,
+  fully client-side, separately deployable.
+- **Docker** (`Dockerfile`, `docker-compose.yml`) — `docker compose up --build`
+  serves the app on `:8080`.
+- **MCP server** (`packages/mcp-server`) — `create_invoice`,
+  `validate_invoice`, `convert_invoice` over stdio.
 
 | Capability | State |
 |---|---|
@@ -85,6 +97,21 @@ downloaded PDF passes `tools/validate.py`) needs a Playwright browser once:
 
     npx playwright install --with-deps chromium
     npm run e2e
+
+To try it in Docker instead (builds the app and serves it on `:8080`, no
+local Node/Python setup needed):
+
+    docker compose up --build
+
+To run the standalone validator page or the docs site on their own:
+
+    npm run schematron:compile && npm run saxonjs:fetch   # once, for the validator page
+    npm run dev --workspace=packages/validator-page
+    npm run build:compliance-data && npm run docs:build   # writes packages/docs-site/dist/
+
+To run the MCP server (`create_invoice` / `validate_invoice` / `convert_invoice`):
+
+    npx tsx packages/mcp-server/src/server.ts
 
 ## Reading
 
