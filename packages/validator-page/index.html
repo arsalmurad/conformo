@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>invoice-engine validator</title>
+<meta name="description" content="Validate a Factur-X/ZUGFeRD invoice against the official EN 16931 Schematron, entirely in your browser. No signup, no upload to a server.">
+<style>
+  :root { color-scheme: light dark; --ink:#15181d; --mute:#5b6470; --line:#e2e5e9; --accent:#1a56db; --bg:#ffffff; --bad:#991b1b; --good:#166534; }
+  @media (prefers-color-scheme: dark) { :root { --ink:#e8eaed; --mute:#9aa4b2; --line:#2b2f36; --accent:#7aa2ff; --bg:#101215; --bad:#f87171; --good:#4ade80; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 16px/1.5 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--ink); background: var(--bg); }
+  main { max-width: 720px; margin: 0 auto; padding: 32px 20px 80px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  p.lede { color: var(--mute); margin: 0 0 24px; font-size: 14px; }
+  .dropzone { border: 2px dashed var(--line); border-radius: 10px; padding: 28px; text-align: center; }
+  .dropzone.active { border-color: var(--accent); }
+  .dropzone input[type=file] { margin-top: 10px; }
+  textarea { width: 100%; min-height: 160px; font: 13px/1.4 ui-monospace, Consolas, monospace; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: inherit; margin-top: 16px; }
+  .row { display: flex; gap: 12px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
+  button { padding: 8px 16px; border-radius: 6px; border: 1px solid var(--line); background: var(--accent); color: #fff; font-weight: 600; cursor: pointer; }
+  button:disabled { opacity: 0.5; cursor: default; }
+  select { padding: 6px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: inherit; }
+  #status { margin-top: 20px; font-weight: 600; }
+  #status.ok { color: var(--good); }
+  #status.bad { color: var(--bad); }
+  ul#rules { list-style: none; padding: 0; margin: 16px 0 0; }
+  ul#rules li { border-bottom: 1px solid var(--line); padding: 10px 0; font-size: 14px; }
+  ul#rules li .rule-id { font-weight: 700; }
+  ul#rules li.fatal .rule-id, ul#rules li.error .rule-id { color: var(--bad); }
+  .why { color: var(--mute); font-size: 13px; margin-top: 4px; }
+  footer { max-width: 720px; margin: 40px auto 0; padding: 0 20px; color: var(--mute); font-size: 12px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>invoice-engine validator</h1>
+  <p class="lede">
+    Checks a Factur-X/ZUGFeRD invoice against the official EN 16931 Schematron,
+    entirely in your browser. Nothing you drop here is ever uploaded anywhere.
+  </p>
+
+  <div id="dropzone" class="dropzone">
+    <div>Drop a CII XML file or a Factur-X/ZUGFeRD PDF here, or paste XML below.</div>
+    <input id="file-input" type="file" accept=".xml,.pdf,application/xml,text/xml,application/pdf">
+  </div>
+
+  <textarea id="xml-input" placeholder="...or paste CII XML here"></textarea>
+
+  <div class="row">
+    <label for="country">Country rules</label>
+    <select id="country">
+      <option value="">EN 16931 only</option>
+      <option value="FR">France (BR-FR Flux 2)</option>
+    </select>
+    <button id="validate-btn">Validate</button>
+  </div>
+
+  <div id="status"></div>
+  <ul id="rules"></ul>
+</main>
+<footer>
+  Runs <code>@invoice-engine/validate</code> client-side with the same compiled
+  Schematron the CLI and the app use. Apache-2.0 ·
+  <a href="https://github.com/arsalmurad/invoice-engine">Source</a>
+</footer>
+<script type="module" src="/src/main.ts"></script>
+</body>
+</html>

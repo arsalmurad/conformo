@@ -1,0 +1,6 @@
+node_modules
+dist
+
+# Copied from the repo root's own gitignored, fetch/compile-on-demand
+# artefacts — see scripts/copy-validator-assets.mjs.
+public/validator/

@@ -1,0 +1,21 @@
+{
+  "name": "@invoice-engine/validator-page",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "predev": "node scripts/copy-validator-assets.mjs",
+    "dev": "vite",
+    "prebuild": "node scripts/copy-validator-assets.mjs",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@invoice-engine/validate": "*",
+    "@invoice-engine/parse": "*"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.2",
+    "vite": "^8.3.0"
+  }
+}
