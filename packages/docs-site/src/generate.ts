@@ -65,18 +65,19 @@ ${c.extraFieldsBeyondEN16931?.length ? `
   <span class="badge badge-${c.status === 'verified' ? 'mandatory' : 'unverified'}">${c.status === 'verified' ? 'Verified' : 'Unverified'}</span>
 </div>
 `;
-  return page({ title: c.name, description: `E-invoicing mandate status for ${c.name}.`, active: 'countries' }, body);
+  return page({ title: c.name, description: `E-invoicing mandate status for ${c.name}.`, active: 'countries', depth: 1 }, body);
 }
 
 function countriesIndexPage(): string {
+  // Same directory as the country pages this links to — no "../" needed.
   const items = [...countries].sort((a, b) => a.name.localeCompare(b.name))
-    .map((c) => `<li><a href="/countries/${c.country.toLowerCase()}.html">${esc(c.name)}</a></li>`).join('');
+    .map((c) => `<li><a href="${c.country.toLowerCase()}.html">${esc(c.name)}</a></li>`).join('');
   const body = `
 <h1>Countries</h1>
 <p class="lede">${countries.length} countries, sourced from a tax authority, ministry, or official EU page. Dataset last verified ${esc(dataset.generatedAt)}.</p>
 <ul class="country-grid">${items}</ul>
 `;
-  return page({ title: 'Countries', description: 'E-invoicing mandate status by country.', active: 'countries' }, body);
+  return page({ title: 'Countries', description: 'E-invoicing mandate status by country.', active: 'countries', depth: 1 }, body);
 }
 
 function homePage(): string {
@@ -88,12 +89,12 @@ ZUGFeRD, XRechnung, UBL 2.1 and Peppol BIS, validated live against the
 official CEN Schematron plus each country's CIUS rules.</p>
 <h2>Where to start</h2>
 <ul>
-  <li><a href="/countries/index.html">Compliance status by country</a> — generated from a sourced dataset.</li>
+  <li><a href="countries/index.html">Compliance status by country</a> — generated from a sourced dataset.</li>
   <li><a href="https://github.com/arsalmurad/invoice-engine">Source on GitHub</a></li>
   <li><a href="https://github.com/arsalmurad/invoice-engine/blob/main/CONTRIBUTING.md">Contributing</a></li>
 </ul>
 `;
-  return page({ title: 'invoice-engine', description: 'Legally valid electronic invoices, EN 16931, Factur-X, XRechnung, UBL, Peppol.', active: 'home' }, body);
+  return page({ title: 'invoice-engine', description: 'Legally valid electronic invoices, EN 16931, Factur-X, XRechnung, UBL, Peppol.', active: 'home', depth: 0 }, body);
 }
 
 function write(relPath: string, html: string): void {

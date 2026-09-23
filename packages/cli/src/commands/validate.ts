@@ -26,7 +26,17 @@ export async function runValidate(args: string[]): Promise<void> {
     return;
   }
 
-  const result = await validate(xml, country ? { country } : {});
+  let result: Awaited<ReturnType<typeof validate>>;
+  try {
+    result = await validate(xml, country ? { country } : {});
+  } catch (err) {
+    // e.g. the file isn't CII XML at all — a clear one-line message, not a
+    // raw stack trace (this is what "parse" already does for the same class
+    // of error; "validate" should behave the same way).
+    console.error((err as Error).message);
+    process.exitCode = 1;
+    return;
+  }
   const failures = result.results.filter((r) => r.severity === "error" || r.severity === "fatal");
   const advisory = result.results.filter((r) => r.severity === "warning" || r.severity === "info");
 

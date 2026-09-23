@@ -70,4 +70,17 @@ describe.skipIf(skip)("the validator inside a browser environment (happy-dom, no
     expect(result.valid).toBe(true);
     expect(result.firedCount).toBeGreaterThan(0);
   });
+
+  // Regression: validateInBrowser() used to skip the assertCii() guard the
+  // Node entry point has always had, so well-formed non-invoice XML fired
+  // zero rules and came back "valid" — the worst possible failure mode for
+  // the one artefact (the public validator page) whose entire job is being
+  // trustworthy. Found by an independent review that actually dropped a
+  // non-invoice file into the built validator page, not by reading the code.
+  it("rejects well-formed non-invoice XML rather than reporting it valid", async () => {
+    const en16931 = JSON.parse(readFileSync(en16931Path, "utf-8"));
+    await expect(validateInBrowser(SaxonJS, "<hello><world/></hello>", en16931)).rejects.toThrow(
+      /CrossIndustryInvoice/,
+    );
+  });
 });

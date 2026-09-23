@@ -19,4 +19,19 @@ describe('docs-site: builds one page per mandate country from the dataset', () =
       expect(html).toContain(c.sourceUrl);
     }
   });
+
+  // Regression: every internal link used to be rooted at "/", which only
+  // resolves when the site is served from a domain's root — GitHub Pages for
+  // a project repo serves at "<user>.github.io/<repo>/", where every
+  // "/countries/..." link 404s. Found by an independent review; verified live
+  // by serving a copy of dist/ from a nested subpath in a real browser and
+  // confirming both the home page's link and a country page's nav resolve
+  // within that subpath, not back up to the server root.
+  it('never links to an absolute, root-anchored path, so the site works from any subpath', () => {
+    const home = fs.readFileSync('packages/docs-site/dist/index.html', 'utf-8');
+    const country = fs.readFileSync('packages/docs-site/dist/countries/fr.html', 'utf-8');
+    for (const html of [home, country]) {
+      expect(html).not.toMatch(/href="\//);
+    }
+  });
 });

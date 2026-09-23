@@ -1,4 +1,4 @@
-import { runSchematron, toValidationResult } from "./core.js";
+import { assertCii, runSchematron, toValidationResult } from "./core.js";
 import type { CompiledSchematron, SaxonJSLike, ValidationResult } from "./types.js";
 
 export type { RuleResult, PlainLanguageMessage, ValidationResult, SaxonJSLike } from "./types.js";
@@ -18,6 +18,7 @@ export async function validateInBrowser(
   en16931: CompiledSchematron,
   frCtc?: CompiledSchematron,
 ): Promise<ValidationResult> {
+  assertCii(xml);
   const runs = [await runSchematron(saxonJs, xml, en16931)];
   if (frCtc) runs.push(await runSchematron(saxonJs, xml, frCtc));
   return toValidationResult(runs);

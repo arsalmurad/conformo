@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import SaxonJS from "saxon-js";
-import { runSchematron, toValidationResult } from "./core.js";
+import { assertCii, runSchematron, toValidationResult } from "./core.js";
 import type { CompiledSchematron, ValidateOptions, ValidationResult } from "./types.js";
 
 export type { RuleResult, PlainLanguageMessage, ValidateOptions, ValidationResult, SaxonJSLike } from "./types.js";
@@ -25,19 +25,6 @@ function loadSef(name: string): CompiledSchematron {
   const sef = JSON.parse(text) as CompiledSchematron;
   sefCache.set(name, sef);
   return sef;
-}
-
-/** Is this a Factur-X/CII document? The only syntax whose Schematron is
- * compiled today . A UBL document is rejected rather than
- * silently validated against nothing. */
-function assertCii(xml: string): void {
-  if (!/<(?:\w+:)?CrossIndustryInvoice\b/.test(xml)) {
-    throw new Error(
-      "validate() only supports the Factur-X/CII syntax right now " +
-        "(no rsm:CrossIndustryInvoice root found). UBL Schematron is not yet " +
-        "compiled to SEF; see the project's own tracker.",
-    );
-  }
 }
 
 /** Validates a Factur-X/CII invoice against the compiled EN 16931 Schematron,

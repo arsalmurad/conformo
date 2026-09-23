@@ -8,6 +8,12 @@ export interface PageOptions {
   title: string;
   description: string;
   active?: string;
+  /** How many directories deep this page is from the site root (0 for
+   * index.html, 1 for countries/*.html) — every link is written relative to
+   * that, never rooted at "/". A rooted link only works when the site is
+   * served from a domain's root; GitHub Pages for a project repo serves at
+   * "<user>.github.io/<repo>/", where every "/countries/..." link 404s. */
+  depth: 0 | 1;
 }
 
 const STYLE = `
@@ -40,6 +46,7 @@ const STYLE = `
 `;
 
 export function page(opts: PageOptions, body: string): string {
+  const root = opts.depth === 0 ? '.' : '..';
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -53,8 +60,8 @@ export function page(opts: PageOptions, body: string): string {
 <header class="site">
   <strong>invoice-engine</strong>
   <nav>
-    <a href="/index.html"${opts.active === 'home' ? ' class="active"' : ''}>Home</a>
-    <a href="/countries/index.html"${opts.active === 'countries' ? ' class="active"' : ''}>Countries</a>
+    <a href="${root}/index.html"${opts.active === 'home' ? ' class="active"' : ''}>Home</a>
+    <a href="${root}/countries/index.html"${opts.active === 'countries' ? ' class="active"' : ''}>Countries</a>
     <a href="https://github.com/arsalmurad/invoice-engine">GitHub</a>
   </nav>
 </header>
