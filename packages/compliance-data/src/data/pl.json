@@ -1,0 +1,31 @@
+{
+  "country": "PL",
+  "name": "Poland",
+  "mandates": [
+    {
+      "scope": "B2G",
+      "status": "mandatory",
+      "direction": "receive",
+      "effectiveDate": "2019-08-01",
+      "thresholdNote": "Contracts >= EUR 30,000 from 2019-04-18; all contracting authorities from 2019-08-01.",
+      "requiredFormats": ["peppol-bis-3.0"],
+      "platform": "Platforma Elektronicznego Fakturowania (PEF), operating within OpenPeppol",
+      "notes": "Legal basis: Act of 9 November 2018, transposing Directive 2014/55/EU."
+    },
+    {
+      "scope": "B2B",
+      "status": "mandatory",
+      "direction": "both",
+      "effectiveDate": "2026-02-01",
+      "thresholdNote": "Businesses with annual revenue exceeding PLN 200 million from 2026-02-01; all B2B transactions across all companies from 2026-04-01. Previously delayed from an earlier planned 2024 date.",
+      "requiredFormats": ["ksef-fa"],
+      "platform": "Krajowy System e-Faktur (KSeF)",
+      "sourceUrl": "https://ksef.podatki.gov.pl/media/4u1bmhx4/information-sheet-on-the-fa-3-logical-structure.pdf",
+      "notes": "Format is the FA(3) logical structure (a native KSeF XML schema, not Peppol BIS), replacing FA(2) for every invoice issued from 2026-02-01. Foreign VAT-exempt businesses are exempt."
+    }
+  ],
+  "ruleSetVersion": "KSeF FA(3)",
+  "sourceUrl": "https://ec.europa.eu/digital-building-blocks/sites/spaces/einvoicingCFS/pages/881983593/2025+Poland+2025+eInvoicing+Country+Sheet",
+  "lastVerified": "2025-08-14",
+  "status": "verified"
+}

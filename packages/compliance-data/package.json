@@ -1,0 +1,25 @@
+{
+  "name": "@invoice-engine/compliance-data",
+  "version": "0.1.0",
+  "description": "A versioned, sourced dataset of e-invoicing mandate requirements per country. Every row cites a tax authority, ministry, or official EU source, or is marked unverified.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./data.json": "./dist/compliance-data.json"
+  },
+  "files": [
+    "src",
+    "dist"
+  ],
+  "keywords": [
+    "e-invoicing",
+    "einvoicing",
+    "en16931",
+    "compliance",
+    "xrechnung",
+    "peppol",
+    "factur-x"
+  ]
+}

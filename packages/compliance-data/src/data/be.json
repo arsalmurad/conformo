@@ -1,0 +1,28 @@
+{
+  "country": "BE",
+  "name": "Belgium",
+  "mandates": [
+    {
+      "scope": "B2G",
+      "status": "mandatory",
+      "direction": "send",
+      "effectiveDate": "2023-11-01",
+      "thresholdNote": "Phased in by contract value: contracts >= EUR 215,000 from 2022-11-01, >= EUR 30,000 from 2023-05-01, < EUR 30,000 from 2023-11-01. Contracts under EUR 3,000 are exempt.",
+      "requiredFormats": ["peppol-bis-3.0"],
+      "platform": "Peppol network",
+      "notes": "Legal basis: federal law of 7 April 2019, transposing Directive 2014/55/EU."
+    },
+    {
+      "scope": "B2B",
+      "status": "mandatory",
+      "direction": "both",
+      "effectiveDate": "2026-01-01",
+      "requiredFormats": ["peppol-bis-3.0"],
+      "platform": "Peppol network",
+      "notes": "Legal basis: federal law amending the VAT code, dated 6 February 2024. Peppol BIS Billing 3.0 over the Peppol network is the default; an alternative format is permitted only by mutual agreement and only if convertible to EN 16931. Exemptions: VAT-exempt entities, foreign taxpayers with no Belgian permanent establishment, and certain intra-community/cross-border transactions."
+    }
+  ],
+  "sourceUrl": "https://ec.europa.eu/digital-building-blocks/sites/display/DIGITAL/eInvoicing+in+Belgium",
+  "lastVerified": "2025-08-14",
+  "status": "verified"
+}

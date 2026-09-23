@@ -1,0 +1,49 @@
+{
+  "country": "FR",
+  "name": "France",
+  "mandates": [
+    {
+      "scope": "B2G",
+      "status": "mandatory",
+      "direction": "send",
+      "effectiveDate": "2019-11-01",
+      "requiredFormats": ["cii", "ubl-2.1", "factur-x"],
+      "platform": "Chorus Pro",
+      "notes": "Legal basis: Article 193 of Law n°2019-486 (22 May 2019), codified in the Public Procurement Code."
+    },
+    {
+      "scope": "B2B",
+      "status": "mandatory",
+      "direction": "send",
+      "effectiveDate": "2026-09-01",
+      "thresholdNote": "Large and medium-sized enterprises must issue e-invoices from this date.",
+      "requiredFormats": ["cii", "ubl-2.1", "factur-x"],
+      "platform": "PDP (Plateforme de Dématérialisation Partenaire) network, reporting to the PPF/DGFiP",
+      "notes": "Legal basis: Article 26 of amending finance law n°2022-1157 for 2022. A secondary (non-EU-official) source reports the original plan for a free public transmission portal was abandoned around October 2024 in favor of this private-PDP model — not independently confirmed on the primary EU source page, flagged here rather than stated as fact."
+    },
+    {
+      "scope": "B2B",
+      "status": "planned",
+      "direction": "send",
+      "effectiveDate": "2027-09-01",
+      "thresholdNote": "Small and micro-enterprises must issue e-invoices from this date.",
+      "requiredFormats": ["cii", "ubl-2.1", "factur-x"],
+      "platform": "PDP (Plateforme de Dématérialisation Partenaire) network, reporting to the PPF/DGFiP"
+    },
+    {
+      "scope": "B2B",
+      "status": "mandatory",
+      "direction": "receive",
+      "effectiveDate": "2026-09-01",
+      "thresholdNote": "All VAT-registered businesses must be able to receive structured e-invoices from this date.",
+      "requiredFormats": ["cii", "ubl-2.1", "factur-x"]
+    }
+  ],
+  "extraFieldsBeyondEN16931": [
+    "Notes with subject codes AAB (early-payment discount), PMD (late-payment penalty rate) and PMT (fixed recovery indemnity) are required on every invoice (BR-FR rules)."
+  ],
+  "ruleSetVersion": "BR-FR Flux 2",
+  "sourceUrl": "https://ec.europa.eu/digital-building-blocks/sites/display/DIGITAL/eInvoicing+in+France",
+  "lastVerified": "2025-08-14",
+  "status": "verified"
+}

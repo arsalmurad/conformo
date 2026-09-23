@@ -1,0 +1,39 @@
+{
+  "country": "IT",
+  "name": "Italy",
+  "mandates": [
+    {
+      "scope": "B2G",
+      "status": "mandatory",
+      "direction": "send",
+      "effectiveDate": "2015-03-31",
+      "requiredFormats": ["fatturapa"],
+      "platform": "Sistema di Interscambio (SdI)",
+      "notes": "Mandatory for central government from June 2014, extended to all public-sector entities by 31 March 2015. Legal basis: Legislative Decree No. 148/2018, transposing Directive 2014/55/EU."
+    },
+    {
+      "scope": "B2B",
+      "status": "mandatory",
+      "direction": "both",
+      "effectiveDate": "2019-01-01",
+      "thresholdNote": "Universal since January 2024: flat-rate ('forfettario') taxpayers were originally excluded below EUR 65,000 turnover, the threshold was reduced to EUR 25,000 in July 2022, and the exclusion was fully removed as of January 2024.",
+      "requiredFormats": ["fatturapa"],
+      "platform": "Sistema di Interscambio (SdI)",
+      "notes": "Legal basis: Law n. 205/2018. Non-resident businesses and certain cross-border transactions are excluded from this specific obligation."
+    },
+    {
+      "scope": "B2C",
+      "status": "mandatory",
+      "direction": "both",
+      "effectiveDate": "2019-01-01",
+      "requiredFormats": ["fatturapa"],
+      "platform": "Sistema di Interscambio (SdI)"
+    }
+  ],
+  "extraFieldsBeyondEN16931": [
+    "FatturaPA is Italy's own national XML schema, not CII/UBL/Peppol BIS, with its own CIUS per the Provvedimento of 18 April 2019. This project does not currently implement a FatturaPA serializer or reader (see packages/formats) — this row describes the legal requirement, not this codebase's coverage of it."
+  ],
+  "sourceUrl": "https://ec.europa.eu/digital-building-blocks/sites/display/DIGITAL/eInvoicing+in+Italy",
+  "lastVerified": "2025-08-14",
+  "status": "verified"
+}

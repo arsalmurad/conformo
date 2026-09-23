@@ -10,6 +10,8 @@
     "test": "vitest run",
     "build:sample": "tsx tools/build-sample.ts",
     "build:fixtures": "tsx tools/build-fixtures.ts",
+    "build:compliance-data": "tsx tools/build-compliance-data.ts",
+    "readme:matrix": "tsx tools/generate-readme-matrix.ts",
     "validate": "node tools/py.mjs tools/validate.py && node tools/py.mjs tools/pdfa_audit.py",
     "schematron:compile": "bash tools/compile-schematron.sh",
     "saxonjs:fetch": "node tools/fetch-saxonjs.mjs",

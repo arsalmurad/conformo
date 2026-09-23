@@ -1,0 +1,25 @@
+{
+  "country": "NL",
+  "name": "Netherlands",
+  "mandates": [
+    {
+      "scope": "B2G",
+      "status": "mandatory",
+      "direction": "send",
+      "effectiveDate": "2019-11-01",
+      "thresholdNote": "Applies to public procurement contracts above EU procurement thresholds.",
+      "requiredFormats": ["peppol-bis-3.0", "ubl-2.1", "other"],
+      "notes": "Legal basis: law of 20 December 2017 amending the Public Procurement Law 2012. Accepted formats: Peppol BIS 3.0 (preferred), UBL-OHNL, SI-UBL 2.0 (the Dutch NLCIUS implementation), and SETU (HR-XML) for temporary-staffing invoices specifically."
+    },
+    {
+      "scope": "B2B",
+      "status": "voluntary",
+      "direction": "both",
+      "notes": "No B2B mandate exists. Direct quote from the official source: \"There is no business-to-business (B2B) mandate.\" Adoption is voluntary and requires the buyer's consent; no future mandate was announced as of the source's last-updated date.",
+      "requiredFormats": ["other"]
+    }
+  ],
+  "sourceUrl": "https://ec.europa.eu/digital-building-blocks/sites/display/DIGITAL/eInvoicing+in+the+Netherlands",
+  "lastVerified": "2025-08-14",
+  "status": "verified"
+}

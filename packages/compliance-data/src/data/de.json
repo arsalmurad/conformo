@@ -1,0 +1,45 @@
+{
+  "country": "DE",
+  "name": "Germany",
+  "mandates": [
+    {
+      "scope": "B2G",
+      "status": "mandatory",
+      "direction": "send",
+      "effectiveDate": "2019-11-01",
+      "requiredFormats": ["xrechnung", "zugferd", "peppol-bis-3.0"],
+      "notes": "Applies to public procurement contracts above EU thresholds."
+    },
+    {
+      "scope": "B2B",
+      "status": "mandatory",
+      "direction": "receive",
+      "effectiveDate": "2025-01-01",
+      "thresholdNote": "All companies must be able to accept EN 16931-compliant e-invoices from this date.",
+      "requiredFormats": ["xrechnung", "zugferd", "peppol-bis-3.0"]
+    },
+    {
+      "scope": "B2B",
+      "status": "planned",
+      "direction": "send",
+      "effectiveDate": "2027-01-01",
+      "thresholdNote": "Businesses with turnover above EUR 800,000 must issue e-invoices from this date.",
+      "requiredFormats": ["xrechnung", "zugferd", "peppol-bis-3.0"]
+    },
+    {
+      "scope": "B2B",
+      "status": "planned",
+      "direction": "send",
+      "effectiveDate": "2028-01-01",
+      "thresholdNote": "All businesses must issue e-invoices from this date. Paper and non-EN-16931 EDI invoices remain allowed with the buyer's consent until each respective deadline.",
+      "requiredFormats": ["xrechnung", "zugferd", "peppol-bis-3.0"]
+    }
+  ],
+  "extraFieldsBeyondEN16931": [
+    "Leitweg-ID — a routing identifier required on invoices addressed to German public-sector recipients (carried as BT-10/buyerReference in this project's model)."
+  ],
+  "ruleSetVersion": "XRechnung 3.0",
+  "sourceUrl": "https://ec.europa.eu/digital-building-blocks/sites/display/DIGITAL/eInvoicing+in+Germany",
+  "lastVerified": "2025-08-14",
+  "status": "verified"
+}

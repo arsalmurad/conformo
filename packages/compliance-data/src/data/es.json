@@ -1,0 +1,28 @@
+{
+  "country": "ES",
+  "name": "Spain",
+  "mandates": [
+    {
+      "scope": "B2G",
+      "status": "mandatory",
+      "direction": "send",
+      "effectiveDate": "2015-01-15",
+      "thresholdNote": "Invoices over EUR 5,000 to public administration suppliers.",
+      "requiredFormats": ["facturae"],
+      "platform": "FACe"
+    },
+    {
+      "scope": "B2B",
+      "status": "planned",
+      "direction": "both",
+      "thresholdNote": "Under Law 18/2022 ('Crea y Crece'): once the implementing technical regulations are enacted, companies with EUR 8 million+ annual revenue get a 1-year compliance deadline, other businesses a 2-year deadline. As of this source's 2025-02-04 publication date, the technical regulations were still pending and no firm effective date had been set — this is why no effectiveDate is given here rather than one being guessed.",
+      "requiredFormats": ["facturae"],
+      "platform": "FACeB2B",
+      "notes": "Spain separately requires 'Verifactu'-certified invoicing software and near-real-time reporting for most businesses (related anti-fraud/reporting regime, distinct from this structural B2B e-invoicing mandate) — not modeled as its own mandate row here since it is a software-certification/reporting requirement rather than an invoice-format mandate, and this project has not independently verified its exact effective date against a primary source."
+    }
+  ],
+  "ruleSetVersion": "Facturae 3.2.x",
+  "sourceUrl": "https://ec.europa.eu/digital-building-blocks/sites/pages/viewpage.action?pageId=892470070",
+  "lastVerified": "2025-02-04",
+  "status": "verified"
+}
