@@ -12,6 +12,7 @@
     "build:fixtures": "tsx tools/build-fixtures.ts",
     "build:compliance-data": "tsx tools/build-compliance-data.ts",
     "readme:matrix": "tsx tools/generate-readme-matrix.ts",
+    "docs:build": "npm run build --workspace=packages/docs-site",
     "validate": "node tools/py.mjs tools/validate.py && node tools/py.mjs tools/pdfa_audit.py",
     "schematron:compile": "bash tools/compile-schematron.sh",
     "saxonjs:fetch": "node tools/fetch-saxonjs.mjs",

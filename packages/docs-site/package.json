@@ -1,0 +1,12 @@
+{
+  "name": "@invoice-engine/docs-site",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsx src/generate.ts"
+  },
+  "dependencies": {
+    "@invoice-engine/compliance-data": "*"
+  }
+}
