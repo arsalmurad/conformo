@@ -21,12 +21,16 @@ import { assertSerializable, dec, electronicAddressScheme, money, req, tag, wrap
 import { CUSTOMIZATION_ID, businessProcess } from './profiles.js';
 import type { Profile } from './profiles.js';
 
-const NS = {
+/** Exported so packages/parse's UBL reader resolves elements against the
+ * exact same URIs this writer emits — one source of truth, not two string
+ * literals that could silently drift apart. */
+export const UBL_NS = {
   invoice: 'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2',
   creditNote: 'urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2',
   cac: 'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2',
   cbc: 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2',
 } as const;
+const NS = UBL_NS;
 
 export interface UBLOptions {
   profile?: Profile;

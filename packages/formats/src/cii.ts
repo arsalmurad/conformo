@@ -22,12 +22,16 @@ import { assertSerializable, date102, dec, electronicAddressScheme, money, req, 
 import { CUSTOMIZATION_ID, businessProcess } from './profiles.js';
 import type { Profile } from './profiles.js';
 
-const NS = {
+/** Exported so packages/parse's CII reader resolves elements against the
+ * exact same URIs this writer emits — one source of truth, not two string
+ * literals that could silently drift apart. */
+export const CII_NS = {
   rsm: 'urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100',
   qdt: 'urn:un:unece:uncefact:data:standard:QualifiedDataType:100',
   ram: 'urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100',
   udt: 'urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100',
 } as const;
+const NS = CII_NS;
 
 export interface CIIOptions {
   /** BT-24 / BT-23 profile. Peppol BIS Billing 3.0 is UBL only. */

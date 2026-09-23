@@ -17,7 +17,8 @@
       "@invoice-engine/pdf": ["./packages/pdf/src/index.ts"],
       "@invoice-engine/validate": ["./packages/validate/src/index.ts"],
       "@invoice-engine/validate/browser": ["./packages/validate/src/browser.ts"],
-      "@invoice-engine/cli": ["./packages/cli/src/cli.ts"]
+      "@invoice-engine/cli": ["./packages/cli/src/cli.ts"],
+      "@invoice-engine/parse": ["./packages/parse/src/index.ts"]
     },
     "baseUrl": "."
   },

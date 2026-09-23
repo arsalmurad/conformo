@@ -1,0 +1,15 @@
+{
+  "name": "@invoice-engine/parse",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@invoice-engine/core": "*",
+    "@invoice-engine/formats": "*",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^6.3.289"
+  }
+}
