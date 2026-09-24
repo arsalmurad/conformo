@@ -1,4 +1,4 @@
-import { isValidElement } from 'react';
+import { cloneElement, isValidElement } from 'react';
 import type { Invoice, Line, Party, TaxCategory } from '@invoice-engine/core';
 import type { LiveValidation } from '../validation/useLiveValidation.js';
 import type { TouchedFields } from '../validation/useTouchedFields.js';
@@ -319,12 +319,38 @@ function Field({
   const value = isValidElement(children) ? (children.props as { value?: unknown }).value : undefined;
   const incomplete = hasErrors && isEmptyValue(value);
   const stateClass = hasErrors ? (incomplete ? 'field-incomplete' : 'field-invalid') : hint ? 'field-invalid' : '';
+
+  // WCAG 3.3.1/4.1.2: the error text and hint are a DESCRIPTION of the input,
+  // not part of its accessible NAME — without this, a screen reader would
+  // fold the whole label's text (including error/hint copy that changes as
+  // you type) into the input's name instead of announcing it as a separate,
+  // stable description on focus. Falls back to a slug of the label for the
+  // few call sites with no data-field (e.g. "Address scheme"), so every
+  // Field that has something to describe gets a stable id, not only the
+  // ones already wired into touch-tracking.
+  const dataField = isValidElement(children) ? (children.props as Record<string, unknown>)['data-field'] : undefined;
+  const hasDescription = hasErrors || !!hint;
+  const describedById = hasDescription
+    ? typeof dataField === 'string'
+      ? `${dataField.replace(/\./g, '-')}-desc`
+      : `${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-desc`
+    : undefined;
+  const child =
+    isValidElement(children) && describedById
+      ? cloneElement(children as React.ReactElement<Record<string, unknown>>, {
+          'aria-describedby': describedById,
+          'aria-invalid': hasErrors || undefined,
+        })
+      : children;
+
   return (
     <label className={`field ${stateClass}`}>
       <span className="field-label">{label}</span>
-      {children}
-      <FieldErrors errors={errors} />
-      {hint && <p className="field-hint">{hint}</p>}
+      {child}
+      <div id={describedById}>
+        <FieldErrors errors={errors} />
+        {hint && <p className="field-hint">{hint}</p>}
+      </div>
     </label>
   );
 }

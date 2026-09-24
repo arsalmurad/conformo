@@ -36,9 +36,23 @@ export function NumberField({ value, onChange, errors }: Props) {
     <div className={`field ${hasErrors ? (incomplete ? 'field-incomplete' : 'field-invalid') : ''}`} id="field-number">
       <span className="field-label">Invoice number</span>
       {value ? (
-        <input data-field="number" value={value} readOnly aria-readonly title="Assigned from the numbering sequence — not editable" />
+        <input
+          data-field="number"
+          value={value}
+          readOnly
+          aria-readonly
+          aria-describedby={hasErrors ? 'number-desc' : undefined}
+          aria-invalid={hasErrors || undefined}
+          title="Assigned from the numbering sequence — not editable"
+        />
       ) : (
-        <button type="button" data-field="number" onClick={() => void assignNext().then((n) => n && onChange(n))} disabled={assigning}>
+        <button
+          type="button"
+          data-field="number"
+          aria-describedby={hasErrors ? 'number-desc' : undefined}
+          onClick={() => void assignNext().then((n) => n && onChange(n))}
+          disabled={assigning}
+        >
           {assigning ? 'Assigning…' : `Assign next number (${provider.label})`}
         </button>
       )}
@@ -69,8 +83,10 @@ export function NumberField({ value, onChange, errors }: Props) {
           )}
         </div>
       )}
-      <FieldErrors errors={errors} />
-      {error && <p className="field-hint">Couldn't assign a number: {error}</p>}
+      <div id="number-desc">
+        <FieldErrors errors={errors} />
+        {error && <p className="field-hint">Couldn't assign a number: {error}</p>}
+      </div>
     </div>
   );
 }
