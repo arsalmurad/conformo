@@ -5,11 +5,21 @@ import { useInvoiceDraft } from './state/useInvoiceDraft.js';
 import { useLiveValidation } from './validation/useLiveValidation.js';
 import { useTouchedFields } from './validation/useTouchedFields.js';
 import { visibleIssues, type Issue } from './validation/visibleIssues.js';
+import { useComplianceCountries } from './useComplianceCountries.js';
 import { InvoiceEditor } from './editor/InvoiceEditor.js';
 import { InvoiceDropzone } from './import/InvoiceDropzone.js';
+import { InvoicePreview } from './preview/InvoicePreview.js';
 import { buildInvoicePdf, downloadPdf, type EmbeddableLogo } from './pdf/exportPdf.js';
 import { UnlockScreen } from './UnlockScreen.js';
 import './App.css';
+
+/** Only France's CIUS Schematron is actually compiled into this build (see
+ * CONTRIBUTING.md invariant 6: "never claim compliance, show it"). The selector
+ * still lists every country packages/compliance-data ships, so adding a
+ * country to the dataset grows this list on its own, but every option
+ * except France stays disabled until its own layer is compiled and proven —
+ * an unimplemented option must never look choosable. */
+const COMPILED_COUNTRIES = new Set(['FR']);
 
 /** Scrolls to and focuses the input an issue was attributed to (Part C:
  * "clicking an issue scrolls to and focuses the offending field"). Also
@@ -33,6 +43,8 @@ export default function App() {
   const [logo, setLogo] = useState<EmbeddableLogo | undefined>(undefined);
   const validation = useLiveValidation(invoice, country);
   const touchedFields = useTouchedFields();
+  const complianceCountries = useComplianceCountries();
+  const isUntouched = !invoice.number && !invoice.seller.name && !invoice.buyer.name && invoice.lines.every((l) => !l.name);
 
   if (lock.status === 'checking') return null;
   if (lock.status === 'locked' || lock.status === 'wrong-passphrase') {
@@ -70,7 +82,11 @@ export default function App() {
             Country rules
             <select value={country ?? ''} onChange={(e) => setCountry((e.target.value || undefined) as 'FR' | undefined)}>
               <option value="">EN 16931 only</option>
-              <option value="FR">France (BR-FR Flux 2)</option>
+              {complianceCountries.map((c) => (
+                <option key={c.country} value={c.country} disabled={!COMPILED_COUNTRIES.has(c.country)}>
+                  {c.country === 'FR' ? 'France (BR-FR Flux 2)' : `${c.name} (coming soon)`}
+                </option>
+              ))}
             </select>
           </label>
           <label>
@@ -86,6 +102,15 @@ export default function App() {
         </div>
       </header>
 
+      {isUntouched && (
+        <div className="empty-state">
+          <p>
+            <strong>Start with the invoice below, or drop one in.</strong>
+            A downloaded, EN 16931-valid PDF is a few fields away — no account, no server.
+          </p>
+        </div>
+      )}
+
       <InvoiceDropzone onImport={setInvoice} />
 
       <ValidationSummary
@@ -97,19 +122,22 @@ export default function App() {
         onIssueClick={(key) => goToField(key, touchedFields.markTouched)}
       />
 
-      <InvoiceEditor
-        invoice={invoice}
-        onChange={setInvoice}
-        validation={validation}
-        touchedFields={touchedFields}
-        profiles={profiles}
-        onSaveProfile={saveProfile}
-        onDeleteProfile={deleteProfile}
-        paymentLink={paymentLink}
-        onPaymentLinkChange={setPaymentLink}
-        logo={logo}
-        onLogoChange={setLogo}
-      />
+      <div className="workspace">
+        <InvoiceEditor
+          invoice={invoice}
+          onChange={setInvoice}
+          validation={validation}
+          touchedFields={touchedFields}
+          profiles={profiles}
+          onSaveProfile={saveProfile}
+          onDeleteProfile={deleteProfile}
+          paymentLink={paymentLink}
+          onPaymentLinkChange={setPaymentLink}
+          logo={logo}
+          onLogoChange={setLogo}
+        />
+        <InvoicePreview invoice={invoice} template={template} logo={logo} paymentLink={paymentLink} />
+      </div>
 
       <footer className="app-footer">
         {!protectedSince && (

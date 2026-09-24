@@ -16,6 +16,10 @@ dist-ssr
 # artefacts — see scripts/copy-validator-assets.mjs.
 public/validator/
 
+# Regenerated from packages/compliance-data's own source at dev/build time —
+# see scripts/copy-compliance-data.mjs.
+public/compliance-countries.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

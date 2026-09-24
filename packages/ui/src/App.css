@@ -145,16 +145,18 @@
   gap: var(--space-3);
 }
 
+/* auto-fit/minmax, not a viewport media query, for the same reason as
+   .editor-row above: this grid's available width depends on the .workspace
+   preview panel next to it, not on the browser window, so a breakpoint keyed
+   to viewport width stays two columns even when the rendered column is too
+   narrow for two 220px+ party forms (found by actually loading the page:
+   Seller/Buyer's "Save as profile" button was wrapping onto the "Load a
+   saved profile" select). This collapses to one column whenever the
+   container itself is too narrow, regardless of why. */
 .editor-parties {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: var(--space-5);
-}
-
-@media (max-width: 640px) {
-  .editor-parties {
-    grid-template-columns: 1fr;
-  }
 }
 
 fieldset.party {
@@ -289,14 +291,23 @@ input[type='file']::file-selector-button:hover {
   border-color: var(--line-strong);
 }
 
+/* flex-wrap, not a narrower media-query breakpoint: this sits inside
+   .editor-parties' two-column grid, whose actual rendered width depends on
+   the .workspace sidebar next to it, not on the viewport alone — a
+   viewport-keyed breakpoint would still overlap "Load a saved profile…" and
+   "Save as profile" whenever the preview panel is what's eating the width,
+   not the browser window. Wrapping the button to its own line degrades
+   gracefully at any container width instead. */
 .profile-picker {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-2);
   margin-bottom: 4px;
 }
 
 .profile-picker select {
-  flex: 1;
+  flex: 1 1 140px;
+  min-width: 0;
   padding: 6px 7px;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
@@ -305,6 +316,8 @@ input[type='file']::file-selector-button:hover {
 }
 
 .profile-picker button {
+  flex: 0 0 auto;
+  white-space: nowrap;
   font-size: var(--text-sm);
   padding: 6px 9px;
   border: 1px solid var(--line);
