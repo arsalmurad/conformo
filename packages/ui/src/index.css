@@ -1,13 +1,73 @@
+/**
+ * Design tokens . Every other
+ * stylesheet in this app reads these variables rather than hardcoding a
+ * color or a pixel value, so a single edit here is the whole theme.
+ */
 :root {
   color-scheme: light;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* Color */
   --ink: #1a1c22;
   --mute: #6b7280;
+  --mute-2: #9aa1ac;
   --line: #e2e4e8;
+  --line-strong: #c7cbd3;
   --accent: #1554d9;
+  --accent-ink: #ffffff;
+  --accent-soft: #e8eefc;
   --bad: #c0342a;
+  --bad-soft: #fbeae8;
   --good: #167a45;
+  --good-soft: #e7f5ec;
   --bg: #fafafb;
+  --surface: #ffffff;
+  --surface-2: #f2f3f5;
+  --focus-ring: #1554d9;
+
+  /* Type scale */
+  --text-xs: 11px;
+  --text-sm: 12.5px;
+  --text-base: 14px;
+  --text-lg: 16px;
+  --text-xl: 20px;
+  --text-2xl: 26px;
+
+  /* Spacing scale (4px base) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Radius scale */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --ink: #e7e9ee;
+    --mute: #9aa3b0;
+    --mute-2: #6f7683;
+    --line: #2d3038;
+    --line-strong: #3c4048;
+    --accent: #6d94ff;
+    --accent-ink: #0b1020;
+    --accent-soft: #172038;
+    --bad: #ff8a80;
+    --bad-soft: #3a1f1d;
+    --good: #6fd39a;
+    --good-soft: #163127;
+    --bg: #14161b;
+    --surface: #1b1e24;
+    --surface-2: #22252c;
+    --focus-ring: #6d94ff;
+  }
 }
 
 * {
@@ -18,14 +78,26 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
+  font-size: var(--text-base);
 }
 
 input,
 select,
-button {
+button,
+textarea {
   font: inherit;
+  color: inherit;
 }
 
 button {
   cursor: pointer;
+}
+
+/* One visible focus style for every interactive element in the app —
+ * "Consistent focus states" (an earlier pass) — rather than each browser's own
+ * default outline, which varies and sometimes has too little contrast
+ * against --surface in dark mode. */
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }

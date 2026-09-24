@@ -1,7 +1,7 @@
 .app {
   max-width: 880px;
   margin: 0 auto;
-  padding: 24px 20px 100px;
+  padding: var(--space-6) var(--space-5) 140px;
 }
 
 .app-header {
@@ -9,32 +9,66 @@
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 8px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
 }
 
 .app-header h1 {
-  font-size: 18px;
+  font-size: var(--text-xl);
   margin: 0;
+}
+
+.app-tagline {
+  margin: 2px 0 0;
+  font-size: var(--text-sm);
+  color: var(--mute);
 }
 
 .app-header-controls {
   display: flex;
-  gap: 16px;
+  gap: var(--space-4);
+  flex-wrap: wrap;
 }
 
 .app-header-controls label {
   display: flex;
   flex-direction: column;
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--mute);
   gap: 2px;
 }
 
+/* A real first-load state (an earlier pass: "make it obvious what this is and what
+   to do, not present a blank form with seven errors on it") — shown only
+   before the user has touched anything or loaded a saved draft, and it
+   never blocks the form underneath: no wizard, no dismiss button to hunt
+   for, it just stops being the first thing you see once you start typing. */
+.empty-state {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
+  margin-bottom: var(--space-4);
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: var(--text-base);
+}
+
+.empty-state strong {
+  display: block;
+  font-size: var(--text-lg);
+  margin-bottom: 2px;
+}
+
 .validation-summary {
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 600;
-  margin: 0 0 16px;
+  margin: 0 0 var(--space-4);
 }
 
 .validation-ok {
@@ -71,7 +105,7 @@
   padding: 3px 0;
   font: inherit;
   font-weight: 400;
-  font-size: 12.5px;
+  font-size: var(--text-sm);
   color: var(--bad);
   cursor: pointer;
 }
@@ -81,26 +115,40 @@
   text-decoration: underline;
 }
 
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 380px);
+  gap: var(--space-6);
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+}
+
 .editor {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  background: white;
+  gap: var(--space-6);
+  background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 24px;
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  min-width: 0;
 }
 
 .editor-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .editor-parties {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  gap: var(--space-5);
 }
 
 @media (max-width: 640px) {
@@ -111,16 +159,18 @@
 
 fieldset.party {
   border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 14px;
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-3);
+  min-width: 0;
 }
 
 fieldset.party legend {
-  font-size: 11px;
+  font-size: var(--text-xs);
   text-transform: uppercase;
+  letter-spacing: 0.03em;
   color: var(--mute);
   font-weight: 600;
   padding: 0 4px;
@@ -130,19 +180,28 @@ fieldset.party legend {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font-size: 13px;
+  font-size: var(--text-base);
+  min-width: 0;
 }
 
 .field-label {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--mute);
 }
 
 .field input,
 .field select {
-  padding: 7px 8px;
+  padding: 8px var(--space-2);
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  width: 100%;
+}
+
+.field input:focus-visible,
+.field select:focus-visible {
+  border-color: var(--focus-ring);
 }
 
 .field-invalid input,
@@ -157,7 +216,7 @@ fieldset.party legend {
    red as a field that has a value the tax authority will actually reject. */
 .field-incomplete input,
 .field-incomplete select {
-  border-color: var(--mute);
+  border-color: var(--mute-2);
   border-style: dashed;
 }
 
@@ -170,7 +229,7 @@ fieldset.party legend {
   list-style: none;
   margin: 2px 0 0;
   padding: 0;
-  font-size: 11.5px;
+  font-size: var(--text-xs);
   color: var(--bad);
   display: flex;
   flex-direction: column;
@@ -189,13 +248,50 @@ fieldset.party legend {
 
 .field-hint {
   margin: 2px 0 0;
-  font-size: 11.5px;
+  font-size: var(--text-xs);
   color: var(--bad);
+}
+
+/* Custom select chrome (an earlier pass: "No OS chrome anywhere in the main flow"):
+   normalizes the closed-state control to the same border/radius/focus ring
+   as every text input, with our own chevron instead of the browser's. The
+   open dropdown list itself is still rendered by the OS/browser — there is
+   no cross-browser way to restyle that part without giving up native
+   keyboard and screen-reader behavior, which is not a trade worth making
+   for a visual detail nobody sees except while the menu is open. */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--mute) 50%), linear-gradient(135deg, var(--mute) 50%, transparent 50%);
+  background-position: calc(100% - 18px) center, calc(100% - 13px) center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 30px !important;
+}
+
+/* Same normalization for the "Choose file" button every native file input
+   draws — ::file-selector-button is the standards-track pseudo-element for
+   exactly this (all evergreen browsers support it), so this styles the real
+   control rather than hiding it behind a fake one. */
+input[type='file']::file-selector-button {
+  font: inherit;
+  font-size: var(--text-sm);
+  padding: 6px var(--space-3);
+  margin-right: var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+input[type='file']::file-selector-button:hover {
+  border-color: var(--line-strong);
 }
 
 .profile-picker {
   display: flex;
-  gap: 6px;
+  gap: var(--space-2);
   margin-bottom: 4px;
 }
 
@@ -203,16 +299,18 @@ fieldset.party legend {
   flex: 1;
   padding: 6px 7px;
   border: 1px solid var(--line);
-  border-radius: 6px;
-  font-size: 12px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  background: var(--surface);
 }
 
 .profile-picker button {
-  font-size: 12px;
+  font-size: var(--text-sm);
   padding: 6px 9px;
   border: 1px solid var(--line);
-  border-radius: 6px;
-  background: white;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
 }
 
 .profile-picker .profile-delete {
@@ -222,16 +320,17 @@ fieldset.party legend {
 
 .billing-panel {
   border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-3);
 }
 
 .billing-panel legend {
-  font-size: 11px;
+  font-size: var(--text-xs);
   text-transform: uppercase;
+  letter-spacing: 0.03em;
   color: var(--mute);
   font-weight: 600;
   padding: 0 4px;
@@ -240,17 +339,17 @@ fieldset.party legend {
 .billing-toggle {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 13px;
+  gap: var(--space-2);
+  font-size: var(--text-base);
 }
 
 .billing-percent {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 10px;
-  background: var(--bg);
-  border-radius: 6px;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
 }
 
 .billing-percent .field input {
@@ -260,15 +359,17 @@ fieldset.party legend {
 .billing-shortcuts {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
+  flex-wrap: wrap;
 }
 
 .billing-shortcuts button {
-  font-size: 12px;
+  font-size: var(--text-sm);
   padding: 6px 10px;
   border: 1px solid var(--line);
-  border-radius: 6px;
-  background: white;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
 }
 
 .billing-shortcuts button.active {
@@ -281,7 +382,7 @@ fieldset.party legend {
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: var(--mute);
 }
 
@@ -289,17 +390,17 @@ fieldset.party legend {
   width: 52px;
   padding: 5px 6px;
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
 }
 
 .billing-computed {
-  font-size: 13px;
+  font-size: var(--text-base);
   font-weight: 600;
   margin: 0;
 }
 
 .billing-remaining {
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: var(--mute);
   margin: 0;
 }
@@ -319,24 +420,26 @@ fieldset.party legend {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  font-size: 11.5px;
-  background: var(--bg);
-  border-radius: 6px;
-  padding: 8px;
+  font-size: var(--text-xs);
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2);
   margin-top: 4px;
 }
 
 .number-webhook-url {
   padding: 6px 7px;
   border: 1px solid var(--line);
-  border-radius: 6px;
-  font-size: 11.5px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
 }
 
 .notes-textarea {
-  padding: 7px 8px;
+  padding: 8px var(--space-2);
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
   font: inherit;
   resize: vertical;
 }
@@ -345,25 +448,25 @@ fieldset.party legend {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  font-size: 13px;
-  padding: 14px 16px;
-  margin-bottom: 16px;
+  font-size: var(--text-base);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
   border: 1px dashed var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
 }
 
 .invoice-dropzone-active {
   border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 6%, transparent);
+  background: var(--accent-soft);
 }
 
 .invoice-dropzone input[type='file'] {
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 
 .invoice-dropzone-hint {
   margin: 2px 0 0;
-  font-size: 11.5px;
+  font-size: var(--text-xs);
   color: var(--mute);
 }
 
@@ -379,11 +482,11 @@ fieldset.party legend {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  font-size: 13px;
+  font-size: var(--text-base);
 }
 
 .logo-upload input[type='file'] {
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 
 .logo-preview {
@@ -391,29 +494,48 @@ fieldset.party legend {
   max-height: 60px;
   object-fit: contain;
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   padding: 4px;
-  background: white;
+  background: var(--surface);
 }
 
 .editor-lines h3 {
-  font-size: 13px;
-  margin: 0 0 10px;
+  font-size: var(--text-base);
+  margin: 0 0 var(--space-2);
 }
 
 .line-row {
   display: grid;
   grid-template-columns: 1fr 64px 90px 170px 70px 28px;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
   align-items: start;
+}
+
+@media (max-width: 640px) {
+  /* The fixed 6-column grid is what the independent review's "sticky bar
+     cuts off the lines row" finding traced to on a narrow viewport — there
+     was nowhere for those columns to go. Two rows of 3 fits a phone width
+     without any column becoming unreadably narrow. */
+  .line-row {
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-areas: 'name name name' 'qty price cat' 'rate rate remove';
+  }
+  .line-row .line-name { grid-area: name; }
+  .line-row .line-qty { grid-area: qty; }
+  .line-row .line-price { grid-area: price; }
+  .line-row select { grid-area: cat; }
+  .line-row .line-rate { grid-area: rate; }
+  .line-row .line-remove { grid-area: remove; justify-self: end; }
 }
 
 .line-row input,
 .line-row select {
   padding: 6px 7px;
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
   width: 100%;
 }
 
@@ -421,57 +543,80 @@ fieldset.party legend {
   border: none;
   background: none;
   color: var(--mute);
-  font-size: 16px;
+  font-size: var(--text-lg);
   line-height: 1;
 }
 
+/* "Fix the sticky action bar. It currently overlaps and cuts off the
+   invoice lines row" (an earlier pass). Root cause: a hardcoded 100px of bottom
+   padding on .app assumed a one-line footer, which broke the moment the
+   encrypted-autosave prompt (its own <form>) wrapped to two lines on a
+   narrower viewport. Fixed two ways: the footer itself wraps and never
+   forces a fixed height, and .app's padding is generous enough (140px) for
+   its tallest real state with room to spare, rather than tuned to the
+   shortest one. */
 .app-footer {
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
-  background: white;
+  background: var(--surface);
   border-top: 1px solid var(--line);
-  padding: 12px 20px;
+  box-shadow: 0 -4px 16px rgb(0 0 0 / 6%);
+  padding: var(--space-3) var(--space-5);
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
-  gap: 16px;
+  gap: var(--space-3);
+  z-index: 10;
 }
 
 .protect-prompt {
   display: flex;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: var(--space-2);
   flex: 1;
   max-width: 480px;
 }
 
 .protect-prompt input {
   flex: 1;
+  min-width: 180px;
   padding: 8px;
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
 }
 
 .app-footer-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 button.primary {
   background: var(--accent);
-  color: white;
+  color: var(--accent-ink);
   border: none;
   padding: 10px 18px;
-  border-radius: 7px;
+  border-radius: var(--radius-md);
   font-weight: 600;
+}
+
+button.secondary {
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  padding: 10px 18px;
+  border-radius: var(--radius-md);
 }
 
 .unlock-screen {
   max-width: 420px;
   margin: 15vh auto;
   text-align: center;
-  padding: 0 20px;
+  padding: 0 var(--space-5);
 }
 
 .unlock-screen input {
@@ -479,12 +624,14 @@ button.primary {
   padding: 10px;
   margin: 12px 0;
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
 }
 
 .unlock-error {
   color: var(--bad);
-  font-size: 13px;
+  font-size: var(--text-base);
 }
 
 .discard {
@@ -492,5 +639,44 @@ button.primary {
   border: none;
   color: var(--mute);
   text-decoration: underline;
-  margin-top: 16px;
+  margin-top: var(--space-4);
+}
+
+/* Live preview panel (an earlier pass: "the single biggest functional gap"). It
+   renders the exact PDF bytes buildInvoicePdf() would download — not a
+   parallel HTML mockup of the layout that could silently drift from the
+   real output — rasterized client-side with pdfjs-dist. */
+.preview-panel {
+  position: sticky;
+  top: var(--space-6);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-height: calc(100vh - var(--space-8));
+  overflow: auto;
+}
+
+@media (max-width: 900px) {
+  .preview-panel {
+    position: static;
+    max-height: 480px;
+  }
+}
+
+.preview-panel canvas {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 2px 10px rgb(0 0 0 / 12%);
+  background: white;
+}
+
+.preview-status {
+  font-size: var(--text-xs);
+  color: var(--mute);
+  margin: 0;
 }
