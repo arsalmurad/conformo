@@ -101,3 +101,36 @@ test('creates an invoice end to end and the downloaded PDF passes tools/validate
     rmSync(tmpDir, { recursive: true, force: true });
   }
 });
+
+/**
+ *  "a new e2e assertion that
+ * the live preview reflects an edit within 500ms." Measures from the moment
+ * the field edit lands (Playwright's fill() resolves) to the moment the
+ * preview iframe points at a new PDF (a new blob: URL — InvoicePreview only
+ * assigns one once buildInvoicePdf() has actually produced fresh bytes) —
+ * the most literal reading of "reflects an edit" available, since the iframe
+ * shows the exact PDF the download button would produce, not a re-rendering
+ * of it.
+ */
+test('live preview reflects an edit within 500ms', async ({ page }) => {
+  await page.goto('/');
+
+  const discardBtn = page.getByRole('button', { name: /discard it and start a new invoice/i });
+  if (await discardBtn.isVisible().catch(() => false)) {
+    await discardBtn.click();
+  }
+
+  const frame = page.locator('.preview-panel iframe');
+  await expect(frame).toBeVisible();
+  await expect(page.getByText(/Live preview — this is the PDF/i)).toBeVisible({ timeout: 10_000 });
+
+  const before = await frame.getAttribute('src');
+
+  const start = Date.now();
+  await page.getByLabel('Currency').fill('USD');
+
+  await expect.poll(() => frame.getAttribute('src'), { timeout: 2_000, intervals: [10] }).not.toBe(before);
+  const elapsed = Date.now() - start;
+
+  expect(elapsed).toBeLessThan(500);
+});
