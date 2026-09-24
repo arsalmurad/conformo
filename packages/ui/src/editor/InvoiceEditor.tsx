@@ -1,5 +1,6 @@
 import { cloneElement, isValidElement } from 'react';
 import type { Invoice, Line, Party, TaxCategory } from '@conformo/core';
+import { localeForInvoice } from '@conformo/pdf';
 import type { LiveValidation } from '../validation/useLiveValidation.js';
 import type { TouchedFields } from '../validation/useTouchedFields.js';
 import { touchKeyFor } from '../validation/touchKey.js';
@@ -16,6 +17,7 @@ import { NumberField } from './NumberField.js';
 import { NotesField } from './NotesField.js';
 import { PaymentLinkField } from './PaymentLinkField.js';
 import { LogoUpload } from './LogoUpload.js';
+import { LocaleDateInput } from './LocaleDateInput.js';
 
 /** Client-side hints (IBAN checksum, VAT format) run instantly, unlike the
  * Schematron round trip — no point waiting 350ms and a WASM-ish transform to
@@ -71,6 +73,10 @@ export function InvoiceEditor({
 }: Props) {
   const { byField, bySection } = validation;
   const { isVisible, markTouched } = touchedFields;
+  // Same locale the PDF itself renders with (packages/pdf/src/locale.ts) —
+  // the date fields should show the invoice's own country's format, not
+  // guess independently and risk disagreeing with the document it produces.
+  const locale = localeForInvoice(invoice.buyer.country, invoice.seller.country);
 
   // Only a field the user has actually blurred (or an export attempt) shows
   // its errors — see useTouchedFields. 'tax'/'totals' have no input of their
@@ -105,10 +111,15 @@ export function InvoiceEditor({
           <input data-field="currency" value={invoice.currency} onChange={(e) => set('currency', e.target.value.toUpperCase())} maxLength={3} />
         </Field>
         <Field label="Issue date" errors={fieldErrors('issueDate')}>
-          <input data-field="issueDate" type="date" value={invoice.issueDate} onChange={(e) => set('issueDate', e.target.value)} />
+          <LocaleDateInput data-field="issueDate" locale={locale} value={invoice.issueDate} onChange={(v) => set('issueDate', v)} />
         </Field>
         <Field label="Due date" errors={fieldErrors('dueDate')}>
-          <input data-field="dueDate" type="date" value={invoice.dueDate ?? ''} onChange={(e) => set('dueDate', e.target.value || undefined)} />
+          <LocaleDateInput
+            data-field="dueDate"
+            locale={locale}
+            value={invoice.dueDate ?? ''}
+            onChange={(v) => set('dueDate', v || undefined)}
+          />
         </Field>
       </section>
 
