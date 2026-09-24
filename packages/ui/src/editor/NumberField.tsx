@@ -27,13 +27,18 @@ export function NumberField({ value, onChange, errors }: Props) {
   // during e2e/create-invoice.spec.ts, which showed the "Assign next
   // number" button's name swallowing unrelated sibling text ("Change
   // numbering source", the BR-02 error) rather than just its own label.
+  const hasErrors = !!errors?.length || !!error;
+  // Empty (no number assigned yet) is "not finished", not "wrong" — same
+  // incomplete/invalid distinction InvoiceEditor's Field makes for every
+  // other required field (Part C).
+  const incomplete = hasErrors && !value;
   return (
-    <div className={`field ${errors?.length || error ? 'field-invalid' : ''}`}>
+    <div className={`field ${hasErrors ? (incomplete ? 'field-incomplete' : 'field-invalid') : ''}`} id="field-number">
       <span className="field-label">Invoice number</span>
       {value ? (
-        <input value={value} readOnly aria-readonly title="Assigned from the numbering sequence — not editable" />
+        <input data-field="number" value={value} readOnly aria-readonly title="Assigned from the numbering sequence — not editable" />
       ) : (
-        <button type="button" onClick={() => void assignNext().then((n) => n && onChange(n))} disabled={assigning}>
+        <button type="button" data-field="number" onClick={() => void assignNext().then((n) => n && onChange(n))} disabled={assigning}>
           {assigning ? 'Assigning…' : `Assign next number (${provider.label})`}
         </button>
       )}

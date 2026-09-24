@@ -3,11 +3,25 @@ import type { TemplateId } from '@invoice-engine/pdf';
 import { TEMPLATES } from '@invoice-engine/pdf';
 import { useInvoiceDraft } from './state/useInvoiceDraft.js';
 import { useLiveValidation } from './validation/useLiveValidation.js';
+import { useTouchedFields } from './validation/useTouchedFields.js';
+import { visibleIssues, type Issue } from './validation/visibleIssues.js';
 import { InvoiceEditor } from './editor/InvoiceEditor.js';
 import { InvoiceDropzone } from './import/InvoiceDropzone.js';
 import { buildInvoicePdf, downloadPdf, type EmbeddableLogo } from './pdf/exportPdf.js';
 import { UnlockScreen } from './UnlockScreen.js';
 import './App.css';
+
+/** Scrolls to and focuses the input an issue was attributed to (Part C:
+ * "clicking an issue scrolls to and focuses the offending field"). Also
+ * marks the field touched, so its own inline error appears in place too —
+ * clicking the summary and reading the field itself should never disagree. */
+function goToField(key: string, markTouched: (key: string) => void) {
+  markTouched(key);
+  const el = document.querySelector<HTMLElement>(`[data-field="${key}"]`);
+  if (!el) return;
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  el.focus();
+}
 
 export default function App() {
   const { invoice, setInvoice, profiles, saveProfile, deleteProfile, lock, protectedSince, protect, unlock, discardLockedDraft } =
@@ -18,6 +32,7 @@ export default function App() {
   const [paymentLink, setPaymentLink] = useState('');
   const [logo, setLogo] = useState<EmbeddableLogo | undefined>(undefined);
   const validation = useLiveValidation(invoice, country);
+  const touchedFields = useTouchedFields();
 
   if (lock.status === 'checking') return null;
   if (lock.status === 'locked' || lock.status === 'wrong-passphrase') {
@@ -25,6 +40,7 @@ export default function App() {
   }
 
   async function exportPdf() {
+    touchedFields.revealAll(); // "validate the whole document on first export attempt"
     setExporting(true);
     try {
       const bytes = await buildInvoicePdf(invoice, template, { logo, paymentLink: paymentLink || undefined });
@@ -35,6 +51,7 @@ export default function App() {
   }
 
   function exportJson() {
+    touchedFields.revealAll();
     const blob = new Blob([JSON.stringify(invoice, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -74,14 +91,17 @@ export default function App() {
       <ValidationSummary
         checking={validation.checking}
         ready={validation.ready}
-        errorCount={validation.errorCount}
+        totalErrorCount={validation.errorCount}
+        issues={visibleIssues(validation, touchedFields)}
         structuralError={validation.structuralError}
+        onIssueClick={(key) => goToField(key, touchedFields.markTouched)}
       />
 
       <InvoiceEditor
         invoice={invoice}
         onChange={setInvoice}
         validation={validation}
+        touchedFields={touchedFields}
         profiles={profiles}
         onSaveProfile={saveProfile}
         onDeleteProfile={deleteProfile}
@@ -111,25 +131,51 @@ export default function App() {
 function ValidationSummary({
   checking,
   ready,
-  errorCount,
+  totalErrorCount,
+  issues,
   structuralError,
+  onIssueClick,
 }: {
   checking: boolean;
   ready: boolean;
-  errorCount: number;
+  /** The real, unfiltered count — used only to tell "actually passes" apart
+   * from "hasn't been touched yet", never shown as a number of its own
+   * (Part C: a fresh form must not claim to pass EN 16931 just because
+   * nothing has been touched enough to reveal its errors yet). */
+  totalErrorCount: number;
+  issues: Issue[];
   structuralError?: string;
+  onIssueClick: (key: string) => void;
 }) {
   if (structuralError) {
     return <p className="validation-summary validation-bad">Can't build this invoice yet: {structuralError}</p>;
   }
   if (!ready) return <p className="validation-summary">Validating…</p>;
-  if (errorCount === 0) {
+  if (totalErrorCount === 0) {
     return <p className="validation-summary validation-ok">✓ Passes EN 16931{checking ? ' (rechecking…)' : ''}</p>;
   }
+  if (issues.length === 0) {
+    // Real errors exist, but nothing the user has touched (or tried to
+    // export) yet — neither a false "passes" nor an alarming red count for
+    // a form nobody has started filling in.
+    return <p className="validation-summary">Fill in the invoice — checks appear as you leave each field.</p>;
+  }
   return (
-    <p className="validation-summary validation-bad">
-      {errorCount} issue{errorCount === 1 ? '' : 's'} to fix{checking ? ' (rechecking…)' : ''}
-    </p>
+    <div className="validation-summary validation-bad">
+      <p>
+        {issues.length} issue{issues.length === 1 ? '' : 's'} to fix{checking ? ' (rechecking…)' : ''}
+      </p>
+      <ul className="validation-issue-list">
+        {issues.map((issue, i) => (
+          <li key={i}>
+            <button type="button" className="validation-issue" onClick={() => onIssueClick(issue.key)}>
+              <span className="field-error-text">{issue.rule.plainLanguage?.summary ?? issue.rule.message}</span>{' '}
+              <span className="field-error-rule">{issue.rule.ruleId}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

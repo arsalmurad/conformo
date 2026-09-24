@@ -1,5 +1,8 @@
+import { isValidElement } from 'react';
 import type { Invoice, Line, Party, TaxCategory } from '@invoice-engine/core';
 import type { LiveValidation } from '../validation/useLiveValidation.js';
+import type { TouchedFields } from '../validation/useTouchedFields.js';
+import { touchKeyFor } from '../validation/touchKey.js';
 import type { PartyProfile } from '../profiles/types.js';
 import type { EmbeddableLogo } from '../pdf/exportPdf.js';
 import { checkIban } from '../profiles/iban.js';
@@ -43,6 +46,7 @@ interface Props {
   invoice: Invoice;
   onChange: (invoice: Invoice) => void;
   validation: LiveValidation;
+  touchedFields: TouchedFields;
   profiles: PartyProfile[];
   onSaveProfile: (profile: PartyProfile) => void;
   onDeleteProfile: (id: string) => void;
@@ -56,6 +60,7 @@ export function InvoiceEditor({
   invoice,
   onChange,
   validation,
+  touchedFields,
   profiles,
   onSaveProfile,
   onDeleteProfile,
@@ -65,6 +70,14 @@ export function InvoiceEditor({
   onLogoChange,
 }: Props) {
   const { byField, bySection } = validation;
+  const { isVisible, markTouched } = touchedFields;
+
+  // Only a field the user has actually blurred (or an export attempt) shows
+  // its errors — see useTouchedFields. 'tax'/'totals' have no input of their
+  // own to blur (they're computed from the lines, not typed directly), so
+  // they piggyback on the lines section having been touched.
+  const fieldErrors = (key: string) => (isVisible(touchKeyFor(key)) ? byField[key] : undefined);
+  const sectionErrors = (key: 'lines' | 'tax' | 'totals' | 'payment') => (isVisible(touchKeyFor(key)) ? bySection[key] : undefined);
 
   const set = <K extends keyof Invoice>(key: K, value: Invoice[K]) => onChange({ ...invoice, [key]: value });
   const setParty = (side: 'seller' | 'buyer', patch: Partial<Party>) =>
@@ -75,18 +88,27 @@ export function InvoiceEditor({
     onChange({ ...invoice, lines: [...invoice.lines, { name: '', quantity: 1, unitPriceMinor: 0, taxCategory: 'S', taxRate: 0 }] });
   const removeLine = (index: number) => onChange({ ...invoice, lines: invoice.lines.filter((_, i) => i !== index) });
 
+  // A single delegated blur handler for the whole form, rather than an
+  // onBlur prop threaded through every one of the ~25 inputs below: React's
+  // onBlur bubbles (it's backed by the native "focusout" event, not "blur"),
+  // so this fires for every field and reads which one via data-field.
+  const handleBlur = (e: React.FocusEvent<HTMLFormElement>) => {
+    const field = (e.target as HTMLElement).dataset.field;
+    if (field) markTouched(field);
+  };
+
   return (
-    <form className="editor" onSubmit={(e) => e.preventDefault()}>
+    <form className="editor" onSubmit={(e) => e.preventDefault()} onBlur={handleBlur}>
       <section className="editor-row">
-        <NumberField value={invoice.number} onChange={(number) => set('number', number)} errors={byField.number} />
-        <Field label="Currency" errors={byField.currency}>
-          <input value={invoice.currency} onChange={(e) => set('currency', e.target.value.toUpperCase())} maxLength={3} />
+        <NumberField value={invoice.number} onChange={(number) => set('number', number)} errors={fieldErrors('number')} />
+        <Field label="Currency" errors={fieldErrors('currency')}>
+          <input data-field="currency" value={invoice.currency} onChange={(e) => set('currency', e.target.value.toUpperCase())} maxLength={3} />
         </Field>
-        <Field label="Issue date" errors={byField.issueDate}>
-          <input type="date" value={invoice.issueDate} onChange={(e) => set('issueDate', e.target.value)} />
+        <Field label="Issue date" errors={fieldErrors('issueDate')}>
+          <input data-field="issueDate" type="date" value={invoice.issueDate} onChange={(e) => set('issueDate', e.target.value)} />
         </Field>
-        <Field label="Due date" errors={byField.dueDate}>
-          <input type="date" value={invoice.dueDate ?? ''} onChange={(e) => set('dueDate', e.target.value || undefined)} />
+        <Field label="Due date" errors={fieldErrors('dueDate')}>
+          <input data-field="dueDate" type="date" value={invoice.dueDate ?? ''} onChange={(e) => set('dueDate', e.target.value || undefined)} />
         </Field>
       </section>
 
@@ -96,7 +118,7 @@ export function InvoiceEditor({
           side="seller"
           party={invoice.seller}
           onChange={(p) => setParty('seller', p)}
-          byField={byField}
+          fieldErrors={fieldErrors}
           profiles={profiles}
           onSaveProfile={onSaveProfile}
           onDeleteProfile={onDeleteProfile}
@@ -106,26 +128,28 @@ export function InvoiceEditor({
           side="buyer"
           party={invoice.buyer}
           onChange={(p) => setParty('buyer', p)}
-          byField={byField}
+          fieldErrors={fieldErrors}
           profiles={profiles}
           onSaveProfile={onSaveProfile}
           onDeleteProfile={onDeleteProfile}
         />
       </section>
 
-      <section className="editor-lines">
+      <section className="editor-lines" id="field-lines">
         <h3>Invoice lines</h3>
-        <FieldErrors errors={bySection.lines} />
+        <FieldErrors errors={sectionErrors('lines')} />
         {invoice.lines.map((line, i) => (
           <div className="line-row" key={i}>
             <input
               className="line-name"
+              data-field="lines"
               placeholder="Description"
               value={line.name}
               onChange={(e) => setLine(i, { name: e.target.value })}
             />
             <input
               className="line-qty"
+              data-field="lines"
               type="number"
               step="any"
               value={line.quantity}
@@ -133,11 +157,12 @@ export function InvoiceEditor({
             />
             <MoneyInput
               className="line-price"
+              dataField="lines"
               minor={line.unitPriceMinor}
               onChange={(unitPriceMinor) => setLine(i, { unitPriceMinor })}
               key={i}
             />
-            <select value={line.taxCategory} onChange={(e) => setLine(i, { taxCategory: e.target.value as TaxCategory })}>
+            <select data-field="lines" value={line.taxCategory} onChange={(e) => setLine(i, { taxCategory: e.target.value as TaxCategory })}>
               {TAX_CATEGORIES.map((c) => (
                 <option key={c.value} value={c.value}>
                   {c.label}
@@ -146,6 +171,7 @@ export function InvoiceEditor({
             </select>
             <input
               className="line-rate"
+              data-field="lines"
               type="number"
               step="0.01"
               value={line.taxRate}
@@ -162,16 +188,17 @@ export function InvoiceEditor({
         </button>
       </section>
 
-      <section>
-        <FieldErrors errors={bySection.tax} />
-        <FieldErrors errors={bySection.totals} />
+      <section id="field-tax">
+        <FieldErrors errors={sectionErrors('tax')} />
+        <FieldErrors errors={sectionErrors('totals')} />
       </section>
 
       <BillingPanel invoice={invoice} onChange={onChange} />
 
       <section className="editor-row">
-        <Field label="IBAN" errors={bySection.payment} hint={ibanHint(invoice.payment.iban)}>
+        <Field label="IBAN" errors={sectionErrors('payment')} hint={ibanHint(invoice.payment.iban)}>
           <input
+            data-field="payment"
             value={invoice.payment.iban ?? ''}
             onChange={(e) => set('payment', { ...invoice.payment, iban: e.target.value.toUpperCase() })}
           />
@@ -196,7 +223,7 @@ function PartyFields({
   side,
   party,
   onChange,
-  byField,
+  fieldErrors,
   profiles,
   onSaveProfile,
   onDeleteProfile,
@@ -205,31 +232,32 @@ function PartyFields({
   side: 'seller' | 'buyer';
   party: Party;
   onChange: (patch: Partial<Party>) => void;
-  byField: LiveValidation['byField'];
+  fieldErrors: (key: string) => import('@invoice-engine/validate/browser').RuleResult[] | undefined;
   profiles: PartyProfile[];
   onSaveProfile: (profile: PartyProfile) => void;
   onDeleteProfile: (id: string) => void;
 }) {
   const isEmail = (party.electronicAddress ?? '').includes('@');
   return (
-    <fieldset className="party">
+    <fieldset className="party" id={`field-${side}`}>
       <legend>{title}</legend>
       <ProfilePicker party={party} profiles={profiles} onLoad={onChange} onSave={onSaveProfile} onDelete={onDeleteProfile} />
-      <Field label="Name" errors={byField[`${side}.name`]}>
-        <input value={party.name} onChange={(e) => onChange({ name: e.target.value })} />
+      <Field label="Name" errors={fieldErrors(`${side}.name`)}>
+        <input data-field={`${side}.name`} value={party.name} onChange={(e) => onChange({ name: e.target.value })} />
       </Field>
-      <Field label="Street" errors={byField[`${side}.street`]}>
-        <input value={party.street ?? ''} onChange={(e) => onChange({ street: e.target.value || undefined })} />
+      <Field label="Street" errors={fieldErrors(`${side}.street`)}>
+        <input data-field={`${side}.street`} value={party.street ?? ''} onChange={(e) => onChange({ street: e.target.value || undefined })} />
       </Field>
       <div className="editor-row">
-        <Field label="Postcode" errors={byField[`${side}.postcode`]}>
-          <input value={party.postcode ?? ''} onChange={(e) => onChange({ postcode: e.target.value || undefined })} />
+        <Field label="Postcode" errors={fieldErrors(`${side}.postcode`)}>
+          <input data-field={`${side}.postcode`} value={party.postcode ?? ''} onChange={(e) => onChange({ postcode: e.target.value || undefined })} />
         </Field>
-        <Field label="City" errors={byField[`${side}.city`]}>
-          <input value={party.city ?? ''} onChange={(e) => onChange({ city: e.target.value || undefined })} />
+        <Field label="City" errors={fieldErrors(`${side}.city`)}>
+          <input data-field={`${side}.city`} value={party.city ?? ''} onChange={(e) => onChange({ city: e.target.value || undefined })} />
         </Field>
-        <Field label="Country" errors={byField[`${side}.country`]}>
+        <Field label="Country" errors={fieldErrors(`${side}.country`)}>
           <input
+            data-field={`${side}.country`}
             value={party.country}
             onChange={(e) => onChange({ country: e.target.value.toUpperCase() })}
             maxLength={2}
@@ -237,11 +265,12 @@ function PartyFields({
           />
         </Field>
       </div>
-      <Field label="VAT number" errors={byField[`${side}.vatId`]} hint={vatHint(party.vatId)}>
-        <input value={party.vatId ?? ''} onChange={(e) => onChange({ vatId: e.target.value.toUpperCase() || undefined })} />
+      <Field label="VAT number" errors={fieldErrors(`${side}.vatId`)} hint={vatHint(party.vatId)}>
+        <input data-field={`${side}.vatId`} value={party.vatId ?? ''} onChange={(e) => onChange({ vatId: e.target.value.toUpperCase() || undefined })} />
       </Field>
-      <Field label="Electronic address" errors={byField[`${side}.electronicAddress`]}>
+      <Field label="Electronic address" errors={fieldErrors(`${side}.electronicAddress`)}>
         <input
+          data-field={`${side}.electronicAddress`}
           value={party.electronicAddress ?? ''}
           placeholder="name@example.com, or a scheme-specific ID"
           onChange={(e) => onChange({ electronicAddress: e.target.value || undefined })}
@@ -266,6 +295,10 @@ function PartyFields({
   );
 }
 
+function isEmptyValue(v: unknown): boolean {
+  return v === undefined || v === null || v === '';
+}
+
 function Field({
   label,
   errors,
@@ -277,8 +310,17 @@ function Field({
   hint?: string;
   children: React.ReactNode;
 }) {
+  const hasErrors = !!errors?.length;
+  // "A missing buyer name while typing is not the same class of thing as a
+  // structurally invalid VAT breakdown" (Part C) — a required field that's
+  // simply still empty reads as unfinished, not as broken, even though both
+  // are the same Schematron severity underneath. Detected from the child
+  // input's own `value`, so every Field call site gets this for free.
+  const value = isValidElement(children) ? (children.props as { value?: unknown }).value : undefined;
+  const incomplete = hasErrors && isEmptyValue(value);
+  const stateClass = hasErrors ? (incomplete ? 'field-incomplete' : 'field-invalid') : hint ? 'field-invalid' : '';
   return (
-    <label className={`field ${errors?.length || hint ? 'field-invalid' : ''}`}>
+    <label className={`field ${stateClass}`}>
       <span className="field-label">{label}</span>
       {children}
       <FieldErrors errors={errors} />

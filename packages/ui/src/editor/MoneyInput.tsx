@@ -15,7 +15,17 @@ import { fromMajor, toMajor } from '@invoice-engine/core';
  * the user happened to blur it. The fix only resyncs while NOT focused, so
  * it doesn't fight the user's own in-progress keystrokes the way a plain
  * `value={toMajor(minor)}` would. */
-export function MoneyInput({ minor, onChange, className }: { minor: number; onChange: (minor: number) => void; className?: string }) {
+export function MoneyInput({
+  minor,
+  onChange,
+  className,
+  dataField,
+}: {
+  minor: number;
+  onChange: (minor: number) => void;
+  className?: string;
+  dataField?: string;
+}) {
   const [text, setText] = useState(() => toMajor(minor));
   const [focused, setFocused] = useState(false);
 
@@ -26,6 +36,7 @@ export function MoneyInput({ minor, onChange, className }: { minor: number; onCh
   return (
     <input
       className={className}
+      data-field={dataField}
       type="text"
       inputMode="decimal"
       value={text}

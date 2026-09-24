@@ -45,6 +45,42 @@
   color: var(--bad);
 }
 
+.validation-bad p {
+  margin: 0 0 6px;
+}
+
+.validation-issue-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* "Make the issue count navigable: clicking an issue scrolls to and focuses
+   the offending field" (Part C) — a plain, unstyled-looking button so each
+   issue reads as a list item that happens to be clickable, not as a
+   call-to-action competing with the real form controls. */
+.validation-issue {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 3px 0;
+  font: inherit;
+  font-weight: 400;
+  font-size: 12.5px;
+  color: var(--bad);
+  cursor: pointer;
+}
+
+.validation-issue:hover,
+.validation-issue:focus-visible {
+  text-decoration: underline;
+}
+
 .editor {
   display: flex;
   flex-direction: column;
@@ -114,6 +150,22 @@ fieldset.party legend {
   border-color: var(--bad);
 }
 
+/* "A missing buyer name while typing is not the same class of thing as a
+   structurally invalid VAT breakdown, and they should not look identical"
+   : a required field
+   that's simply still empty gets a neutral dashed border, not the same solid
+   red as a field that has a value the tax authority will actually reject. */
+.field-incomplete input,
+.field-incomplete select {
+  border-color: var(--mute);
+  border-style: dashed;
+}
+
+.field-incomplete .field-errors,
+.field-incomplete .field-hint {
+  color: var(--mute);
+}
+
 .field-errors {
   list-style: none;
   margin: 2px 0 0;
@@ -123,6 +175,16 @@ fieldset.party legend {
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+/* The human sentence leads; the rule id (BR-06, BT-27, ...) is a secondary,
+   muted tag next to it, not the bold lead-in it used to be (Part C: "Keep
+   the rule id visible but secondary"). */
+.field-error-rule {
+  color: var(--mute);
+  font-size: 10.5px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .field-hint {
