@@ -1,5 +1,5 @@
 {
-  "name": "@verinvoice/core",
+  "name": "@conformo/core",
   "version": "0.0.0",
   "type": "module",
   "main": "./src/index.ts",

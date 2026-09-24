@@ -1,9 +1,9 @@
 /**
  * Minimal XML string building shared by every serializer. No dependencies: the
- * formats package may import only @verinvoice/core.
+ * formats package may import only @conformo/core.
  */
-import { decimalToString, toMajor } from '@verinvoice/core';
-import type { Invoice, Party } from '@verinvoice/core';
+import { decimalToString, toMajor } from '@conformo/core';
+import type { Invoice, Party } from '@conformo/core';
 
 /**
  * Escapes text content and attribute values. Also drops the characters XML 1.0

@@ -1,9 +1,9 @@
 import { z } from 'zod';
-import { validate } from '@verinvoice/validate';
-import type { RuleResult } from '@verinvoice/validate';
+import { validate } from '@conformo/validate';
+import type { RuleResult } from '@conformo/validate';
 
 export const validateInvoiceSchema = {
-  xml: z.string().describe('CII (Factur-X/ZUGFeRD) XML text to validate. UBL is not yet supported by @verinvoice/validate.'),
+  xml: z.string().describe('CII (Factur-X/ZUGFeRD) XML text to validate. UBL is not yet supported by @conformo/validate.'),
   country: z.enum(['FR']).optional().describe('Also run this country\'s CIUS layer on top of EN 16931 (only France/BR-FR Flux 2 is compiled today).'),
 };
 

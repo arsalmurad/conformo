@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import type { Invoice } from '@verinvoice/core';
-import type { TemplateId } from '@verinvoice/pdf';
-import { InvoiceInputError } from '@verinvoice/formats';
+import type { Invoice } from '@conformo/core';
+import type { TemplateId } from '@conformo/pdf';
+import { InvoiceInputError } from '@conformo/formats';
 import { buildInvoicePdf, type EmbeddableLogo } from '../pdf/exportPdf.js';
 
 // Small on purpose:  is "the

@@ -3,7 +3,7 @@ import { visibleIssues } from '../packages/ui/src/validation/visibleIssues.js';
 import { touchKeyFor } from '../packages/ui/src/validation/touchKey.js';
 import type { LiveValidation } from '../packages/ui/src/validation/useLiveValidation.js';
 import type { TouchedFields } from '../packages/ui/src/validation/useTouchedFields.js';
-import type { RuleResult } from '@verinvoice/validate/browser';
+import type { RuleResult } from '@conformo/validate/browser';
 
 function rule(ruleId: string): RuleResult {
   return { ruleId, severity: 'error', fields: [], xpath: '', message: `${ruleId} failed` };

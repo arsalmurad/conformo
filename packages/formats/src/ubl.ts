@@ -15,8 +15,8 @@
  * BT-21 (note subject code) has no element of its own in UBL. The binding prefixes
  * it to the note text as "#AAB#text", which is also what the French rules expect.
  */
-import { totals, lineNet } from '@verinvoice/core';
-import type { AllowanceCharge, Invoice, Party, TaxCategory } from '@verinvoice/core';
+import { totals, lineNet } from '@conformo/core';
+import type { AllowanceCharge, Invoice, Party, TaxCategory } from '@conformo/core';
 import { assertSerializable, dec, electronicAddressScheme, money, req, tag, wrap } from './xml.js';
 import { CUSTOMIZATION_ID, businessProcess } from './profiles.js';
 import type { Profile } from './profiles.js';

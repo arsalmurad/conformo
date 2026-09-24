@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNumbering } from '../numbering/useNumbering.js';
 import { FieldErrors } from './FieldErrors.js';
-import type { RuleResult } from '@verinvoice/validate/browser';
+import type { RuleResult } from '@conformo/validate/browser';
 
 interface Props {
   value: string;

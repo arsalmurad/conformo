@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
-import { validate } from "@verinvoice/validate";
-import type { RuleResult } from "@verinvoice/validate";
+import { validate } from "@conformo/validate";
+import type { RuleResult } from "@conformo/validate";
 
 const SEVERITY_LABEL: Record<RuleResult["severity"], string> = {
   fatal: "FATAL",
@@ -12,7 +12,7 @@ const SEVERITY_LABEL: Record<RuleResult["severity"], string> = {
 export async function runValidate(args: string[]): Promise<void> {
   const { file, country } = parseArgs(args);
   if (!file) {
-    console.error("Usage: verinvoice validate <file.xml> [--country FR]");
+    console.error("Usage: conformo validate <file.xml> [--country FR]");
     process.exitCode = 1;
     return;
   }

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { buildUBL } from '@verinvoice/formats';
-import type { Invoice } from '@verinvoice/core';
+import { buildUBL } from '@conformo/formats';
+import type { Invoice } from '@conformo/core';
 import sample from '../fixtures/sample-invoice.json' with { type: 'json' };
 import creditNote from '../fixtures/credit-note.json' with { type: 'json' };
 import peppolFixture from '../fixtures/peppol-belgium-full.json' with { type: 'json' };

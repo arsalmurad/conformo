@@ -6,8 +6,8 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import type { Invoice } from '@verinvoice/core';
-import { buildCII, buildUBL, buildXRechnungCII, buildXRechnungUBL } from '@verinvoice/formats';
+import type { Invoice } from '@conformo/core';
+import { buildCII, buildUBL, buildXRechnungCII, buildXRechnungUBL } from '@conformo/formats';
 import { FIXTURES } from './fixtures.manifest.js';
 import type { Target } from './fixtures.manifest.js';
 

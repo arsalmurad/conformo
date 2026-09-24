@@ -1,7 +1,7 @@
-/** CLI wrapper around @verinvoice/validate's computeCoverage() — see
+/** CLI wrapper around @conformo/validate's computeCoverage() — see
  * that module for what it measures and why it reads the compiled artefact
  * rather than a hardcoded count. */
-import { computeCoverage } from '@verinvoice/validate/coverage';
+import { computeCoverage } from '@conformo/validate/coverage';
 
 const report = computeCoverage();
 console.log(`${report.writtenRules} of ${report.totalRules} EN 16931 rules have a hand-written plain-language message (${report.percent}%).`);

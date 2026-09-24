@@ -1,10 +1,10 @@
 import { readFile, writeFile } from "node:fs/promises";
-import { totals } from "@verinvoice/core";
-import type { Invoice } from "@verinvoice/core";
-import { validate } from "@verinvoice/validate";
+import { totals } from "@conformo/core";
+import type { Invoice } from "@conformo/core";
+import { validate } from "@conformo/validate";
 import {
   detectXmlFormat, exportInvoicesToAccountingJson, exportInvoicesToCsv, readInvoiceFromPdf,
-} from "@verinvoice/parse";
+} from "@conformo/parse";
 
 interface ParsedArgs {
   file?: string;
@@ -38,7 +38,7 @@ function isPdf(bytes: Buffer): boolean {
 export async function runParse(args: string[]): Promise<void> {
   const { file, country, csv, accounting } = parseArgs(args);
   if (!file) {
-    console.error("Usage: verinvoice parse <file.pdf|.xml> [--country FR] [--csv out.csv] [--accounting out.json]");
+    console.error("Usage: conformo parse <file.pdf|.xml> [--country FR] [--csv out.csv] [--accounting out.json]");
     process.exitCode = 1;
     return;
   }

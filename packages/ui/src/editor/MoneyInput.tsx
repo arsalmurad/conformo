@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { fromMajor, toMajor } from '@verinvoice/core';
+import { fromMajor, toMajor } from '@conformo/core';
 
 /** A plain `value={toMajor(minor)}` input reformats to a fixed 2-decimal
  * string on every keystroke, which fights the cursor mid-edit (typing "1000"

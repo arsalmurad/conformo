@@ -1,17 +1,17 @@
 {
-  "name": "@verinvoice/mcp-server",
+  "name": "@conformo/mcp-server",
   "version": "0.1.0",
   "description": "MCP server exposing create/validate/convert so agents can issue and check EN 16931 electronic invoices.",
   "license": "Apache-2.0",
   "type": "module",
   "bin": {
-    "verinvoice-mcp": "./src/server.ts"
+    "conformo-mcp": "./src/server.ts"
   },
   "dependencies": {
-    "@verinvoice/core": "*",
-    "@verinvoice/formats": "*",
-    "@verinvoice/parse": "*",
-    "@verinvoice/validate": "*",
+    "@conformo/core": "*",
+    "@conformo/formats": "*",
+    "@conformo/parse": "*",
+    "@conformo/validate": "*",
     "@modelcontextprotocol/sdk": "^1.30.0",
     "zod": "^3.24.0"
   }

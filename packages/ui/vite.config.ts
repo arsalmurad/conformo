@@ -27,8 +27,8 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 16 * 1024 * 1024,
       },
       manifest: {
-        name: 'Verinvoice',
-        short_name: 'Verinvoice',
+        name: 'Conformo',
+        short_name: 'Conformo',
         description: 'Free, client-side legally valid e-invoices. No account, no server.',
         theme_color: '#1554d9',
         background_color: '#fafafb',

@@ -5,9 +5,9 @@
  * toMajor(), the same conversion the XML serializers use, because a CSV is
  * for humans and other tools to read, not for this codebase's own money math.
  */
-import { totals } from '@verinvoice/core';
-import type { Invoice } from '@verinvoice/core';
-import { toMajor } from '@verinvoice/core';
+import { totals } from '@conformo/core';
+import type { Invoice } from '@conformo/core';
+import { toMajor } from '@conformo/core';
 
 const COLUMNS = [
   'number', 'typeCode', 'issueDate', 'dueDate', 'currency',

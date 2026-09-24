@@ -55,4 +55,4 @@ jobs:
           body=$(curl -s http://localhost:8080/)
           docker compose down
           [ "$code" = "200" ] || (echo "Docker container did not respond with 200" && exit 1)
-          echo "$body" | grep -q '<title>Verinvoice</title>' || (echo "Docker container did not serve the app" && exit 1)
+          echo "$body" | grep -q '<title>Conformo</title>' || (echo "Docker container did not serve the app" && exit 1)

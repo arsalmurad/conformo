@@ -8,7 +8,7 @@
  */
 import type { EncryptedBlob } from './aes.js';
 
-const DB_NAME = 'verinvoice';
+const DB_NAME = 'conformo';
 const DB_VERSION = 1;
 const STORE = 'drafts';
 const DRAFT_KEY = 'current';

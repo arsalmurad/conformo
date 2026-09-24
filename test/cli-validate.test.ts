@@ -20,7 +20,7 @@ describe('cli validate: non-CII input', () => {
   });
 
   it('reports a clean one-line error and a non-zero exit code, not a thrown exception', async () => {
-    dir = mkdtempSync(path.join(tmpdir(), 'verinvoice-cli-test-'));
+    dir = mkdtempSync(path.join(tmpdir(), 'conformo-cli-test-'));
     const file = path.join(dir, 'not-an-invoice.xml');
     writeFileSync(file, '<hello><world/></hello>');
 

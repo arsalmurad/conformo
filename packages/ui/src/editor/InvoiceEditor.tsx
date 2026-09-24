@@ -1,5 +1,5 @@
 import { cloneElement, isValidElement } from 'react';
-import type { Invoice, Line, Party, TaxCategory } from '@verinvoice/core';
+import type { Invoice, Line, Party, TaxCategory } from '@conformo/core';
 import type { LiveValidation } from '../validation/useLiveValidation.js';
 import type { TouchedFields } from '../validation/useTouchedFields.js';
 import { touchKeyFor } from '../validation/touchKey.js';
@@ -232,7 +232,7 @@ function PartyFields({
   side: 'seller' | 'buyer';
   party: Party;
   onChange: (patch: Partial<Party>) => void;
-  fieldErrors: (key: string) => import('@verinvoice/validate/browser').RuleResult[] | undefined;
+  fieldErrors: (key: string) => import('@conformo/validate/browser').RuleResult[] | undefined;
   profiles: PartyProfile[];
   onSaveProfile: (profile: PartyProfile) => void;
   onDeleteProfile: (id: string) => void;
@@ -306,7 +306,7 @@ function Field({
   children,
 }: {
   label: string;
-  errors?: import('@verinvoice/validate/browser').RuleResult[];
+  errors?: import('@conformo/validate/browser').RuleResult[];
   hint?: string;
   children: React.ReactNode;
 }) {

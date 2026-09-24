@@ -13,9 +13,9 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import fs from 'node:fs';
 import { PDFDocument } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
-import { buildCII } from '@verinvoice/formats';
-import { finalizePDFA } from '@verinvoice/pdf';
-import type { Invoice } from '@verinvoice/core';
+import { buildCII } from '@conformo/formats';
+import { finalizePDFA } from '@conformo/pdf';
+import type { Invoice } from '@conformo/core';
 
 let bytes: Uint8Array;
 let raw: string;

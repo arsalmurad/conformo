@@ -10,8 +10,8 @@
  * for another program to read, not a human — no float ever decides a cent
  * (packages/core/src/money.ts) is a promise this format keeps too.
  */
-import { totals } from '@verinvoice/core';
-import type { Invoice, Minor, TaxCategory } from '@verinvoice/core';
+import { totals } from '@conformo/core';
+import type { Invoice, Minor, TaxCategory } from '@conformo/core';
 
 export interface AccountingTaxLine {
   category: TaxCategory;

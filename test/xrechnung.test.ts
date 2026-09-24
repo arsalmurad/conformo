@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { buildXRechnungCII, buildXRechnungUBL, checkXRechnung, isValidLeitwegId, leitwegCheckDigits, XRechnungError } from '@verinvoice/formats';
-import type { Invoice } from '@verinvoice/core';
+import { buildXRechnungCII, buildXRechnungUBL, checkXRechnung, isValidLeitwegId, leitwegCheckDigits, XRechnungError } from '@conformo/formats';
+import type { Invoice } from '@conformo/core';
 import xrechnungFixture from '../fixtures/xrechnung-public-sector.json' with { type: 'json' };
 import sample from '../fixtures/sample-invoice.json' with { type: 'json' };
 

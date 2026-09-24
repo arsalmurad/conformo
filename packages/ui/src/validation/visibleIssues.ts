@@ -1,4 +1,4 @@
-import type { RuleResult } from '@verinvoice/validate/browser';
+import type { RuleResult } from '@conformo/validate/browser';
 import type { LiveValidation } from './useLiveValidation.js';
 import type { TouchedFields } from './useTouchedFields.js';
 import { touchKeyFor } from './touchKey.js';

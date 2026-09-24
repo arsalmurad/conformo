@@ -1,5 +1,5 @@
 {
-  "name": "@verinvoice/validator-page",
+  "name": "@conformo/validator-page",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -11,8 +11,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@verinvoice/validate": "*",
-    "@verinvoice/parse": "*"
+    "@conformo/validate": "*",
+    "@conformo/parse": "*"
   },
   "devDependencies": {
     "typescript": "~6.0.2",

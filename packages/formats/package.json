@@ -1,5 +1,5 @@
 {
-  "name": "@verinvoice/formats",
+  "name": "@conformo/formats",
   "version": "0.0.0",
   "type": "module",
   "main": "./src/index.ts",
@@ -7,6 +7,6 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@verinvoice/core": "*"
+    "@conformo/core": "*"
   }
 }

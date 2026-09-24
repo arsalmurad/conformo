@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { fromMajor, toMajor, roundHalfUp, mulRound, decimalToString, lineNet } from '@verinvoice/core';
+import { fromMajor, toMajor, roundHalfUp, mulRound, decimalToString, lineNet } from '@conformo/core';
 
 describe('money is exact: floats never decide a cent (invariant 1)', () => {
   it('regression: 0.009 x 15.00 is 0.135, which rounds half up to 0.14, not the float 0.13', () => {

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import type { Invoice } from '@verinvoice/core';
-import { buildCII, InvoiceInputError } from '@verinvoice/formats';
-import type { RuleResult } from '@verinvoice/validate/browser';
+import type { Invoice } from '@conformo/core';
+import { buildCII, InvoiceInputError } from '@conformo/formats';
+import type { RuleResult } from '@conformo/validate/browser';
 import { validateInvoiceXml } from './browserValidator.js';
 import { targetFor, type Section } from './fieldMap.js';
 
@@ -17,7 +17,7 @@ export interface LiveValidation {
   errorCount: number;
   /** Set when the invoice couldn't even be serialized to XML — e.g. an
    * electronic address with no scheme code that isn't an e-mail address
-   * (see InvoiceInputError in @verinvoice/formats). This is a REAL
+   * (see InvoiceInputError in @conformo/formats). This is a REAL
    * problem the user needs to see, not the same as "still typing": silently
    * reporting zero issues here would show a false "passes EN 16931" for a
    * document that doesn't even have a body yet. */

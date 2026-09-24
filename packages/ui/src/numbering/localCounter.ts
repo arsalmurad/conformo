@@ -11,7 +11,7 @@
  * on the same object store — two concurrent calls to `next()` for the same
  * series cannot both observe the same starting value.
  */
-const DB_NAME = 'verinvoice-numbering';
+const DB_NAME = 'conformo-numbering';
 const DB_VERSION = 1;
 const STORE = 'counters';
 

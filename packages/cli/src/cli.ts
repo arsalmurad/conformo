@@ -25,7 +25,7 @@ switch (command) {
 function printUsage(): void {
   console.log(
     [
-      "verinvoice <command> [options]",
+      "conformo <command> [options]",
       "",
       "Commands:",
       "  validate <file.xml> [--country FR]   Validate a Factur-X/CII invoice against",

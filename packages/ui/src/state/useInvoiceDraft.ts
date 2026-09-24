@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { Invoice } from '@verinvoice/core';
+import type { Invoice } from '@conformo/core';
 import { encryptJSON, decryptJSON } from '../crypto/aes.js';
 import { saveDraft, loadDraft, clearDraft } from '../crypto/storage.js';
 import { emptyInvoice } from './emptyInvoice.js';

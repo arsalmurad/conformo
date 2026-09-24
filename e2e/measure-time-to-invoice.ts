@@ -40,7 +40,7 @@ async function main() {
   await setupPage.waitForTimeout(2000); // the autosave debounce (state/useInvoiceDraft.ts) — let the profile actually reach IndexedDB
   const hasDraft = await setupPage.evaluate(async () => {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
-      const req = indexedDB.open('verinvoice');
+      const req = indexedDB.open('conformo');
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);
     });

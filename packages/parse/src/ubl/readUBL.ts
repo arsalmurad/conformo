@@ -10,8 +10,8 @@
 import type {
   AllowanceCharge, Contact, Delivery, DocumentTypeCode, Invoice, Line, Note, Party,
   PrecedingInvoice, TaxCategory, TaxRepresentative,
-} from '@verinvoice/core';
-import { UBL_NS } from '@verinvoice/formats';
+} from '@conformo/core';
+import { UBL_NS } from '@conformo/formats';
 import { attr, child, children, descend, text } from '../xml/query.js';
 import type { XmlElement } from '../xml/types.js';
 import { arrOrUndefined, parseDec, parseMoney, pickLineExemption } from '../values.js';

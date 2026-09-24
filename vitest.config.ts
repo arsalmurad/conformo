@@ -10,14 +10,14 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@verinvoice/core': fileURLToPath(new URL('./packages/core/src/index.ts', import.meta.url)),
-      '@verinvoice/formats': fileURLToPath(new URL('./packages/formats/src/index.ts', import.meta.url)),
-      '@verinvoice/pdf': fileURLToPath(new URL('./packages/pdf/src/index.ts', import.meta.url)),
-      '@verinvoice/parse': fileURLToPath(new URL('./packages/parse/src/index.ts', import.meta.url)),
-      '@verinvoice/compliance-data': fileURLToPath(new URL('./packages/compliance-data/src/index.ts', import.meta.url)),
-      '@verinvoice/validate/browser': fileURLToPath(new URL('./packages/validate/src/browser.ts', import.meta.url)),
-      '@verinvoice/validate/coverage': fileURLToPath(new URL('./packages/validate/src/coverage.ts', import.meta.url)),
-      '@verinvoice/validate': fileURLToPath(new URL('./packages/validate/src/index.ts', import.meta.url)),
+      '@conformo/core': fileURLToPath(new URL('./packages/core/src/index.ts', import.meta.url)),
+      '@conformo/formats': fileURLToPath(new URL('./packages/formats/src/index.ts', import.meta.url)),
+      '@conformo/pdf': fileURLToPath(new URL('./packages/pdf/src/index.ts', import.meta.url)),
+      '@conformo/parse': fileURLToPath(new URL('./packages/parse/src/index.ts', import.meta.url)),
+      '@conformo/compliance-data': fileURLToPath(new URL('./packages/compliance-data/src/index.ts', import.meta.url)),
+      '@conformo/validate/browser': fileURLToPath(new URL('./packages/validate/src/browser.ts', import.meta.url)),
+      '@conformo/validate/coverage': fileURLToPath(new URL('./packages/validate/src/coverage.ts', import.meta.url)),
+      '@conformo/validate': fileURLToPath(new URL('./packages/validate/src/index.ts', import.meta.url)),
     },
   },
 });

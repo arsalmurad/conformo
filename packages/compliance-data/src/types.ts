@@ -8,7 +8,7 @@
  * compliance, show it", applies here just as much as to Schematron results).
  *
  * This is a read-only reference dataset, not a rules engine: it does not
- * decide whether a specific invoice complies (that's `@verinvoice/validate`'s
+ * decide whether a specific invoice complies (that's `@conformo/validate`'s
  * job, against the EN 16931 Schematron and each CIUS layer). It answers the
  * prior question — does this country require e-invoicing, since when, for
  * whom, and in what format — which the Schematron cannot answer on its own.

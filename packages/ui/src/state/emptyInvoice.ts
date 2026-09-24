@@ -1,4 +1,4 @@
-import type { Invoice } from '@verinvoice/core';
+import type { Invoice } from '@conformo/core';
 
 /** A brand-new invoice needs no passphrase, no account and no wait — the
  * hard requirement is a downloaded PDF within 10 seconds of opening the app,

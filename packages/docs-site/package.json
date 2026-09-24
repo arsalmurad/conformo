@@ -1,5 +1,5 @@
 {
-  "name": "@verinvoice/docs-site",
+  "name": "@conformo/docs-site",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -7,6 +7,6 @@
     "build": "tsx src/generate.ts"
   },
   "dependencies": {
-    "@verinvoice/compliance-data": "*"
+    "@conformo/compliance-data": "*"
   }
 }

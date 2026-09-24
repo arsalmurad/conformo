@@ -1,13 +1,13 @@
 {
-  "name": "@verinvoice/cli",
+  "name": "@conformo/cli",
   "version": "0.0.0",
   "type": "module",
   "bin": {
-    "verinvoice": "./src/cli.ts"
+    "conformo": "./src/cli.ts"
   },
   "dependencies": {
-    "@verinvoice/core": "*",
-    "@verinvoice/parse": "*",
-    "@verinvoice/validate": "*"
+    "@conformo/core": "*",
+    "@conformo/parse": "*",
+    "@conformo/validate": "*"
   }
 }

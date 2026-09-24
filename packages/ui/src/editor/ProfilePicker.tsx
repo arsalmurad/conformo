@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { Party } from '@verinvoice/core';
+import type { Party } from '@conformo/core';
 import type { PartyProfile } from '../profiles/types.js';
 import { newProfileId } from '../profiles/types.js';
 

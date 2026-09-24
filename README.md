@@ -1,7 +1,7 @@
-# Verinvoice
+# Conformo
 
 The open-source invoice tool for freelancers and small businesses selling
-into the EU, where "email a PDF" is quietly becoming illegal. Verinvoice
+into the EU, where "email a PDF" is quietly becoming illegal. Conformo
 produces the actual structured electronic invoice your country's tax
 authority requires — and proves it, live, against the official rules.
 
@@ -33,7 +33,7 @@ a **structured** electronic invoice, not a document that merely looks like
 one. A PDF, however good-looking, is not one of those. Most open-source
 invoicing tools stop at the PDF.
 
-Verinvoice builds the EN 16931 semantic model first, then serializes it to
+Conformo builds the EN 16931 semantic model first, then serializes it to
 whatever your country actually needs — Factur-X/ZUGFeRD, XRechnung, UBL 2.1,
 Peppol BIS — and embeds the XML **inside** a PDF/A-3 so a human still gets
 something readable. It then validates the result live, in your browser,
@@ -53,8 +53,8 @@ machine unless you choose to send it somewhere.
 | XRechnung 3.0 (CII and UBL) | passes EN 16931 + KoSIT Schematron |
 | PDF/A-3b with embedded XML | passes 25-point audit, deterministic |
 | French CTC (BR-FR Flux 2) | 77 rules fired, 0 failures |
-| Validator (`@verinvoice/validate`) | EN 16931 + French CTC compiled to SEF, runs client-side in a real browser — plain-language coverage below |
-| CLI (`@verinvoice/cli`) | `validate` command |
+| Validator (`@conformo/validate`) | EN 16931 + French CTC compiled to SEF, runs client-side in a real browser — plain-language coverage below |
+| CLI (`@conformo/cli`) | `validate` command |
 | App (`packages/ui`) — live validation, encrypted local persistence, offline PWA, seller/buyer profiles, percent-of-project billing, gapless numbering, input hardening | built, each feature verified live in a real browser session (see `the project's own tracker`) |
 
 <!-- MESSAGE-COVERAGE:START -->

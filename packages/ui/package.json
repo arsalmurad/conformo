@@ -1,5 +1,5 @@
 {
-  "name": "@verinvoice/ui",
+  "name": "@conformo/ui",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -12,11 +12,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@verinvoice/core": "*",
-    "@verinvoice/formats": "*",
-    "@verinvoice/parse": "*",
-    "@verinvoice/pdf": "*",
-    "@verinvoice/validate": "*",
+    "@conformo/core": "*",
+    "@conformo/formats": "*",
+    "@conformo/parse": "*",
+    "@conformo/pdf": "*",
+    "@conformo/validate": "*",
     "@pdf-lib/fontkit": "^1.1.1",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^6.3.289",

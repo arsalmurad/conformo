@@ -16,7 +16,7 @@ import { createInvoice, createInvoiceSchema } from './tools/createInvoice.js';
 import { validateInvoice, validateInvoiceSchema } from './tools/validateInvoice.js';
 import { convertInvoice, convertInvoiceSchema } from './tools/convertInvoice.js';
 
-const server = new McpServer({ name: 'verinvoice', version: '0.1.0' });
+const server = new McpServer({ name: 'conformo', version: '0.1.0' });
 
 server.registerTool(
   'create_invoice',

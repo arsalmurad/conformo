@@ -2,10 +2,10 @@ import fs from 'node:fs';
 import { describe, it, expect } from 'vitest';
 import { PDFDocument } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
-import { totals } from '@verinvoice/core';
-import type { Invoice } from '@verinvoice/core';
-import { buildCII } from '@verinvoice/formats';
-import { finalizePDFA, renderInvoicePage } from '@verinvoice/pdf';
+import { totals } from '@conformo/core';
+import type { Invoice } from '@conformo/core';
+import { buildCII } from '@conformo/formats';
+import { finalizePDFA, renderInvoicePage } from '@conformo/pdf';
 import { NoEmbeddedXmlError, extractEmbeddedXml, readInvoiceFromPdf } from '../packages/parse/src/index.js';
 
 // Builds the exact PDF/A-3 tools/build-sample.ts produces, in memory, so this
@@ -21,7 +21,7 @@ async function buildSamplePdf(invoice: Invoice): Promise<Uint8Array> {
   await finalizePDFA(pdf, {
     xml, xmlFilename: 'factur-x.xml', conformanceLevel: 'EN 16931',
     title: `Invoice ${invoice.number}`, author: invoice.seller.name,
-    producer: 'Verinvoice', creatorTool: 'Verinvoice',
+    producer: 'Conformo', creatorTool: 'Conformo',
     iccProfile: fs.readFileSync('assets/sRGB.icc'),
     createDate: new Date(`${invoice.issueDate}T00:00:00Z`),
   });
@@ -72,7 +72,7 @@ describe('readInvoiceFromPdf(): extraction + the visible-totals fraud check', ()
     await finalizePDFA(pdf, {
       xml: tamperedXml, xmlFilename: 'factur-x.xml', conformanceLevel: 'EN 16931',
       title: `Invoice ${invoice.number}`, author: invoice.seller.name,
-      producer: 'Verinvoice', creatorTool: 'Verinvoice',
+      producer: 'Conformo', creatorTool: 'Conformo',
       iccProfile: fs.readFileSync('assets/sRGB.icc'),
       createDate: new Date(`${invoice.issueDate}T00:00:00Z`),
     });

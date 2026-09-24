@@ -3,8 +3,8 @@
  * calls exactly one of these per business term so a format change on the write
  * side has one obvious place to update on the read side too.
  */
-import { fromMajor } from '@verinvoice/core';
-import type { Minor } from '@verinvoice/core';
+import { fromMajor } from '@conformo/core';
+import type { Minor } from '@conformo/core';
 
 /** xs:decimal text -> Minor. Inverse of packages/formats/src/xml.ts's money(). */
 export function parseMoney(text: string): Minor {

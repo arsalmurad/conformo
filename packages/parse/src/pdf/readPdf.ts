@@ -1,4 +1,4 @@
-import type { Invoice } from '@verinvoice/core';
+import type { Invoice } from '@conformo/core';
 import { extractEmbeddedXml } from './extractXml.js';
 import { verifyVisibleTotals } from './visibleTotals.js';
 import type { VisibleTotalsCheck } from './visibleTotals.js';
@@ -9,7 +9,7 @@ export interface PdfInvoiceResult {
   format: XmlInvoiceFormat;
   invoice: Invoice;
   xmlFilename: string;
-  /** The raw extracted XML text, e.g. to run it through @verinvoice/validate
+  /** The raw extracted XML text, e.g. to run it through @conformo/validate
    * (which validates CII XML text, not an Invoice object). */
   xml: string;
   visibleTotals: VisibleTotalsCheck;
