@@ -6,11 +6,19 @@ EN 16931 semantic model, serialized to Factur-X / ZUGFeRD / XRechnung / UBL /
 Peppol BIS, validated against the official CEN Schematron and each country's
 own rules. Runs in a browser. No Chromium, no LibreOffice, no Java.
 
+<p align="center">
+  <img src="docs/screenshots/empty-state.jpg" width="49%" alt="First load: an empty invoice with a real empty state, not a blank form." />
+  <img src="docs/screenshots/filled-invoice-live-preview.jpg" width="49%" alt="A filled invoice passing EN 16931, with the live PDF preview beside the editor." />
+</p>
+
 ## Status
 
-All six originally-planned phases are complete and independently verified:
+The six originally-planned phases are complete and independently verified:
 the core, the formats, the validator, the app, receiving/parsing, and the
-distribution assets below. See `the project's own tracker` for what's still genuinely
+distribution assets below — plus a follow-up correctness/UX pass (error
+handling gated to touched fields, wider plain-language rule coverage) and a
+product-surface pass (the live preview and design system above, locale
+correctness, WCAG 2.1 AA). See `the project's own tracker` for what's still genuinely
 open (a handful of countries not yet in the compliance dataset, FatturaPA/KSeF
 serializer support, and actually publishing/deploying the packages below).
 
@@ -45,7 +53,7 @@ serializer support, and actually publishing/deploying the packages below).
 
 <!-- MESSAGE-COVERAGE:END -->
 
-**Time to a downloaded invoice for a returning user: ~2.5–3.3s** (5 runs,
+**Time to a downloaded invoice for a returning user: ~1.8–3.1s** (5 runs,
 `e2e/measure-time-to-invoice.ts`; well inside the 10-second target). Measured
 end to end against the production build — service worker warm, unlocking an
 encrypted draft with a passphrase, loading a saved seller profile, filling
