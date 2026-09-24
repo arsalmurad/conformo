@@ -1,37 +1,48 @@
-# invoice-engine
+# Verinvoice
 
-Invoices that are legally valid, not just good-looking.
-
-EN 16931 semantic model, serialized to Factur-X / ZUGFeRD / XRechnung / UBL /
-Peppol BIS, validated against the official CEN Schematron and each country's
-own rules. Runs in a browser. No Chromium, no LibreOffice, no Java.
+The open-source invoice tool for freelancers and small businesses selling
+into the EU, where "email a PDF" is quietly becoming illegal. Verinvoice
+produces the actual structured electronic invoice your country's tax
+authority requires — and proves it, live, against the official rules.
 
 <p align="center">
   <img src="docs/screenshots/empty-state.jpg" width="49%" alt="First load: an empty invoice with a real empty state, not a blank form." />
   <img src="docs/screenshots/filled-invoice-live-preview.jpg" width="49%" alt="A filled invoice passing EN 16931, with the live PDF preview beside the editor." />
 </p>
 
-## Status
+<!--
+Live demo: [pending — see below]
+Standalone validator (no signup, checks a file you already have): [pending — see below]
+-->
 
-The six originally-planned phases are complete and independently verified:
-the core, the formats, the validator, the app, receiving/parsing, and the
-distribution assets below — plus a follow-up correctness/UX pass (error
-handling gated to touched fields, wider plain-language rule coverage) and a
-product-surface pass (the live preview and design system above, locale
-correctness, WCAG 2.1 AA). See `the project's own tracker` for what's still genuinely
-open (a handful of countries not yet in the compliance dataset, FatturaPA/KSeF
-serializer support, and actually publishing/deploying the packages below).
+**Try it now, no signup, nothing installed:**
 
-- **Sourced compliance dataset** (`packages/compliance-data`) — see the table
-  below.
-- **Docs site** (`packages/docs-site`) — static, one page per country,
-  generated from the dataset.
-- **Standalone validator page** (`packages/validator-page`) — no signup,
-  fully client-side, separately deployable.
-- **Docker** (`Dockerfile`, `docker-compose.yml`) — `docker compose up --build`
-  serves the app on `:8080`.
-- **MCP server** (`packages/mcp-server`) — `create_invoice`,
-  `validate_invoice`, `convert_invoice` over stdio.
+    docker compose up --build   # then open http://localhost:8080
+
+or run it from source in three commands — see [Quick start](#quick-start)
+below.
+
+*(A hosted live demo and a standalone validator page are built and ready to
+deploy — `packages/ui` and `packages/validator-page` — but not yet live at a
+public URL. Docker is the fastest way to actually use it today.)*
+
+## Why this exists
+
+France, Germany, Belgium, Poland and Italy now require — or are phasing in —
+a **structured** electronic invoice, not a document that merely looks like
+one. A PDF, however good-looking, is not one of those. Most open-source
+invoicing tools stop at the PDF.
+
+Verinvoice builds the EN 16931 semantic model first, then serializes it to
+whatever your country actually needs — Factur-X/ZUGFeRD, XRechnung, UBL 2.1,
+Peppol BIS — and embeds the XML **inside** a PDF/A-3 so a human still gets
+something readable. It then validates the result live, in your browser,
+against the official CEN Schematron and each country's own rules, and shows
+you the result instead of just asserting it. No account, no server: the
+whole thing runs client-side, and your invoice data never leaves your
+machine unless you choose to send it somewhere.
+
+## The proof, not just the claim
 
 | Capability | State |
 |---|---|
@@ -42,8 +53,8 @@ serializer support, and actually publishing/deploying the packages below).
 | XRechnung 3.0 (CII and UBL) | passes EN 16931 + KoSIT Schematron |
 | PDF/A-3b with embedded XML | passes 25-point audit, deterministic |
 | French CTC (BR-FR Flux 2) | 77 rules fired, 0 failures |
-| Validator (`@invoice-engine/validate`) | EN 16931 + French CTC compiled to SEF, runs client-side in a real browser — plain-language coverage below |
-| CLI (`@invoice-engine/cli`) | `validate` command |
+| Validator (`@verinvoice/validate`) | EN 16931 + French CTC compiled to SEF, runs client-side in a real browser — plain-language coverage below |
+| CLI (`@verinvoice/cli`) | `validate` command |
 | App (`packages/ui`) — live validation, encrypted local persistence, offline PWA, seller/buyer profiles, percent-of-project billing, gapless numbering, input hardening | built, each feature verified live in a real browser session (see `the project's own tracker`) |
 
 <!-- MESSAGE-COVERAGE:START -->
@@ -88,6 +99,25 @@ and exempt VAT, category O, document-level allowances/charges, a credit note,
 a German public-sector invoice, a full Peppol Belgian invoice, a tax
 representative, and a foreign tax-currency total. One fixture is a deliberate
 negative control that proves the validator actually rejects a wrong invoice.
+
+## What's built
+
+- **The app** (`packages/ui`) — the editor and live preview above.
+- **Sourced compliance dataset** (`packages/compliance-data`) — the table
+  above.
+- **Docs site** (`packages/docs-site`) — static, one page per country,
+  generated from the dataset.
+- **Standalone validator page** (`packages/validator-page`) — no signup,
+  fully client-side, separately deployable; checks a file you already have
+  against the official Schematron without importing it anywhere.
+- **Docker** (`Dockerfile`, `docker-compose.yml`) — `docker compose up --build`
+  serves the app on `:8080`.
+- **MCP server** (`packages/mcp-server`) — `create_invoice`,
+  `validate_invoice`, `convert_invoice` over stdio, for agents.
+
+For phase-by-phase build history and verification detail, see
+[`the project's own tracker`](the project's own tracker) — that is where the day-to-day project
+log lives, not here.
 
 ## Quick start
 
