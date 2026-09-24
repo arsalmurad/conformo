@@ -47,11 +47,16 @@ async function pageText(pdfBytes: Uint8Array): Promise<string> {
   return parts.join(' ').replace(/\s+/g, ' ');
 }
 
+/** The decimal mark is `.` or `,` depending on the invoice's locale
+ * (packages/pdf/src/locale.ts's `formatInvoiceAmount` — grouping is off
+ * there specifically so this regex never has to deal with a thousands
+ * separator, which pdfjs's own whitespace collapsing would make ambiguous
+ * against ordinary word spacing). */
 function findMoney(text: string, label: string): { raw: string; minor: number } | undefined {
-  const m = new RegExp(`\\b${label}\\s+(-?\\d+\\.\\d{2})\\s+([A-Z]{3})\\b`).exec(text);
+  const m = new RegExp(`\\b${label}\\s+(-?\\d+[.,]\\d{2})\\s+([A-Z]{3})\\b`).exec(text);
   if (!m) return undefined;
   const [, amount, currency] = m as unknown as [string, string, string];
-  const minor = parseMoney(amount);
+  const minor = parseMoney(amount.replace(',', '.'));
   return { raw: `${amount} ${currency}`, minor };
 }
 

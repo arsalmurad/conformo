@@ -15,7 +15,8 @@
  */
 import { rgb, type PDFDocument, type PDFFont, type PDFPage } from 'pdf-lib';
 import type { Invoice, Totals } from '@invoice-engine/core';
-import { toMajor, lineNet } from '@invoice-engine/core';
+import { lineNet } from '@invoice-engine/core';
+import { formatInvoiceAmount, formatInvoiceDate, localeForInvoice } from './locale.js';
 
 export type TemplateId = 'classic' | 'modern' | 'compact';
 
@@ -100,6 +101,9 @@ export async function renderInvoicePage(
   const line = rgb(...theme.line);
   const rowHeight = theme.compact ? 22 : 30;
   const baseSize = theme.compact ? 8.5 : 9.5;
+  const locale = localeForInvoice(invoice.buyer.country, invoice.seller.country);
+  const fmtDate = (iso: string) => formatInvoiceDate(iso, locale);
+  const fmtAmount = (minor: number) => formatInvoiceAmount(minor, locale);
 
   const page = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
   const W = PAGE_WIDTH, M = MARGIN;
@@ -143,7 +147,7 @@ export async function renderInvoicePage(
     page.drawRectangle({ x: 0, y: PAGE_HEIGHT - bandHeight, width: W, height: bandHeight, color: accent });
     draw('INVOICE', M, y, { f: bold, size: 22, color: rgb(1, 1, 1) });
     right(invoice.number, W - M, y + 4, { f: bold, size: 11, color: rgb(1, 1, 1) });
-    right(`Issued ${invoice.issueDate}${invoice.dueDate ? `   Due ${invoice.dueDate}` : ''}`, W - M, y - 10, {
+    right(`Issued ${fmtDate(invoice.issueDate)}${invoice.dueDate ? `   Due ${fmtDate(invoice.dueDate)}` : ''}`, W - M, y - 10, {
       size: 8.5,
       color: rgb(0.85, 0.9, 1),
     });
@@ -151,7 +155,7 @@ export async function renderInvoicePage(
   } else {
     draw('INVOICE', M, y, { f: bold, size: 22 });
     right(invoice.number, W - M, y + 4, { f: bold, size: 11 });
-    right(`Issued ${invoice.issueDate}${invoice.dueDate ? `   Due ${invoice.dueDate}` : ''}`, W - M, y - 10, {
+    right(`Issued ${fmtDate(invoice.issueDate)}${invoice.dueDate ? `   Due ${fmtDate(invoice.dueDate)}` : ''}`, W - M, y - 10, {
       size: 8.5,
       color: mute,
     });
@@ -188,8 +192,8 @@ export async function renderInvoicePage(
     draw(l.name, M, y, { f: bold, size: baseSize });
     if (l.description && !theme.compact) draw(l.description, M, y - 11, { size: 8, color: mute });
     right(String(l.quantity), 360, y, { size: baseSize });
-    right(toMajor(l.unitPriceMinor), 450, y, { size: baseSize });
-    right(toMajor(lineNet(l)), W - M, y, { size: baseSize });
+    right(fmtAmount(l.unitPriceMinor), 450, y, { size: baseSize });
+    right(fmtAmount(lineNet(l)), W - M, y, { size: baseSize });
     y -= rowHeight;
   });
 
@@ -206,13 +210,13 @@ export async function renderInvoicePage(
     page.drawRectangle({ x: 320, y: y - totals.groups.length * 16 - 26, width: W - M - 320, height: totals.groups.length * 16 + 44, color: accent, opacity: 0.06 });
   }
 
-  row('Subtotal', toMajor(totals.lineTotal), { mute: true });
-  for (const g of totals.groups) row(`VAT ${g.rate}%`, toMajor(g.amount), { mute: true });
-  row('Total', toMajor(totals.grand), { f: bold });
-  if (totals.prepaid) row('Paid', `-${toMajor(totals.prepaid)}`, { mute: true });
+  row('Subtotal', fmtAmount(totals.lineTotal), { mute: true });
+  for (const g of totals.groups) row(`VAT ${g.rate}%`, fmtAmount(g.amount), { mute: true });
+  row('Total', fmtAmount(totals.grand), { f: bold });
+  if (totals.prepaid) row('Paid', `-${fmtAmount(totals.prepaid)}`, { mute: true });
   y -= 4;
   right('Amount due', 470, y, { size: 11, f: bold, color: theme.totalHighlight ? accent : ink });
-  right(`${toMajor(totals.due)} ${invoice.currency}`, W - M, y, { size: 11, f: bold, color: theme.totalHighlight ? accent : ink });
+  right(`${fmtAmount(totals.due)} ${invoice.currency}`, W - M, y, { size: 11, f: bold, color: theme.totalHighlight ? accent : ink });
   y -= 26;
 
   draw('PAYMENT', M, y, { size: 7.5, color: mute, f: bold });
