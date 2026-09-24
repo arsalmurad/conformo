@@ -20,9 +20,16 @@ export function parseSvrl(svrl: string): { results: RuleResult[]; firedCount: nu
     const [, , attrsText, body] = match as unknown as [string, string, string, string];
     const attrs = parseAttrs(attrsText);
     const severity = toSeverity(attrs.flag ?? attrs.role);
-    const message = unescapeXml(stripTags(body)).trim();
-    const ruleId = leadingBracketId(message) ?? attrs.id ?? "";
+    const rawMessage = unescapeXml(stripTags(body)).trim();
+    const ruleId = leadingBracketId(rawMessage) ?? attrs.id ?? "";
     if (!ruleId) continue; // no rule id means nothing a caller can act on or dedupe by
+    // `message` is what a UI shows next to the field, verbatim otherwise — but
+    // the "[BR-Z-10]-" bracket is redundant with `ruleId` (already reported
+    // separately) and reads as raw machine output to someone who isn't a
+    // Schematron author. Stripping it here, once, means every caller gets a
+    // readable sentence with no special-casing of their own (the project's own conventions Part B: "no rule should ever reach a user
+    // as raw Schematron").
+    const message = stripLeadingBracketId(rawMessage);
     results.push({
       ruleId,
       severity,
@@ -56,6 +63,14 @@ function parseAttrs(attrsText: string): Record<string, string> {
  * for artefacts (like French CTC) that do use it directly. */
 function leadingBracketId(message: string): string | undefined {
   return message.match(/^\[([^\]]+)\]/)?.[1];
+}
+
+/** Strips the same "[BR-Z-10]-" prefix leadingBracketId() reads the rule id
+ * from, plus the separating hyphen — a message with no such prefix (the
+ * French CTC Schematron, which puts its id in `@id` instead) passes through
+ * unchanged. */
+function stripLeadingBracketId(message: string): string {
+  return message.replace(/^\[[^\]]+\]-?\s*/, "");
 }
 
 function toSeverity(flag: string | undefined): RuleResult["severity"] {

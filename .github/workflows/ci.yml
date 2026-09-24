@@ -39,6 +39,10 @@ jobs:
         run: |
           npm run readme:matrix
           git diff --exit-code README.md || (echo "README.md's compliance matrix is out of date - run 'npm run build:compliance-data && npm run readme:matrix' and commit the result" && exit 1)
+      - name: Plain-language coverage in the README matches the compiled artefact 
+        run: |
+          npm run readme:coverage
+          git diff --exit-code README.md || (echo "README.md's coverage line is out of date - run 'npm run readme:coverage' and commit the result" && exit 1)
       - name: Docker image runs and serves the app 
         run: |
           docker compose build

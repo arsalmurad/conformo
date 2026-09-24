@@ -12,6 +12,8 @@
     "build:fixtures": "tsx tools/build-fixtures.ts",
     "build:compliance-data": "tsx tools/build-compliance-data.ts",
     "readme:matrix": "tsx tools/generate-readme-matrix.ts",
+    "report:message-coverage": "tsx tools/report-message-coverage.ts",
+    "readme:coverage": "tsx tools/update-readme-coverage.ts",
     "docs:build": "npm run build --workspace=packages/docs-site",
     "validator-page:build": "npm run build --workspace=packages/validator-page",
     "validate": "node tools/py.mjs tools/validate.py && node tools/py.mjs tools/pdfa_audit.py",

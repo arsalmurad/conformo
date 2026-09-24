@@ -5,7 +5,8 @@
   "main": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./browser": "./src/browser.ts"
+    "./browser": "./src/browser.ts",
+    "./coverage": "./src/coverage.ts"
   },
   "dependencies": {
     "saxon-js": "^2.7.0"
