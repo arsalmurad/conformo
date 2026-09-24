@@ -1,24 +1,10 @@
 import { useCallback, useState } from 'react';
 import type { Invoice } from '@invoice-engine/core';
+import { pdfjsReady } from '../pdfjsWorker.js';
 
 interface Props {
   onImport: (invoice: Invoice) => void;
 }
-
-// The visible-totals check (packages/parse/src/pdf/visibleTotals.ts) imports
-// this exact specifier itself to read the PDF's text. Configuring the worker
-// here sets it up before that import is ever used — and because it's the
-// same specifier, Vite treats it as the same module instance, so this one
-// assignment is enough for both call sites. Without it, pdfjs throws "No
-// GlobalWorkerOptions.workerSrc specified" in a browser (found by actually
-// loading this page — pdfjs's Node build needs no such setup, which is why
-// packages/parse's own Node tests never hit this). handleFile() awaits this
-// before touching a PDF, so a drop that races the app's own startup can't
-// hit the unconfigured worker either.
-const pdfWorkerReady = import('pdfjs-dist/legacy/build/pdf.mjs').then(async (pdfjs) => {
-  const workerUrl = (await import('pdfjs-dist/legacy/build/pdf.worker.mjs?url')).default;
-  pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
-});
 
 // Matches parseXml.ts's own default (20 MB), checked here too so a huge file
 // never even reaches the parser — this is a pre-filter, not a substitute for
@@ -60,7 +46,7 @@ export function InvoiceDropzone({ onImport }: Props) {
       const { detectXmlFormat, readInvoiceFromPdf } = await import('@invoice-engine/parse');
 
       if (isPdf(bytes)) {
-        await pdfWorkerReady;
+        await pdfjsReady;
         const result = await readInvoiceFromPdf(bytes);
         if (result.visibleTotals.checked && result.visibleTotals.mismatches.length > 0) {
           const fields = result.visibleTotals.mismatches.map((m) => m.label).join(', ');

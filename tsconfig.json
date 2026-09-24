@@ -24,5 +24,11 @@
     },
     "baseUrl": "."
   },
-  "include": ["packages/*/src/**/*.ts", "tools/**/*.ts", "test/**/*.ts", "e2e/**/*.ts", "playwright.config.ts"]
+  "include": ["packages/*/src/**/*.ts", "tools/**/*.ts", "test/**/*.ts", "e2e/**/*.ts", "playwright.config.ts"],
+  // pdfjsWorker.ts uses Vite's `?url` import convention, typed only by
+  // vite/client (which this Node-context config deliberately doesn't set,
+  // since it also checks tools/ and test/, which run under Node, not Vite).
+  // packages/ui's own tsconfig.app.json (chained after this one in the root
+  // "typecheck" script) has vite/client and checks this file correctly.
+  "exclude": ["packages/ui/src/pdfjsWorker.ts"]
 }
