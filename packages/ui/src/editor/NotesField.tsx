@@ -1,4 +1,4 @@
-import type { Invoice } from '@invoice-engine/core';
+import type { Invoice } from '@verinvoice/core';
 import { pasteAsPlainText, stripHtml } from '../hardening/sanitize.js';
 
 interface Props {

@@ -5,8 +5,8 @@
  * are not separate cases here — readCII()/readUBL() already read every term
  * either profile can carry.
  */
-import { CII_NS, UBL_NS } from '@invoice-engine/formats';
-import type { Invoice } from '@invoice-engine/core';
+import { CII_NS, UBL_NS } from '@verinvoice/formats';
+import type { Invoice } from '@verinvoice/core';
 import { parseXml } from './xml/parseXml.js';
 import type { ParseXmlOptions } from './xml/parseXml.js';
 import { readCII } from './cii/readCII.js';

@@ -52,17 +52,17 @@ export function page(opts: PageOptions, body: string): string {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${opts.title} — invoice-engine docs</title>
+<title>${opts.title} — Verinvoice docs</title>
 <meta name="description" content="${opts.description}">
 <style>${STYLE}</style>
 </head>
 <body>
 <header class="site">
-  <strong>invoice-engine</strong>
+  <strong>Verinvoice</strong>
   <nav>
     <a href="${root}/index.html"${opts.active === 'home' ? ' class="active"' : ''}>Home</a>
     <a href="${root}/countries/index.html"${opts.active === 'countries' ? ' class="active"' : ''}>Countries</a>
-    <a href="https://github.com/arsalmurad/invoice-engine">GitHub</a>
+    <a href="https://github.com/arsalmurad/verinvoice">GitHub</a>
   </nav>
 </header>
 <main>

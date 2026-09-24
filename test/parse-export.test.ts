@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import { describe, it, expect } from 'vitest';
-import type { Invoice } from '@invoice-engine/core';
+import type { Invoice } from '@verinvoice/core';
 import { exportInvoicesToAccountingJson, exportInvoicesToCsv } from '../packages/parse/src/index.js';
 
 const invoice = JSON.parse(fs.readFileSync('fixtures/sample-invoice.json', 'utf8')) as Invoice;

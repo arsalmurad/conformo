@@ -1,14 +1,14 @@
 /**
  * Generates one static HTML page per mandate country from
- * @invoice-engine/compliance-data, plus an index. "So it cannot drift"
+ * @verinvoice/compliance-data, plus an index. "So it cannot drift"
  * : there is no hand-written country page
  * anywhere in this package, only this generator and the dataset it reads.
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { countries, dataset } from '@invoice-engine/compliance-data';
-import type { CountryCompliance, Mandate, MandateStatus } from '@invoice-engine/compliance-data';
+import { countries, dataset } from '@verinvoice/compliance-data';
+import type { CountryCompliance, Mandate, MandateStatus } from '@verinvoice/compliance-data';
 import { page } from './layout.js';
 
 // Resolved from this file's own location, not process.cwd() — this script
@@ -82,7 +82,7 @@ function countriesIndexPage(): string {
 
 function homePage(): string {
   const body = `
-<h1>invoice-engine</h1>
+<h1>Verinvoice</h1>
 <p class="lede">The open-source invoice tool that produces legally valid electronic invoices,
 not just good-looking PDFs. EN 16931 semantic model, serialized to Factur-X,
 ZUGFeRD, XRechnung, UBL 2.1 and Peppol BIS, validated live against the
@@ -90,11 +90,11 @@ official CEN Schematron plus each country's CIUS rules.</p>
 <h2>Where to start</h2>
 <ul>
   <li><a href="countries/index.html">Compliance status by country</a> — generated from a sourced dataset.</li>
-  <li><a href="https://github.com/arsalmurad/invoice-engine">Source on GitHub</a></li>
-  <li><a href="https://github.com/arsalmurad/invoice-engine/blob/main/CONTRIBUTING.md">Contributing</a></li>
+  <li><a href="https://github.com/arsalmurad/verinvoice">Source on GitHub</a></li>
+  <li><a href="https://github.com/arsalmurad/verinvoice/blob/main/CONTRIBUTING.md">Contributing</a></li>
 </ul>
 `;
-  return page({ title: 'invoice-engine', description: 'Legally valid electronic invoices, EN 16931, Factur-X, XRechnung, UBL, Peppol.', active: 'home', depth: 0 }, body);
+  return page({ title: 'Verinvoice', description: 'Legally valid electronic invoices, EN 16931, Factur-X, XRechnung, UBL, Peppol.', active: 'home', depth: 0 }, body);
 }
 
 function write(relPath: string, html: string): void {

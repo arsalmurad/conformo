@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
-import { validate } from "@invoice-engine/validate";
-import type { RuleResult } from "@invoice-engine/validate";
+import { validate } from "@verinvoice/validate";
+import type { RuleResult } from "@verinvoice/validate";
 
 const SEVERITY_LABEL: Record<RuleResult["severity"], string> = {
   fatal: "FATAL",
@@ -12,7 +12,7 @@ const SEVERITY_LABEL: Record<RuleResult["severity"], string> = {
 export async function runValidate(args: string[]): Promise<void> {
   const { file, country } = parseArgs(args);
   if (!file) {
-    console.error("Usage: invoice-engine validate <file.xml> [--country FR]");
+    console.error("Usage: verinvoice validate <file.xml> [--country FR]");
     process.exitCode = 1;
     return;
   }

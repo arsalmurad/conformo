@@ -12,15 +12,15 @@
     "noEmit": true,
     "types": ["node"],
     "paths": {
-      "@invoice-engine/core": ["./packages/core/src/index.ts"],
-      "@invoice-engine/formats": ["./packages/formats/src/index.ts"],
-      "@invoice-engine/pdf": ["./packages/pdf/src/index.ts"],
-      "@invoice-engine/validate": ["./packages/validate/src/index.ts"],
-      "@invoice-engine/validate/browser": ["./packages/validate/src/browser.ts"],
-      "@invoice-engine/validate/coverage": ["./packages/validate/src/coverage.ts"],
-      "@invoice-engine/cli": ["./packages/cli/src/cli.ts"],
-      "@invoice-engine/parse": ["./packages/parse/src/index.ts"],
-      "@invoice-engine/compliance-data": ["./packages/compliance-data/src/index.ts"]
+      "@verinvoice/core": ["./packages/core/src/index.ts"],
+      "@verinvoice/formats": ["./packages/formats/src/index.ts"],
+      "@verinvoice/pdf": ["./packages/pdf/src/index.ts"],
+      "@verinvoice/validate": ["./packages/validate/src/index.ts"],
+      "@verinvoice/validate/browser": ["./packages/validate/src/browser.ts"],
+      "@verinvoice/validate/coverage": ["./packages/validate/src/coverage.ts"],
+      "@verinvoice/cli": ["./packages/cli/src/cli.ts"],
+      "@verinvoice/parse": ["./packages/parse/src/index.ts"],
+      "@verinvoice/compliance-data": ["./packages/compliance-data/src/index.ts"]
     },
     "baseUrl": "."
   },

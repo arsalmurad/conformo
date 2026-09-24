@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { buildCII } from "@invoice-engine/formats";
-import { validate } from "@invoice-engine/validate";
-import type { Invoice } from "@invoice-engine/core";
+import { buildCII } from "@verinvoice/formats";
+import { validate } from "@verinvoice/validate";
+import type { Invoice } from "@verinvoice/core";
 import sample from "../fixtures/sample-invoice.json" with { type: "json" };
 
 const validCii = buildCII(sample as unknown as Invoice);

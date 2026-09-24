@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import type { TemplateId } from '@invoice-engine/pdf';
-import { TEMPLATES } from '@invoice-engine/pdf';
+import type { TemplateId } from '@verinvoice/pdf';
+import { TEMPLATES } from '@verinvoice/pdf';
 import { useInvoiceDraft } from './state/useInvoiceDraft.js';
 import { useLiveValidation } from './validation/useLiveValidation.js';
 import { useTouchedFields } from './validation/useTouchedFields.js';
@@ -76,7 +76,7 @@ export default function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>invoice-engine</h1>
+        <h1>Verinvoice</h1>
         <div className="app-header-controls">
           <label>
             Country rules

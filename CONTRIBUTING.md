@@ -1,4 +1,4 @@
-# Contributing to invoice-engine
+# Contributing to Verinvoice
 
 Thanks for considering it. This project has a narrow, deliberately-guarded
 mission — read `CONTRIBUTING.md` first. It is the actual contract for this repo,

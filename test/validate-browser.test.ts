@@ -14,10 +14,10 @@ import { describe, it, expect, beforeAll } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import { buildCII } from "@invoice-engine/formats";
-import { validateInBrowser } from "@invoice-engine/validate/browser";
-import type { SaxonJSLike } from "@invoice-engine/validate";
-import type { Invoice } from "@invoice-engine/core";
+import { buildCII } from "@verinvoice/formats";
+import { validateInBrowser } from "@verinvoice/validate/browser";
+import type { SaxonJSLike } from "@verinvoice/validate";
+import type { Invoice } from "@verinvoice/core";
 import sample from "../fixtures/sample-invoice.json" with { type: "json" };
 
 // happy-dom replaces the global `URL` with its own DOM implementation, which

@@ -16,8 +16,8 @@
 import type {
   AllowanceCharge, Contact, Delivery, DocumentTypeCode, Invoice, Line, Note, Party,
   PrecedingInvoice, TaxCategory, TaxRepresentative,
-} from '@invoice-engine/core';
-import { CII_NS } from '@invoice-engine/formats';
+} from '@verinvoice/core';
+import { CII_NS } from '@verinvoice/formats';
 import { attr, child, children, descend, text } from '../xml/query.js';
 import type { XmlElement } from '../xml/types.js';
 import { arrOrUndefined, parseDate102, parseDec, parseMoney, pickLineExemption } from '../values.js';

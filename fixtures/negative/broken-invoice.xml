@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   Deliberately broken CII invoice, hand-written rather than built through
-  @invoice-engine/formats on purpose: the serializer's whole job is to make
+  @verinvoice/formats on purpose: the serializer's whole job is to make
   documents like this impossible to produce, so proving the validator catches
   a bad document means bypassing it. Exists only to drive
   test/validate.test.ts's "at least 10 distinct rules" gate

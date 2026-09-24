@@ -1,9 +1,9 @@
 /**
  * Minimal XML string building shared by every serializer. No dependencies: the
- * formats package may import only @invoice-engine/core.
+ * formats package may import only @verinvoice/core.
  */
-import { decimalToString, toMajor } from '@invoice-engine/core';
-import type { Invoice, Party } from '@invoice-engine/core';
+import { decimalToString, toMajor } from '@verinvoice/core';
+import type { Invoice, Party } from '@verinvoice/core';
 
 /**
  * Escapes text content and attribute values. Also drops the characters XML 1.0

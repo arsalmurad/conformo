@@ -1,13 +1,13 @@
 import { z } from 'zod';
-import type { Invoice } from '@invoice-engine/core';
-import { InvoiceInputError } from '@invoice-engine/formats';
-import { checkXRechnung } from '@invoice-engine/formats';
+import type { Invoice } from '@verinvoice/core';
+import { InvoiceInputError } from '@verinvoice/formats';
+import { checkXRechnung } from '@verinvoice/formats';
 import { FORMAT_IDS, serialize } from '../format.js';
 import type { FormatId } from '../format.js';
 
 export const createInvoiceSchema = {
   invoiceJson: z.string().describe(
-    'A JSON-encoded Invoice object matching the EN 16931 model in @invoice-engine/core '
+    'A JSON-encoded Invoice object matching the EN 16931 model in @verinvoice/core '
     + '(BT/BG-identified fields: number, issueDate, currency, seller, buyer, payment, lines, ...). '
     + 'Money fields (unitPriceMinor, amountMinor, etc.) are integers in minor units (cents), never floats.',
   ),

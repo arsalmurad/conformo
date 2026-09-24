@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { detectXmlFormat, extractEmbeddedXml } from '@invoice-engine/parse';
+import { detectXmlFormat, extractEmbeddedXml } from '@verinvoice/parse';
 import { FORMAT_IDS, serialize } from '../format.js';
 import type { FormatId } from '../format.js';
 

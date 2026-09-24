@@ -14,8 +14,8 @@
  * a redesigned template must never change what invoice content means.
  */
 import { rgb, type PDFDocument, type PDFFont, type PDFPage } from 'pdf-lib';
-import type { Invoice, Totals } from '@invoice-engine/core';
-import { lineNet } from '@invoice-engine/core';
+import type { Invoice, Totals } from '@verinvoice/core';
+import { lineNet } from '@verinvoice/core';
 import { formatInvoiceAmount, formatInvoiceDate, localeForInvoice } from './locale.js';
 
 export type TemplateId = 'classic' | 'modern' | 'compact';

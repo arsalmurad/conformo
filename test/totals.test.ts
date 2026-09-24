@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { totals } from '@invoice-engine/core';
-import type { AllowanceCharge, Invoice, TaxCategory } from '@invoice-engine/core';
+import { totals } from '@verinvoice/core';
+import type { AllowanceCharge, Invoice, TaxCategory } from '@verinvoice/core';
 
 const base = (lines: Invoice['lines'], extra: Partial<Invoice> = {}): Invoice => ({
   number: 'T-1', issueDate: '2026-01-01', currency: 'EUR',

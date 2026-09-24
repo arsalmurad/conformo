@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import type { Invoice } from '@invoice-engine/core';
+import type { Invoice } from '@verinvoice/core';
 import { pdfjsReady } from '../pdfjsWorker.js';
 
 interface Props {
@@ -43,7 +43,7 @@ export function InvoiceDropzone({ onImport }: Props) {
         return;
       }
       const bytes = new Uint8Array(await file.arrayBuffer());
-      const { detectXmlFormat, readInvoiceFromPdf } = await import('@invoice-engine/parse');
+      const { detectXmlFormat, readInvoiceFromPdf } = await import('@verinvoice/parse');
 
       if (isPdf(bytes)) {
         await pdfjsReady;

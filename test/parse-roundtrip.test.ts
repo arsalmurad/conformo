@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, it, expect } from 'vitest';
-import type { Invoice } from '@invoice-engine/core';
-import { buildCII, buildUBL } from '@invoice-engine/formats';
+import type { Invoice } from '@verinvoice/core';
+import { buildCII, buildUBL } from '@verinvoice/formats';
 import { FIXTURES } from '../tools/fixtures.manifest.js';
 import { detectXmlFormat, UnrecognizedFormatError } from '../packages/parse/src/index.js';
 import { XmlSecurityError } from '../packages/parse/src/xml/parseXml.js';

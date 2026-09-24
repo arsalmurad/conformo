@@ -1,13 +1,13 @@
 /**
  * Same pattern as packages/ui/src/validation/browserValidator.ts: loads the
  * free SaxonJS2.rt.js runtime as a real <script> tag and the compiled SEF
- * artefacts as fetched JSON, then runs @invoice-engine/validate's browser
+ * artefacts as fetched JSON, then runs @verinvoice/validate's browser
  * entry point (never the Node one, which imports node:fs and cannot be
  * bundled for a browser at all). Assets are served from public/validator/,
  * populated by scripts/copy-validator-assets.mjs.
  */
-import { validateInBrowser } from '@invoice-engine/validate/browser';
-import type { SaxonJSLike, ValidationResult } from '@invoice-engine/validate/browser';
+import { validateInBrowser } from '@verinvoice/validate/browser';
+import type { SaxonJSLike, ValidationResult } from '@verinvoice/validate/browser';
 
 let saxonPromise: Promise<SaxonJSLike> | undefined;
 let en16931Promise: Promise<object> | undefined;

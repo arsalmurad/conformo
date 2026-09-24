@@ -1,9 +1,9 @@
 import { PDFDocument } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
-import { totals } from '@invoice-engine/core';
-import type { Invoice } from '@invoice-engine/core';
-import { buildCII } from '@invoice-engine/formats';
-import { finalizePDFA, renderInvoicePage, type TemplateId, type RenderOptions } from '@invoice-engine/pdf';
+import { totals } from '@verinvoice/core';
+import type { Invoice } from '@verinvoice/core';
+import { buildCII } from '@verinvoice/formats';
+import { finalizePDFA, renderInvoicePage, type TemplateId, type RenderOptions } from '@verinvoice/pdf';
 
 export type EmbeddableLogo = NonNullable<RenderOptions['logo']>;
 
@@ -21,7 +21,7 @@ async function loadAssets() {
 }
 
 /** Builds the same PDF/A-3 Factur-X document tools/build-sample.ts produces
- * in Node, from the same @invoice-engine/pdf renderer — proving the "renders
+ * in Node, from the same @verinvoice/pdf renderer — proving the "renders
  * identically in the browser and in Node" hard requirement by construction,
  * not by eyeballing two implementations. */
 export async function buildInvoicePdf(
@@ -45,9 +45,9 @@ export async function buildInvoicePdf(
     xmlFilename: 'factur-x.xml',
     conformanceLevel: 'EN 16931',
     title: `Invoice ${invoice.number || 'draft'}`,
-    author: invoice.seller.name || 'invoice-engine',
-    producer: 'invoice-engine',
-    creatorTool: 'invoice-engine',
+    author: invoice.seller.name || 'Verinvoice',
+    producer: 'Verinvoice',
+    creatorTool: 'Verinvoice',
     iccProfile: new Uint8Array(iccBytes),
     createDate: new Date(`${invoice.issueDate}T00:00:00Z`),
   });

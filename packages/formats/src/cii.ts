@@ -16,8 +16,8 @@
  * so a missing mandatory value shows up as a validation error instead of a
  * silently different document.
  */
-import { totals, lineNet } from '@invoice-engine/core';
-import type { AllowanceCharge, Invoice, Party, TaxCategory } from '@invoice-engine/core';
+import { totals, lineNet } from '@verinvoice/core';
+import type { AllowanceCharge, Invoice, Party, TaxCategory } from '@verinvoice/core';
 import { assertSerializable, date102, dec, electronicAddressScheme, money, req, tag, wrap } from './xml.js';
 import { CUSTOMIZATION_ID, businessProcess } from './profiles.js';
 import type { Profile } from './profiles.js';

@@ -1,4 +1,4 @@
-import type { RuleResult } from '@invoice-engine/validate/browser';
+import type { RuleResult } from '@verinvoice/validate/browser';
 
 /** "Keep the rule id visible but secondary. The human sentence leads."
  *  The rule id used to

@@ -1,14 +1,14 @@
 /**
  * Regenerates the compliance matrix in README.md from
- * @invoice-engine/compliance-data, between the COMPLIANCE-MATRIX markers, so
+ * @verinvoice/compliance-data, between the COMPLIANCE-MATRIX markers, so
  * the table in the README can never drift from the sourced dataset (the gate
  * in the project's own conventions: "the compliance matrix in the README
  * regenerates from the dataset"). Never hand-edit the table itself — edit the
  * data in packages/compliance-data/src/data/*.json and rerun this script.
  */
 import fs from 'node:fs';
-import { countries } from '@invoice-engine/compliance-data';
-import type { CountryCompliance, Mandate, Scope } from '@invoice-engine/compliance-data';
+import { countries } from '@verinvoice/compliance-data';
+import type { CountryCompliance, Mandate, Scope } from '@verinvoice/compliance-data';
 
 const START = '<!-- COMPLIANCE-MATRIX:START -->';
 const END = '<!-- COMPLIANCE-MATRIX:END -->';

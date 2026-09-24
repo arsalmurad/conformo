@@ -3,8 +3,8 @@
  * serializer, shared by create_invoice and convert_invoice so the two tools
  * can't drift on what "xrechnung-cii" means.
  */
-import { buildCII, buildUBL, buildXRechnungCII, buildXRechnungUBL } from '@invoice-engine/formats';
-import type { Invoice } from '@invoice-engine/core';
+import { buildCII, buildUBL, buildXRechnungCII, buildXRechnungUBL } from '@verinvoice/formats';
+import type { Invoice } from '@verinvoice/core';
 
 export const FORMAT_IDS = ['cii', 'ubl', 'xrechnung-cii', 'xrechnung-ubl', 'peppol-ubl'] as const;
 export type FormatId = (typeof FORMAT_IDS)[number];

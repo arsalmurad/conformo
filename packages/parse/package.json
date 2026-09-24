@@ -1,5 +1,5 @@
 {
-  "name": "@invoice-engine/parse",
+  "name": "@verinvoice/parse",
   "version": "0.0.0",
   "type": "module",
   "main": "./src/index.ts",
@@ -7,8 +7,8 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@invoice-engine/core": "*",
-    "@invoice-engine/formats": "*",
+    "@verinvoice/core": "*",
+    "@verinvoice/formats": "*",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^6.3.289"
   }

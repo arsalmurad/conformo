@@ -1,11 +1,11 @@
-import { validateInBrowser } from '@invoice-engine/validate/browser';
-import type { SaxonJSLike, ValidationResult } from '@invoice-engine/validate/browser';
+import { validateInBrowser } from '@verinvoice/validate/browser';
+import type { SaxonJSLike, ValidationResult } from '@verinvoice/validate/browser';
 
 /**
  * Loads the free SaxonJS2.rt.js runtime (no Node built-ins — see
  * tools/fetch-saxonjs.mjs) as a real <script> tag, the way a browser page
  * does it, and the compiled SEF artefacts as fetched JSON. This is the
- * browser-only counterpart to @invoice-engine/validate's Node entry: that
+ * browser-only counterpart to @verinvoice/validate's Node entry: that
  * entry imports `node:fs` and the Node `saxon-js` package directly, which
  * cannot be bundled for a browser at all, so this module — not that one —
  * is what packages/ui is allowed to import. All three files are served from

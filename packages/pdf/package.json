@@ -1,5 +1,5 @@
 {
-  "name": "@invoice-engine/pdf",
+  "name": "@verinvoice/pdf",
   "version": "0.0.0",
   "type": "module",
   "main": "./src/index.ts",
@@ -7,7 +7,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@invoice-engine/core": "*",
+    "@verinvoice/core": "*",
     "pdf-lib": "^1.17.1"
   }
 }

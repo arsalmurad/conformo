@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { buildCII } from '@invoice-engine/formats';
-import type { Invoice } from '@invoice-engine/core';
+import { buildCII } from '@verinvoice/formats';
+import type { Invoice } from '@verinvoice/core';
 import sample from '../fixtures/sample-invoice.json' with { type: 'json' };
 
 const inv = sample as unknown as Invoice;

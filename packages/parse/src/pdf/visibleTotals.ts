@@ -15,8 +15,8 @@
  * that doesn't say "Amount due" simply reports checked: false, which the
  * caller should treat as "unverified", not "clean".
  */
-import { totals } from '@invoice-engine/core';
-import type { Invoice } from '@invoice-engine/core';
+import { totals } from '@verinvoice/core';
+import type { Invoice } from '@verinvoice/core';
 import { parseMoney } from '../values.js';
 
 export interface TotalMismatch {

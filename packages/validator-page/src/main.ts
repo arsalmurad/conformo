@@ -1,5 +1,5 @@
-import { extractEmbeddedXml } from '@invoice-engine/parse';
-import type { RuleResult } from '@invoice-engine/validate/browser';
+import { extractEmbeddedXml } from '@verinvoice/parse';
+import type { RuleResult } from '@verinvoice/validate/browser';
 import { validateInvoiceXml } from './browserValidator.js';
 
 const dropzone = document.getElementById('dropzone')!;

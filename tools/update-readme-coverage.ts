@@ -6,7 +6,7 @@
  * packages/validate/src/messages/en.ts and rerun this script.
  */
 import fs from 'node:fs';
-import { computeCoverage } from '@invoice-engine/validate/coverage';
+import { computeCoverage } from '@verinvoice/validate/coverage';
 
 const START = '<!-- MESSAGE-COVERAGE:START -->';
 const END = '<!-- MESSAGE-COVERAGE:END -->';

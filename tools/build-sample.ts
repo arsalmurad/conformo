@@ -7,10 +7,10 @@
 import fs from 'node:fs';
 import { PDFDocument } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
-import { totals } from '@invoice-engine/core';
-import type { Invoice } from '@invoice-engine/core';
-import { buildCII } from '@invoice-engine/formats';
-import { finalizePDFA, renderInvoicePage } from '@invoice-engine/pdf';
+import { totals } from '@verinvoice/core';
+import type { Invoice } from '@verinvoice/core';
+import { buildCII } from '@verinvoice/formats';
+import { finalizePDFA, renderInvoicePage } from '@verinvoice/pdf';
 
 const FONTS = process.env.FONT_DIR ?? './assets/fonts';
 const ICC = process.env.ICC_PATH ?? './assets/sRGB.icc';
@@ -32,7 +32,7 @@ await renderInvoicePage(pdf, { regular, bold }, invoice, t, TEMPLATE);
 await finalizePDFA(pdf, {
   xml, xmlFilename: 'factur-x.xml', conformanceLevel: 'EN 16931',
   title: `Invoice ${invoice.number}`, author: invoice.seller.name,
-  producer: 'invoice-engine', creatorTool: 'invoice-engine',
+  producer: 'Verinvoice', creatorTool: 'Verinvoice',
   iccProfile: fs.readFileSync(ICC),
   createDate: new Date(`${invoice.issueDate}T00:00:00Z`),
 });

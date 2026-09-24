@@ -1,5 +1,5 @@
 {
-  "name": "@invoice-engine/docs-site",
+  "name": "@verinvoice/docs-site",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -7,6 +7,6 @@
     "build": "tsx src/generate.ts"
   },
   "dependencies": {
-    "@invoice-engine/compliance-data": "*"
+    "@verinvoice/compliance-data": "*"
   }
 }

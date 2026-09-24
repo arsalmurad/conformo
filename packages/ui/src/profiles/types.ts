@@ -1,4 +1,4 @@
-import type { Party } from '@invoice-engine/core';
+import type { Party } from '@verinvoice/core';
 
 /** A saved, reusable seller/buyer entity — the "profiles" hard requirement
  * from the project's own conventions. Wraps the same `Party` shape the core model

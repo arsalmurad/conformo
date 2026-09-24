@@ -9,7 +9,7 @@
  * checkXRechnung() is NOT a validator and passing it proves nothing. The claim
  * "valid" comes from the official KoSIT Schematron (tools/validate.py), never from here.
  */
-import type { Invoice } from '@invoice-engine/core';
+import type { Invoice } from '@verinvoice/core';
 import { buildCII } from './cii.js';
 import { buildUBL } from './ubl.js';
 

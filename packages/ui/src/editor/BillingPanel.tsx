@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import type { Invoice, Line } from '@invoice-engine/core';
-import { toMajor } from '@invoice-engine/core';
+import type { Invoice, Line } from '@verinvoice/core';
+import { toMajor } from '@verinvoice/core';
 import { MoneyInput } from './MoneyInput.js';
 
 const SHORTCUTS: { percent: number; label: string }[] = [

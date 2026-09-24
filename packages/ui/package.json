@@ -1,5 +1,5 @@
 {
-  "name": "@invoice-engine/ui",
+  "name": "@verinvoice/ui",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -12,11 +12,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@invoice-engine/core": "*",
-    "@invoice-engine/formats": "*",
-    "@invoice-engine/parse": "*",
-    "@invoice-engine/pdf": "*",
-    "@invoice-engine/validate": "*",
+    "@verinvoice/core": "*",
+    "@verinvoice/formats": "*",
+    "@verinvoice/parse": "*",
+    "@verinvoice/pdf": "*",
+    "@verinvoice/validate": "*",
     "@pdf-lib/fontkit": "^1.1.1",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^6.3.289",

@@ -46,7 +46,7 @@ _TRANSPILE = ROOT / "schxslt2" / "schxslt2-1.11.2" / "transpile.xsl"
 
 def _download(name):
     url, pin = PINS[name]
-    req = urllib.request.Request(url, headers={"User-Agent": "invoice-engine-tools"})
+    req = urllib.request.Request(url, headers={"User-Agent": "verinvoice-tools"})
     with urllib.request.urlopen(req, timeout=120) as r:
         data = r.read()
     got = hashlib.sha256(data).hexdigest()

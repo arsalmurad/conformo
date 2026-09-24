@@ -1,5 +1,5 @@
 {
-  "name": "@invoice-engine/validator-page",
+  "name": "@verinvoice/validator-page",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -11,8 +11,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@invoice-engine/validate": "*",
-    "@invoice-engine/parse": "*"
+    "@verinvoice/validate": "*",
+    "@verinvoice/parse": "*"
   },
   "devDependencies": {
     "typescript": "~6.0.2",
