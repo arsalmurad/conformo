@@ -4,6 +4,7 @@ import { totals } from '@conformo/core';
 import type { Invoice } from '@conformo/core';
 import { buildCII } from '@conformo/formats';
 import { finalizePDFA, renderInvoicePage, type TemplateId, type RenderOptions } from '@conformo/pdf';
+import { BASE_URL } from '../baseUrl.js';
 
 export type EmbeddableLogo = NonNullable<RenderOptions['logo']>;
 
@@ -11,10 +12,14 @@ let fontCache: { regularBytes: ArrayBuffer; boldBytes: ArrayBuffer; iccBytes: Ar
 
 async function loadAssets() {
   if (fontCache) return fontCache;
+  // BASE_URL (baseUrl.ts), not a hardcoded "/" — respects VITE_BASE_PATH
+  // (vite.config.ts) so this still resolves when the app is deployed under a
+  // subpath rather than a domain root.
+  const base = BASE_URL;
   const [regularBytes, boldBytes, iccBytes] = await Promise.all([
-    fetch('/assets/fonts/WorkSans-Regular.ttf').then((r) => r.arrayBuffer()),
-    fetch('/assets/fonts/WorkSans-Bold.ttf').then((r) => r.arrayBuffer()),
-    fetch('/assets/sRGB.icc').then((r) => r.arrayBuffer()),
+    fetch(`${base}assets/fonts/WorkSans-Regular.ttf`).then((r) => r.arrayBuffer()),
+    fetch(`${base}assets/fonts/WorkSans-Bold.ttf`).then((r) => r.arrayBuffer()),
+    fetch(`${base}assets/sRGB.icc`).then((r) => r.arrayBuffer()),
   ]);
   fontCache = { regularBytes, boldBytes, iccBytes };
   return fontCache;

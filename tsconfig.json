@@ -28,7 +28,15 @@
   // pdfjsWorker.ts uses Vite's `?url` import convention, typed only by
   // vite/client (which this Node-context config deliberately doesn't set,
   // since it also checks tools/ and test/, which run under Node, not Vite).
-  // packages/ui's own tsconfig.app.json (chained after this one in the root
-  // "typecheck" script) has vite/client and checks this file correctly.
+  // Nothing else needs excluding here: every other Vite-only need
+  // (VITE_BASE_PATH's import.meta.env.BASE_URL) goes through baseUrl.ts's
+  // own local type assertion instead of the global vite/client augmentation
+  // — found the hard way, since a file reachable via import from an
+  // included plain-.ts file gets type-checked by this pass regardless of
+  // being listed here itself; exclude only stops a file from being an
+  // *entry point*, not from being pulled in transitively. packages/ui's and
+  // packages/validator-page's own tsconfig.json (both chained after this
+  // one in the root "typecheck" script) have vite/client and check
+  // pdfjsWorker.ts correctly.
   "exclude": ["packages/ui/src/pdfjsWorker.ts"]
 }

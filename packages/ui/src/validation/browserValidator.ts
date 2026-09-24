@@ -1,5 +1,6 @@
 import { validateInBrowser } from '@conformo/validate/browser';
 import type { SaxonJSLike, ValidationResult } from '@conformo/validate/browser';
+import { BASE_URL } from '../baseUrl.js';
 
 /**
  * Loads the free SaxonJS2.rt.js runtime (no Node built-ins — see
@@ -20,7 +21,9 @@ function loadSaxon(): Promise<SaxonJSLike> {
   if (!saxonPromise) {
     saxonPromise = new Promise((resolve, reject) => {
       const script = document.createElement('script');
-      script.src = '/validator/SaxonJS2.rt.js';
+      // BASE_URL (baseUrl.ts), not a hardcoded "/" — see vite.config.ts's
+      // VITE_BASE_PATH, for when this is deployed under a subpath.
+      script.src = `${BASE_URL}validator/SaxonJS2.rt.js`;
       script.onload = () => resolve((window as unknown as { SaxonJS: SaxonJSLike }).SaxonJS);
       script.onerror = () => reject(new Error('failed to load the SaxonJS runtime'));
       document.head.appendChild(script);
@@ -30,7 +33,7 @@ function loadSaxon(): Promise<SaxonJSLike> {
 }
 
 function loadSef(name: 'en16931' | 'fr-ctc'): Promise<object> {
-  return fetch(`/validator/${name}.sef.json`).then((r) => {
+  return fetch(`${BASE_URL}validator/${name}.sef.json`).then((r) => {
     if (!r.ok) throw new Error(`missing compiled Schematron artefact ${name}.sef.json (run npm run schematron:compile)`);
     return r.json();
   });

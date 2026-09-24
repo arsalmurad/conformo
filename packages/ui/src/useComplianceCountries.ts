@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { BASE_URL } from './baseUrl.js';
 
 export interface ComplianceCountry {
   country: string;
@@ -13,7 +14,7 @@ export function useComplianceCountries(): ComplianceCountry[] {
   const [countries, setCountries] = useState<ComplianceCountry[]>([]);
   useEffect(() => {
     let cancelled = false;
-    fetch('/compliance-countries.json')
+    fetch(`${BASE_URL}compliance-countries.json`)
       .then((r) => (r.ok ? r.json() : []))
       .then((data: ComplianceCountry[]) => { if (!cancelled) setCountries(data); })
       .catch(() => { /* the selector just falls back to EN 16931 + France */ });

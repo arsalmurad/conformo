@@ -6,7 +6,7 @@
     "packages/*"
   ],
   "scripts": {
-    "typecheck": "tsc -p tsconfig.json --noEmit && npm run typecheck --workspace=packages/ui",
+    "typecheck": "tsc -p tsconfig.json --noEmit && npm run typecheck --workspace=packages/ui && npm run typecheck --workspace=packages/validator-page",
     "test": "vitest run",
     "build:sample": "tsx tools/build-sample.ts",
     "build:fixtures": "tsx tools/build-fixtures.ts",

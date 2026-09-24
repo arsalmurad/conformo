@@ -8,7 +8,8 @@
     "dev": "vite",
     "prebuild": "node scripts/copy-validator-assets.mjs",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@conformo/validate": "*",
