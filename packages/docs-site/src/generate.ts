@@ -17,6 +17,9 @@ import { page } from './layout.js';
 // repo root).
 const OUT = fileURLToPath(new URL('../dist', import.meta.url));
 
+const APP_URL = 'https://conformo-three.vercel.app';
+const VALIDATOR_URL = 'https://conformo-validate.vercel.app';
+
 function esc(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
@@ -89,6 +92,8 @@ ZUGFeRD, XRechnung, UBL 2.1 and Peppol BIS, validated live against the
 official CEN Schematron plus each country's CIUS rules.</p>
 <h2>Where to start</h2>
 <ul>
+  <li><a href="${APP_URL}">Open the app</a> — no signup, nothing installed.</li>
+  <li><a href="${VALIDATOR_URL}">Validate an invoice you already have</a> — checks it against the official Schematron, entirely client-side.</li>
   <li><a href="countries/index.html">Compliance status by country</a> — generated from a sourced dataset.</li>
   <li><a href="https://github.com/arsalmurad/conformo">Source on GitHub</a></li>
   <li><a href="https://github.com/arsalmurad/conformo/blob/main/CONTRIBUTING.md">Contributing</a></li>

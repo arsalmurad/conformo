@@ -62,6 +62,7 @@ export function page(opts: PageOptions, body: string): string {
   <nav>
     <a href="${root}/index.html"${opts.active === 'home' ? ' class="active"' : ''}>Home</a>
     <a href="${root}/countries/index.html"${opts.active === 'countries' ? ' class="active"' : ''}>Countries</a>
+    <a href="https://conformo-three.vercel.app">App</a>
     <a href="https://github.com/arsalmurad/conformo">GitHub</a>
   </nav>
 </header>
