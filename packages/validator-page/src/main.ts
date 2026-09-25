@@ -9,6 +9,7 @@ const countrySelect = document.getElementById('country') as HTMLSelectElement;
 const validateBtn = document.getElementById('validate-btn') as HTMLButtonElement;
 const statusEl = document.getElementById('status')!;
 const rulesEl = document.getElementById('rules')!;
+const fileNameEl = document.getElementById('file-name')!;
 
 function isPdf(bytes: Uint8Array): boolean {
   return bytes.length >= 5 && new TextDecoder().decode(bytes.subarray(0, 5)) === '%PDF-';
@@ -78,7 +79,10 @@ async function runValidation(): Promise<void> {
 
 fileInput.addEventListener('change', () => {
   const file = fileInput.files?.[0];
-  if (file) void handleFile(file);
+  if (file) {
+    fileNameEl.textContent = file.name;
+    void handleFile(file);
+  }
 });
 
 dropzone.addEventListener('dragover', (e) => {

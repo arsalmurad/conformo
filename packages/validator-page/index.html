@@ -15,7 +15,10 @@
   p.lede { color: var(--mute); margin: 0 0 24px; font-size: 14px; }
   .dropzone { border: 2px dashed var(--line); border-radius: 10px; padding: 28px; text-align: center; }
   .dropzone.active { border-color: var(--accent); }
-  .dropzone input[type=file] { margin-top: 10px; }
+  .file-input-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+  .file-picker-button { display: inline-block; margin-top: 10px; padding: 8px 16px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font-weight: 600; cursor: pointer; }
+  .file-picker-button:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .file-picker-name { margin-top: 8px; font-size: 13px; color: var(--mute); }
   textarea { width: 100%; min-height: 160px; font: 13px/1.4 ui-monospace, Consolas, monospace; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: inherit; margin-top: 16px; }
   .row { display: flex; gap: 12px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
   button { padding: 8px 16px; border-radius: 6px; border: 1px solid var(--line); background: var(--accent); color: #fff; font-weight: 600; cursor: pointer; }
@@ -42,7 +45,10 @@
 
   <div id="dropzone" class="dropzone">
     <div>Drop a CII XML file or a Factur-X/ZUGFeRD PDF here, or paste XML below.</div>
-    <input id="file-input" type="file" accept=".xml,.pdf,application/xml,text/xml,application/pdf">
+    <label class="file-picker-button" for="file-input">Choose file
+      <input id="file-input" class="file-input-hidden" type="file" accept=".xml,.pdf,application/xml,text/xml,application/pdf">
+    </label>
+    <div id="file-name" class="file-picker-name">No file chosen</div>
   </div>
 
   <textarea id="xml-input" placeholder="...or paste CII XML here"></textarea>
