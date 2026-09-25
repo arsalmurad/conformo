@@ -39,6 +39,19 @@ function loadSef(name: 'en16931' | 'fr-ctc'): Promise<object> {
   });
 }
 
+// Kicked off eagerly, at module load, not lazily on the first validation
+// call: found by actually loading the page and editing a field right away —
+// the SaxonJS runtime + the EN 16931 SEF (both multi-file, multi-KB fetches)
+// were still in flight when the *first* edit's validation pass needed them,
+// and that same first-edit moment competed with the live preview's own
+// pdf.js worker cold-start for the same network/main-thread time, pushing
+// the preview well past its own 500ms budget. Every invoice needs the EN
+// 16931 SEF regardless of country, so it's safe to always prefetch; the
+// French CTC SEF stays lazy (loadSef('fr-ctc') below) since it's only ever
+// needed if the user selects France.
+loadSaxon();
+en16931Promise ??= loadSef('en16931');
+
 export async function validateInvoiceXml(xml: string, country: 'FR' | undefined): Promise<ValidationResult> {
   const [saxonJs, en16931] = await Promise.all([
     loadSaxon(),

@@ -122,9 +122,61 @@
   align-items: start;
 }
 
-@media (max-width: 900px) {
+/* Aligned with the mobile Form/Preview toggle's own breakpoint below —
+ * having the workspace stack to one column at a different width than the
+ * toggle appears at would leave a dead zone where both panels are stacked
+ * (a scroll to reach the preview) but no toggle exists yet to skip it. */
+@media (max-width: 768px) {
   .workspace {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Hidden above 768px — both panels already sit side by side there, so
+ * there's nothing to switch between. Below it, .workspace.mobile-view-form/
+ * -preview (further down) shows exactly one of the two panels at a time. */
+.mobile-view-toggle {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-view-toggle {
+    display: flex;
+    gap: 4px;
+    margin-bottom: var(--space-4);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    padding: 4px;
+  }
+
+  .mobile-view-toggle button {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--mute);
+    font: inherit;
+    font-weight: 600;
+    font-size: var(--text-sm);
+    cursor: pointer;
+  }
+
+  .mobile-view-toggle button.active {
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 10%);
+  }
+
+  /* Both panels stay mounted (see App.tsx) so switching never re-triggers a
+     preview rebuild or drops form focus — only visibility toggles. */
+  .workspace.mobile-view-form .preview-panel {
+    display: none;
+  }
+
+  .workspace.mobile-view-preview .editor {
+    display: none;
   }
 }
 
@@ -191,8 +243,7 @@ fieldset.party legend {
   color: var(--mute);
 }
 
-.field input,
-.field select {
+.field input {
   padding: 8px var(--space-2);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
@@ -201,8 +252,11 @@ fieldset.party legend {
   width: 100%;
 }
 
-.field input:focus-visible,
-.field select:focus-visible {
+.field select {
+  width: 100%;
+}
+
+.field input:focus-visible {
   border-color: var(--focus-ring);
 }
 
@@ -261,9 +315,22 @@ fieldset.party legend {
    no cross-browser way to restyle that part without giving up native
    keyboard and screen-reader behavior, which is not a trade worth making
    for a visual detail nobody sees except while the menu is open. */
+/* Universal, not .field-scoped: a <select> outside a .field (the header's
+ * "Country rules"/"Template" pickers) used to fall through to nothing but
+ * appearance:none, leaving Chrome's own default UA border/background/radius
+ * visible underneath the custom chevron — found by actually loading the
+ * page at 390px, where it read as a native control despite the chevron.
+ * Every select gets the same border/background/radius/padding as a form
+ * input now, everywhere, not only inside a .field wrapper. */
 select {
   appearance: none;
   -webkit-appearance: none;
+  padding: 8px var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background-color: var(--surface);
+  color: var(--ink);
+  font: inherit;
   background-image: linear-gradient(45deg, transparent 50%, var(--mute) 50%), linear-gradient(135deg, var(--mute) 50%, transparent 50%);
   background-position: calc(100% - 18px) center, calc(100% - 13px) center;
   background-size: 5px 5px, 5px 5px;
@@ -271,24 +338,64 @@ select {
   padding-right: 30px !important;
 }
 
-/* Same normalization for the "Choose file" button every native file input
-   draws — ::file-selector-button is the standards-track pseudo-element for
-   exactly this (all evergreen browsers support it), so this styles the real
-   control rather than hiding it behind a fake one. */
-input[type='file']::file-selector-button {
-  font: inherit;
-  font-size: var(--text-sm);
-  padding: 6px var(--space-3);
-  margin-right: var(--space-2);
+select:focus-visible {
+  border-color: var(--focus-ring);
+}
+
+/* File inputs: ::file-selector-button styling (restyling the real control's
+ * own button) turned out to still leave a native "no file chosen" label next
+ * to it that no CSS reaches, so the control reads as native regardless
+ * (found by actually loading the page at 390px: the project's own conventions's own gate wants no native-looking file controls, and half a
+ * native control still counts). Hidden instead — visually, not from the
+ * accessibility tree or the tab order — behind a real <label> styled as a
+ * button, the standard robust pattern: a screen reader still sees a real
+ * file input with its real label, Tab still reaches it directly and
+ * Enter/Space still opens the native picker, and a mouse click on the
+ * styled label activates the input it's bound to via `for`/`id` exactly
+ * like clicking a native label always has. */
+.file-input-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.file-picker-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 8px var(--space-3);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: var(--surface-2);
   color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: 600;
   cursor: pointer;
 }
 
-input[type='file']::file-selector-button:hover {
+.file-picker-button:hover {
   border-color: var(--line-strong);
+}
+
+/* The real input is visually hidden, so its own :focus-visible outline
+ * would land on an invisible 1x1 box — :focus-within on the wrapping label
+ * puts the same outline on the visible styled button instead, for a
+ * keyboard user tabbing to it. */
+.file-picker-button:focus-within {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.file-picker-name {
+  font-size: var(--text-sm);
+  color: var(--mute);
 }
 
 /* `color-scheme: dark` (index.css) already tells Chromium to draw the date
@@ -510,6 +617,7 @@ input[type='file']::file-selector-button:hover {
 .invoice-dropzone {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 6px;
   font-size: var(--text-base);
   padding: var(--space-4);
@@ -521,10 +629,6 @@ input[type='file']::file-selector-button:hover {
 .invoice-dropzone-active {
   border-color: var(--accent);
   background: var(--accent-soft);
-}
-
-.invoice-dropzone input[type='file'] {
-  font-size: var(--text-sm);
 }
 
 .invoice-dropzone-hint {
@@ -544,12 +648,9 @@ input[type='file']::file-selector-button:hover {
 .logo-upload {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 6px;
   font-size: var(--text-base);
-}
-
-.logo-upload input[type='file'] {
-  font-size: var(--text-sm);
 }
 
 .logo-preview {
@@ -618,6 +719,12 @@ input[type='file']::file-selector-button:hover {
    forces a fixed height, and .app's padding is generous enough (140px) for
    its tallest real state with room to spare, rather than tuned to the
    shortest one. */
+/* Just the two export/download actions now — the passphrase prompt used to
+ * live here too, wrapping onto up to three stacked rows on a narrow screen
+ * (found by actually loading the page at 390px: 146px, 17% of viewport
+ * height, well over the "no more than 10%" budget). Moved to a normal
+ * banner in the page flow instead (see .protect-prompt below) so this bar
+ * is always exactly one row, at any width. */
 .app-footer {
   position: fixed;
   left: 0;
@@ -628,19 +735,21 @@ input[type='file']::file-selector-button:hover {
   box-shadow: 0 -4px 16px rgb(0 0 0 / 6%);
   padding: var(--space-3) var(--space-5);
   display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
-  gap: var(--space-3);
   z-index: 10;
 }
 
 .protect-prompt {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--space-2);
-  flex: 1;
-  max-width: 480px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
 }
 
 .protect-prompt input {
@@ -706,10 +815,11 @@ button.secondary {
 }
 
 /* Live preview panel (an earlier pass: "the single biggest functional gap"). Shows
-   the exact PDF bytes buildInvoicePdf() would download in the browser's own
-   native PDF viewer (an iframe on a blob: URL) — not a parallel HTML mockup,
-   and not rasterized by a second renderer either, so there is no second
-   implementation that could silently drift from the real output. */
+   the exact PDF bytes buildInvoicePdf() would download, rasterized onto a
+   <canvas> with pdf.js at devicePixelRatio — not a parallel HTML mockup that
+   could silently drift from the real output. An <iframe src="blob:...">
+   version was faster but showed the browser's own PDF-viewer toolbar and a
+   "blob:" URL, which looks like a debugging artifact, not a product. */
 .preview-panel {
   position: sticky;
   top: var(--space-6);
@@ -724,20 +834,26 @@ button.secondary {
   overflow: auto;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 768px) {
   .preview-panel {
     position: static;
-    max-height: 480px;
+    /* Generous, not the old flat 480px: on this breakpoint the mobile
+       Form/Preview toggle shows this panel alone (not sharing a column
+       with the editor), so it should use most of the viewport rather than
+       being capped as if it were still squeezed beside the form. */
+    max-height: 75vh;
   }
 }
 
-.preview-panel iframe {
+.preview-panel canvas {
+  display: block;
   width: 100%;
-  /* A4 portrait (595.28 x 841.89pt, PAGE_WIDTH/PAGE_HEIGHT in templates.ts) —
-     an aspect-ratio box, not a fixed height, so the frame keeps the page's
-     real proportions as the sidebar's own width changes. */
+  /* A4 portrait fallback (595.28 x 841.89pt, PAGE_WIDTH/PAGE_HEIGHT in
+     templates.ts) for the moment before the first render sets an explicit
+     inline width/height (InvoicePreview.tsx computes those from the real
+     page, in CSS px, so they always win once set). Without this, the canvas
+     has no dimensions at all until then and the panel visibly collapses. */
   aspect-ratio: 595.28 / 841.89;
-  border: none;
   border-radius: var(--radius-sm);
   box-shadow: 0 2px 10px rgb(0 0 0 / 12%);
   background: white;

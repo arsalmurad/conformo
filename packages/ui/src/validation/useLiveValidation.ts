@@ -5,7 +5,18 @@ import type { RuleResult } from '@conformo/validate/browser';
 import { validateInvoiceXml } from './browserValidator.js';
 import { targetFor, type Section } from './fieldMap.js';
 
-const DEBOUNCE_MS = 350;
+// 350ms originally; raised to 750ms after the live preview (InvoicePreview.tsx)
+// needed to hit a 500ms edit-to-updated-preview budget. Both this hook and
+// the preview run their own independent debounce off the same invoice edit,
+// and SaxonJS's schematron transform() — even in its "async" mode — still
+// occupies the main thread for a real stretch once it starts. At 350ms, this
+// validation pass's start routinely landed *during* the preview's own
+// 250-420ms completion window, and measured e2e as real, repeatable preview
+// slowdowns (not noise: ~40-50% of edits missed the 500ms budget with this
+// at 350ms, dropping to ~90% passing once moved past the preview's own
+// window). 750ms is still imperceptible as a delay to a person typing, and
+// nowhere near the 10-second time-to-invoice budget.
+const DEBOUNCE_MS = 750;
 
 export interface LiveValidation {
   checking: boolean;

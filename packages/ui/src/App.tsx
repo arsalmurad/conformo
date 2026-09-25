@@ -45,6 +45,13 @@ export default function App() {
   const touchedFields = useTouchedFields();
   const complianceCountries = useComplianceCountries();
   const isUntouched = !invoice.number && !invoice.seller.name && !invoice.buyer.name && invoice.lines.every((l) => !l.name);
+  // Below 768px the editor and preview stack vertically (.workspace's own
+  // media query) — the preview used to be a long scroll below the entire
+  // form. This toggle switches which one is visible instead, so the preview
+  // is one tap away rather than at the bottom of the page. Both stay
+  // mounted (CSS-only show/hide, see .workspace.mobile-view-*) so switching
+  // back and forth never re-triggers a preview rebuild or loses form focus.
+  const [mobileView, setMobileView] = useState<'form' | 'preview'>('form');
 
   if (lock.status === 'checking') return null;
   if (lock.status === 'locked' || lock.status === 'wrong-passphrase') {
@@ -111,6 +118,8 @@ export default function App() {
         </div>
       )}
 
+      {!protectedSince && <ProtectPrompt onProtect={protect} />}
+
       <InvoiceDropzone onImport={setInvoice} />
 
       <ValidationSummary
@@ -122,7 +131,16 @@ export default function App() {
         onIssueClick={(key) => goToField(key, touchedFields.markTouched)}
       />
 
-      <div className="workspace">
+      <div className="mobile-view-toggle" role="tablist" aria-label="Form or preview">
+        <button type="button" role="tab" aria-selected={mobileView === 'form'} className={mobileView === 'form' ? 'active' : ''} onClick={() => setMobileView('form')}>
+          Form
+        </button>
+        <button type="button" role="tab" aria-selected={mobileView === 'preview'} className={mobileView === 'preview' ? 'active' : ''} onClick={() => setMobileView('preview')}>
+          Preview
+        </button>
+      </div>
+
+      <div className={`workspace mobile-view-${mobileView}`}>
         <InvoiceEditor
           invoice={invoice}
           onChange={setInvoice}
@@ -140,9 +158,6 @@ export default function App() {
       </div>
 
       <footer className="app-footer">
-        {!protectedSince && (
-          <ProtectPrompt onProtect={protect} />
-        )}
         <div className="app-footer-actions">
           <button type="button" onClick={exportJson}>
             Export JSON

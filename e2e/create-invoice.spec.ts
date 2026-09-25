@@ -106,11 +106,10 @@ test('creates an invoice end to end and the downloaded PDF passes tools/validate
  *  "a new e2e assertion that
  * the live preview reflects an edit within 500ms." Measures from the moment
  * the field edit lands (Playwright's fill() resolves) to the moment the
- * preview iframe points at a new PDF (a new blob: URL — InvoicePreview only
- * assigns one once buildInvoicePdf() has actually produced fresh bytes) —
- * the most literal reading of "reflects an edit" available, since the iframe
- * shows the exact PDF the download button would produce, not a re-rendering
- * of it.
+ * preview canvas has actually painted the new page — canvas.dataset.
+ * renderedGeneration (InvoicePreview.tsx) only gets set after the full
+ * build-PDF -> pdf.js render -> blit-to-visible-canvas pipeline completes,
+ * so it's a real completion signal, not a proxy for one.
  */
 test('live preview reflects an edit within 500ms', async ({ page }) => {
   await page.goto('/');
@@ -120,17 +119,69 @@ test('live preview reflects an edit within 500ms', async ({ page }) => {
     await discardBtn.click();
   }
 
-  const frame = page.locator('.preview-panel iframe');
-  await expect(frame).toBeVisible();
+  const canvas = page.locator('.preview-panel canvas');
+  await expect(canvas).toBeVisible();
   await expect(page.getByText(/Live preview — this is the PDF/i)).toBeVisible({ timeout: 10_000 });
 
-  const before = await frame.getAttribute('src');
+  const before = await canvas.getAttribute('data-rendered-generation');
 
   const start = Date.now();
   await page.getByLabel('Currency').fill('USD');
 
-  await expect.poll(() => frame.getAttribute('src'), { timeout: 2_000, intervals: [10] }).not.toBe(before);
+  await expect.poll(() => canvas.getAttribute('data-rendered-generation'), { timeout: 2_000, intervals: [10] }).not.toBe(before);
   const elapsed = Date.now() - start;
 
   expect(elapsed).toBeLessThan(500);
 });
+
+/**
+ * the project's own conventions: the live preview must have no browser
+ * PDF-viewer toolbar and no "blob:..." identity — checked here rather than
+ * just by construction (canvas + pdf.js instead of <iframe src="blob:...">)
+ * because a regression back to an iframe would otherwise only be caught by
+ * eyeballing a screenshot.
+ */
+test('live preview has no iframe/blob chrome', async ({ page }) => {
+  await page.goto('/');
+  const discardBtn = page.getByRole('button', { name: /discard it and start a new invoice/i });
+  if (await discardBtn.isVisible().catch(() => false)) await discardBtn.click();
+
+  await expect(page.locator('.preview-panel canvas')).toBeVisible();
+  await expect(page.locator('.preview-panel iframe')).toHaveCount(0);
+});
+
+/**
+ * the project's own conventions: "add a Playwright check that the
+ * preview canvas has non-blank pixels ... at 1440px and 390px wide."
+ */
+for (const width of [1440, 390]) {
+  test(`live preview canvas has real content at ${width}px wide`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/');
+    const discardBtn = page.getByRole('button', { name: /discard it and start a new invoice/i });
+    if (await discardBtn.isVisible().catch(() => false)) await discardBtn.click();
+
+    if (width < 768) {
+      await page.getByRole('tab', { name: 'Preview' }).click();
+    }
+
+    const canvas = page.locator('.preview-panel canvas');
+    await expect(canvas).toBeVisible();
+    await expect.poll(() => canvas.getAttribute('data-rendered-generation'), { timeout: 10_000 }).not.toBeNull();
+
+    const sample = await canvas.evaluate((c: HTMLCanvasElement) => {
+      const ctx = c.getContext('2d')!;
+      const { data } = ctx.getImageData(0, 0, c.width, c.height);
+      let nonWhite = 0;
+      for (let i = 0; i < data.length; i += 4) {
+        if (data[i]! < 250 || data[i + 1]! < 250 || data[i + 2]! < 250) nonWhite++;
+      }
+      return { nonWhite, total: c.width * c.height };
+    });
+    expect(sample.nonWhite).toBeGreaterThan(0);
+    // Not "any non-white pixel" alone — a single stray pixel would pass that
+    // and still be a blank-looking page. A real invoice page (header, table
+    // lines, totals) covers a real fraction of the canvas.
+    expect(sample.nonWhite / sample.total).toBeGreaterThan(0.005);
+  });
+}

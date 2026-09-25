@@ -64,7 +64,7 @@ machine unless you choose to send it somewhere.
 
 <!-- MESSAGE-COVERAGE:END -->
 
-**Time to a downloaded invoice for a returning user: ~1.8–3.1s** (5 runs,
+**Time to a downloaded invoice for a returning user: ~1.8–2.9s** (5 runs,
 `e2e/measure-time-to-invoice.ts`; well inside the 10-second target). Measured
 end to end against the production build — service worker warm, unlocking an
 encrypted draft with a passphrase, loading a saved seller profile, filling

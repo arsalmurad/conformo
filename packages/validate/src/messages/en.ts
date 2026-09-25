@@ -14,20 +14,23 @@ import type { PlainLanguageMessage } from "../types.js";
  *
  * Coverage (see `packages/validate/src/coverage.ts` / `npm run
  * report:message-coverage` for the live number, also printed in the
- * README): every mandatory-field rule (BR-01..BR-16), every BR-CO-*
- * (cross-field/arithmetic) rule, and every member of every VAT-category
- * family (BR-S/Z/E/AE/IC/G/O-*, the categories a normal invoice actually
- * hits), plus the French CTC rules this project's own sample invoice failed
- * against in an earlier pass (see docs/pdf-traps.md). Not yet written: BR-17..65
- * (mostly single-field presence/format rules on payee, delivery and
- * item-attribute groups no current fixture exercises), BR-DEC-* beyond
- * BR-DEC-14 (all "at most 2 decimal places", same shape repeated ~20 times),
- * and BR-AF/AG/B (Italian domestic split-payment and reverse-charge variants
- * outside this project's target countries). None of that is a silent gap: no
- * rule ever reaches a caller as raw `[BR-XX]-` text regardless — the SVRL
- * parser (src/svrl.ts) strips that bracket from every message unconditionally,
- * hand-written or not; a rule without an entry here just falls back to the
- * official Schematron sentence with the bracket removed, not a hidden entry.
+ * README): every rule in the compiled EN 16931 SEF — every mandatory-field
+ * rule (BR-01..BR-16), every BR-CO-* (cross-field/arithmetic) rule, every
+ * member of every VAT-category family including the two Spanish regional
+ * regimes (BR-S/Z/E/AE/IC/G/O/AF/AG-*: AF is IGIC, the Canary Islands'
+ * VAT-replacement tax; AG is IPSI, the equivalent for Ceuta and Melilla —
+ * same shape as the mainland categories, just their own rate/reconciliation
+ * rules), Italy's split-payment mechanism (BR-B-*, a payment-routing regime
+ * for invoices to Italian public bodies, not a VAT rate category), every
+ * BR-17..65 single-field presence/format rule, every BR-DEC-* "at most 2
+ * decimal places" rule, the two Factur-X-specific extension rules
+ * (BR-FX-EN-04, BR-FXEXT-12), and the French CTC rules this project's own
+ * sample invoice failed against in an earlier pass (see docs/pdf-traps.md). None of
+ * this coverage is a hard guarantee against a gap regardless: no rule ever
+ * reaches a caller as raw `[BR-XX]-` text — the SVRL parser (src/svrl.ts)
+ * strips that bracket from every message unconditionally, hand-written or
+ * not; a rule without an entry here just falls back to the official
+ * Schematron sentence with the bracket removed, not a hidden entry.
  *
  * This file is data, not logic, specifically so it can grow a `fr.ts`,
  * `de.ts`, etc. beside it without touching src/messages/index.ts or any
@@ -644,6 +647,469 @@ export const en: Record<string, PlainLanguageMessage> = {
     summary: "An invoice has a not-subject-to-VAT (\"O\") VAT breakdown, but also a document-level charge categorized as something other than \"O\".",
     why: "Same reasoning as BR-O-11, for a document-level charge.",
     fix: "Change the charge's category to \"O\", or remove the not-subject-to-VAT breakdown if it doesn't apply.",
+  },
+
+  // --- BR-17..65: single-field presence, non-negativity and simple
+  // consistency rules the mandatory-field/VAT-category groups above don't
+  // already cover — payee, tax representative, VAT breakdown fields,
+  // document/line-level allowances and charges, invoice lines, item
+  // attributes, payment, delivery, preceding-invoice reference and
+  // electronic-address scheme identifiers. ---
+  "BR-17": {
+    summary: "The invoice has a payee (BG-10) different from the seller, but no payee name (BT-59).",
+    why: "When someone other than the seller is to be paid (e.g. a factoring company), the buyer needs that party's name to pay the right entity.",
+    fix: "Set BT-59 to the payee's name, or remove the payee group if payment actually goes to the seller.",
+  },
+  "BR-18": {
+    summary: "The invoice has a seller tax representative (BG-11), but no tax representative name (BT-62).",
+    why: "A tax representative is a distinct legal party the invoice names for a reason (they answer for the seller's VAT obligations in that jurisdiction); the group is incomplete without a name.",
+    fix: "Set BT-62 to the tax representative's name, or remove the group if there isn't one.",
+  },
+  "BR-19": {
+    summary: "The invoice has a seller tax representative (BG-11), but no tax representative postal address (BG-12).",
+    why: "Same reasoning as BR-08/BR-10 (seller/buyer address), applied to the tax representative: a receiving system needs to be able to locate every named party.",
+    fix: "Provide at least a country for the tax representative's postal address.",
+  },
+  "BR-20": {
+    summary: "The seller tax representative's postal address is present but has no country code (BT-69).",
+    why: "Same reasoning as BR-09/BR-11: the country code is the one part of the address every downstream rule actually reads.",
+    fix: "Set BT-69 to the tax representative's two-letter ISO 3166-1 country code.",
+  },
+  "BR-21": {
+    summary: "An invoice line (BG-25) has no line identifier (BT-126).",
+    why: "The line identifier is how a credit note, a query, or a receiving system's own records refer back to this specific line.",
+    fix: "Give every invoice line a non-empty identifier — a simple incrementing number (1, 2, 3…) is enough if you don't already have one.",
+  },
+  "BR-22": {
+    summary: "An invoice line (BG-25) has no invoiced quantity (BT-129).",
+    why: "Quantity is one of the two numbers (with unit price) the line's net amount is computed from; a line without one can't be verified.",
+    fix: "Set BT-129 to the quantity of the item or service being invoiced on this line.",
+  },
+  "BR-23": {
+    summary: "An invoice line (BG-25) has no unit of measure code (BT-130) for its invoiced quantity.",
+    why: "\"5\" means something different for hours, kilograms and pieces — the unit code is what makes the quantity actually meaningful.",
+    fix: "Set BT-130 to the UN/ECE Recommendation 20 unit code that matches the quantity (e.g. \"C62\" for a plain count, \"HUR\" for hours).",
+  },
+  "BR-24": {
+    summary: "An invoice line (BG-25) has no line net amount (BT-131).",
+    why: "The line net amount is what every document-level total ultimately sums; a line without one can't be reconciled.",
+    fix: "Set BT-131 to this line's quantity multiplied by its net price, adjusted for any line-level allowances or charges.",
+  },
+  "BR-25": {
+    summary: "An invoice line (BG-25) has no item name (BT-153).",
+    why: "A line identifier and a price aren't enough for a human reader (or an accounting system) to know what was actually sold.",
+    fix: "Set BT-153 to a short description of the item or service this line is for.",
+  },
+  "BR-26": {
+    summary: "An invoice line (BG-25) has no item net price (BT-146).",
+    why: "The net price is the other number (with quantity) the line's net amount is computed from.",
+    fix: "Set BT-146 to the price per unit, excluding VAT and before any line-level allowance or charge.",
+  },
+  "BR-27": {
+    summary: "An invoice line's item net price (BT-146) is negative.",
+    why: "A negative price on a line doesn't have a well-defined meaning under EN 16931 — a discount belongs in the line's own allowance (BG-27), not in a negative price.",
+    fix: "Set BT-146 to a non-negative value, and move any reduction into a line-level allowance instead.",
+  },
+  "BR-28": {
+    summary: "An invoice line's item gross price (BT-148) is negative.",
+    why: "Same reasoning as BR-27, for the optional pre-discount gross price.",
+    fix: "Set BT-148 to a non-negative value, or omit it if you're not stating a separate gross price.",
+  },
+  "BR-29": {
+    summary: "The invoicing period's end date (BT-74) is before its start date (BT-73).",
+    why: "A period that ends before it starts isn't a valid period — this is almost always a swapped pair of dates.",
+    fix: "Check BT-73 and BT-74 and correct whichever one is wrong; BT-74 must be the same as or later than BT-73.",
+  },
+  "BR-30": {
+    summary: "An invoice line's period end date (BT-135) is before its start date (BT-134).",
+    why: "Same reasoning as BR-29, at the line level.",
+    fix: "Check BT-134 and BT-135 and correct whichever one is wrong; BT-135 must be the same as or later than BT-134.",
+  },
+  "BR-31": {
+    summary: "A document-level allowance (BG-20) has no allowance amount (BT-92).",
+    why: "The amount is the one number that makes an allowance an allowance rather than just a note; every document total that subtracts allowances depends on it.",
+    fix: "Set BT-92 to the discount amount, excluding VAT.",
+  },
+  "BR-32": {
+    summary: "A document-level allowance (BG-20) has no VAT category code (BT-95).",
+    why: "An allowance reduces the taxable amount for a specific VAT category — without one, the discount can't be matched to a VAT breakdown group.",
+    fix: "Set BT-95 to the same VAT category code as the line(s) this discount applies against.",
+  },
+  "BR-33": {
+    summary: "A document-level allowance (BG-20) has neither a reason text (BT-97) nor a reason code (BT-98).",
+    why: "A discount with no stated reason is hard for a buyer's accounting system (or a human) to reconcile against what was agreed.",
+    fix: "Set BT-97 (free text, e.g. \"Volume discount\") and/or BT-98 (the matching UNTDID 5189 code).",
+  },
+  "BR-36": {
+    summary: "A document-level charge (BG-21) has no charge amount (BT-99).",
+    why: "Same reasoning as BR-31, for a charge added on top instead of subtracted.",
+    fix: "Set BT-99 to the charge amount, excluding VAT.",
+  },
+  "BR-37": {
+    summary: "A document-level charge (BG-21) has no VAT category code (BT-102).",
+    why: "Same reasoning as BR-32, for a charge.",
+    fix: "Set BT-102 to the VAT category code this charge is taxed under.",
+  },
+  "BR-38": {
+    summary: "A document-level charge (BG-21) has neither a reason text (BT-104) nor a reason code (BT-105).",
+    why: "Same reasoning as BR-33, for a charge (e.g. freight, packaging).",
+    fix: "Set BT-104 (free text, e.g. \"Freight\") and/or BT-105 (the matching UNTDID 7161 code).",
+  },
+  "BR-41": {
+    summary: "An invoice line allowance (BG-27) has no allowance amount (BT-136).",
+    why: "Same reasoning as BR-31, at the line level — the line's own net amount (BT-131) is computed after subtracting this.",
+    fix: "Set BT-136 to this line's discount amount, excluding VAT.",
+  },
+  "BR-42": {
+    summary: "An invoice line allowance (BG-27) has neither a reason text (BT-139) nor a reason code (BT-140).",
+    why: "Same reasoning as BR-33, at the line level.",
+    fix: "Set BT-139 and/or BT-140 to say why this line has a discount.",
+  },
+  "BR-43": {
+    summary: "An invoice line charge (BG-28) has no charge amount (BT-141).",
+    why: "Same reasoning as BR-36, at the line level.",
+    fix: "Set BT-141 to this line's charge amount, excluding VAT.",
+  },
+  "BR-44": {
+    summary: "An invoice line charge (BG-28) has neither a reason text (BT-144) nor a reason code (BT-145).",
+    why: "Same reasoning as BR-38, at the line level.",
+    fix: "Set BT-144 and/or BT-145 to say why this line has an added charge.",
+  },
+  "BR-45": {
+    summary: "A VAT breakdown (BG-23) has no taxable amount (BT-116).",
+    why: "The taxable amount is the base the breakdown's own tax amount (BT-117) is computed from — a breakdown without one can't be checked or trusted.",
+    fix: "Set BT-116 to the net amount taxed at this breakdown's VAT rate (sum of matching lines, plus matching charges, minus matching allowances).",
+  },
+  "BR-46": {
+    summary: "A VAT breakdown (BG-23) has no tax amount (BT-117).",
+    why: "This is the actual VAT amount for the category — without it, the invoice's total VAT (BT-110) can't be verified as the sum of its breakdowns.",
+    fix: "Set BT-117 to the taxable amount (BT-116) multiplied by the category rate (BT-119).",
+  },
+  "BR-47": {
+    summary: "A VAT breakdown (BG-23) has no VAT category code (BT-118).",
+    why: "The category code is what a breakdown group actually groups by — without it, there's no way to tell which lines it's supposed to reconcile against.",
+    fix: "Set BT-118 to the UNTDID 5305 VAT category code this breakdown covers.",
+  },
+  "BR-48": {
+    summary: "A VAT breakdown (BG-23) has no VAT category rate (BT-119), and the invoice isn't marked as not subject to VAT.",
+    why: "The rate is what BT-117 (tax amount) is supposed to equal BT-116 multiplied by — without it, that arithmetic can't even be stated.",
+    fix: "Set BT-119 to the percentage rate for this category, unless the whole invoice is category \"O\" (not subject to VAT), which is the one case a rate isn't required.",
+  },
+  "BR-49": {
+    summary: "The invoice has payment information (BG-16) but no payment means type code (BT-81).",
+    why: "BT-81 says how payment is expected to happen (credit transfer, direct debit, card) — the rest of the payment group only makes sense once you know which one this is.",
+    fix: "Set BT-81 to the UNTDID 4461 code for how this invoice is to be paid.",
+  },
+  "BR-50": {
+    summary: "The invoice states credit-transfer payment information, but no payment account identifier (BT-84).",
+    why: "Without an account identifier, the buyer has no destination to actually send a credit transfer to.",
+    fix: "Set BT-84 to the seller's IBAN or other account identifier for this credit transfer.",
+  },
+  "BR-51": {
+    summary: "The payment card's primary account number (BT-87) looks like it includes more than the first 6 and last 4 digits.",
+    why: "PCI Security Standards Council rules cap how much of a card number may ever be shown on a document; this is a real cardholder-data-exposure risk, not a formatting nitpick.",
+    fix: "Mask BT-87 down to at most the first 6 and last 4 digits (e.g. \"411111******1111\"), the same way a receipt would.",
+  },
+  "BR-52": {
+    summary: "An additional supporting document (BG-24) has no document reference (BT-122).",
+    why: "The reference is what actually identifies which supporting document is being pointed to; a reference-less entry doesn't point anywhere.",
+    fix: "Set BT-122 to the identifier or filename of the supporting document.",
+  },
+  "BR-53": {
+    summary: "The invoice states a VAT accounting currency code (BT-6), but has no total VAT amount in that currency (BT-111).",
+    why: "BT-6 exists specifically to let the invoice's VAT be stated in a currency other than the invoice's own (BT-5) for tax-reporting purposes — without BT-111, that second currency has nothing attached to it.",
+    fix: "Set BT-111 to the total VAT amount converted into the currency named in BT-6.",
+  },
+  "BR-54": {
+    summary: "An item attribute (BG-32) has a name (BT-160) or a value (BT-161) but not both.",
+    why: "An attribute is a name/value pair by definition (e.g. \"Colour\" / \"Red\") — either half alone doesn't describe anything.",
+    fix: "Set both BT-160 and BT-161, or remove the attribute group if it isn't needed.",
+  },
+  "BR-55": {
+    summary: "A preceding invoice reference (BG-3) has no reference number (BT-25).",
+    why: "This group exists specifically to point at an earlier invoice (e.g. the one a credit note corrects) — without a number, it points at nothing.",
+    fix: "Set BT-25 to the invoice number being referenced.",
+  },
+  "BR-56": {
+    summary: "The invoice has a seller tax representative (BG-11), but no tax representative VAT identifier (BT-63).",
+    why: "A tax representative acts on the seller's behalf for VAT purposes specifically, so a VAT identifier is what makes the representation meaningful.",
+    fix: "Set BT-63 to the tax representative's VAT identification number.",
+  },
+  "BR-57": {
+    summary: "A deliver-to address (BG-15) has no country code (BT-80).",
+    why: "Same reasoning as BR-09/BR-11 (seller/buyer address): the country code is what cross-border and VAT logic actually reads.",
+    fix: "Set BT-80 to the two-letter ISO 3166-1 country code of the delivery address.",
+  },
+  "BR-61": {
+    summary: "The invoice specifies a SEPA, local, or non-SEPA international credit transfer as its payment means, but has no payment account identifier (BT-84).",
+    why: "Same underlying requirement as BR-50, stated for these three specific payment-means codes.",
+    fix: "Set BT-84 to the account identifier (IBAN for SEPA) that payment should be sent to.",
+  },
+  "BR-62": {
+    summary: "The seller's electronic address (BT-34) has no scheme identifier.",
+    why: "An electronic address alone is ambiguous (an email? a Peppol participant ID?) — the scheme identifier says which addressing system it belongs to.",
+    fix: "Set BT-34's scheme identifier to the matching code from the EAS (Electronic Address Scheme) code list — \"EM\" for a plain email address.",
+  },
+  "BR-63": {
+    summary: "The buyer's electronic address (BT-49) has no scheme identifier.",
+    why: "Same reasoning as BR-62, for the buyer.",
+    fix: "Set BT-49's scheme identifier the same way — \"EM\" for a plain email address, or the buyer's actual EAS code.",
+  },
+  "BR-64": {
+    summary: "An invoice line's item standard identifier (BT-157) has no scheme identifier.",
+    why: "A bare code (a GTIN? an internal SKU?) is ambiguous without saying which identification scheme it's drawn from.",
+    fix: "Set BT-157's scheme identifier to the matching ISO/IEC 6523 or GS1 code for the identifier system you're using.",
+  },
+  "BR-65": {
+    summary: "An invoice line's item classification identifier (BT-158) has no scheme identifier.",
+    why: "Same reasoning as BR-64, for a classification code (a customs tariff code, a UNSPSC code, etc.) rather than a product identifier.",
+    fix: "Set BT-158's scheme identifier to the matching code for the classification system you're using.",
+  },
+
+  // --- BR-DEC-*: every remaining "no more than 2 decimal places" rule, one
+  // per monetary BT field EN 16931 constrains this way. Same shape as
+  // BR-DEC-14 above — repeated because the rule genuinely repeats, not
+  // because these were left out by mistake. ---
+  "BR-DEC-01": {
+    summary: "The document level allowance amount (BT-92) has more than 2 decimal places.",
+    why: "Same reasoning as BR-DEC-14: EN 16931 fixes every monetary amount to 2 decimals, and a third is usually a floating-point artifact.",
+    fix: "Round BT-92 to exactly 2 decimals, computed in integer minor units rather than floating point.",
+  },
+  "BR-DEC-02": {
+    summary: "The document level allowance base amount (BT-93) has more than 2 decimal places.",
+    why: "Same reasoning as BR-DEC-01, for the amount the allowance's percentage (if any) is calculated from.",
+    fix: "Round BT-93 to exactly 2 decimals.",
+  },
+  "BR-DEC-05": {
+    summary: "The document level charge amount (BT-99) has more than 2 decimal places.",
+    why: "Same reasoning as BR-DEC-01, for a charge instead of an allowance.",
+    fix: "Round BT-99 to exactly 2 decimals.",
+  },
+  "BR-DEC-06": {
+    summary: "The document level charge base amount (BT-100) has more than 2 decimal places.",
+    why: "Same reasoning as BR-DEC-02, for a charge instead of an allowance.",
+    fix: "Round BT-100 to exactly 2 decimals.",
+  },
+  "BR-DEC-09": {
+    summary: "The sum of invoice line net amounts (BT-106) has more than 2 decimal places.",
+    why: "Same reasoning as BR-DEC-14, for the document total every other total is built from.",
+    fix: "Round BT-106 to exactly 2 decimals.",
+  },
+  "BR-DEC-10": {
+    summary: "The sum of allowances on document level (BT-107) has more than 2 decimal places.",
+    why: "Same reasoning as BR-DEC-09.",
+    fix: "Round BT-107 to exactly 2 decimals.",
+  },
+  "BR-DEC-11": {
+    summary: "The sum of charges on document level (BT-108) has more than 2 decimal places.",
+    why: "Same reasoning as BR-DEC-09.",
+    fix: "Round BT-108 to exactly 2 decimals.",
+  },
+  "BR-DEC-12": {
+    summary: "The invoice total amount without VAT (BT-109) has more than 2 decimal places.",
+    why: "Same reasoning as BR-DEC-09.",
+    fix: "Round BT-109 to exactly 2 decimals.",
+  },
+  "BR-DEC-13": {
+    summary: "The invoice total VAT amount (BT-110) has more than 2 decimal places.",
+    why: "Same reasoning as BR-DEC-09.",
+    fix: "Round BT-110 to exactly 2 decimals.",
+  },
+  "BR-DEC-15": {
+    summary: "The invoice total VAT amount in accounting currency (BT-111) has more than 2 decimal places.",
+    why: "Same reasoning as BR-DEC-09, for the currency-converted figure BR-53 requires alongside BT-6.",
+    fix: "Round BT-111 to exactly 2 decimals.",
+  },
+  "BR-DEC-16": {
+    summary: "The paid amount (BT-113) has more than 2 decimal places.",
+    why: "Same reasoning as BR-DEC-09.",
+    fix: "Round BT-113 to exactly 2 decimals.",
+  },
+  "BR-DEC-17": {
+    summary: "The rounding amount (BT-114) has more than 2 decimal places.",
+    why: "Same reasoning as BR-DEC-09 — this is meant to absorb sub-cent rounding, so it should never itself need more precision than a cent.",
+    fix: "Round BT-114 to exactly 2 decimals.",
+  },
+  "BR-DEC-18": {
+    summary: "The amount due for payment (BT-115) has more than 2 decimal places.",
+    why: "Same reasoning as BR-DEC-09, for the figure the buyer is actually asked to pay.",
+    fix: "Round BT-115 to exactly 2 decimals.",
+  },
+  "BR-DEC-19": {
+    summary: "A VAT category taxable amount (BT-116) has more than 2 decimal places.",
+    why: "Same reasoning as BR-DEC-09, per VAT breakdown group.",
+    fix: "Round BT-116 to exactly 2 decimals.",
+  },
+  "BR-DEC-20": {
+    summary: "A VAT category tax amount (BT-117) has more than 2 decimal places.",
+    why: "Same reasoning as BR-DEC-19.",
+    fix: "Round BT-117 to exactly 2 decimals.",
+  },
+  "BR-DEC-23": {
+    summary: "An invoice line net amount (BT-131) has more than 2 decimal places.",
+    why: "Same reasoning as BR-DEC-09, at the line level this time — the figure BT-106 is supposed to sum exactly.",
+    fix: "Round BT-131 to exactly 2 decimals.",
+  },
+  "BR-DEC-24": {
+    summary: "An invoice line allowance amount (BT-136) has more than 2 decimal places.",
+    why: "Same reasoning as BR-DEC-23.",
+    fix: "Round BT-136 to exactly 2 decimals.",
+  },
+  "BR-DEC-25": {
+    summary: "An invoice line allowance base amount (BT-137) has more than 2 decimal places.",
+    why: "Same reasoning as BR-DEC-02, at the line level.",
+    fix: "Round BT-137 to exactly 2 decimals.",
+  },
+  "BR-DEC-27": {
+    summary: "An invoice line charge amount (BT-141) has more than 2 decimal places.",
+    why: "Same reasoning as BR-DEC-23, for a line-level charge.",
+    fix: "Round BT-141 to exactly 2 decimals.",
+  },
+  "BR-DEC-28": {
+    summary: "An invoice line charge base amount (BT-142) has more than 2 decimal places.",
+    why: "Same reasoning as BR-DEC-06, at the line level.",
+    fix: "Round BT-142 to exactly 2 decimals.",
+  },
+
+  // --- IGIC (BR-AF-*): the Canary Islands' own VAT-replacement tax. Same
+  // ten-rule shape as the mainland VAT-category families above (breakdown
+  // presence, seller VAT-identifiability, rate sanity, arithmetic
+  // reconciliation, no exemption reason) — IGIC is a real, chargeable tax
+  // with its own rates, not an exemption, so its rate rules check "0 or
+  // greater" rather than "exactly 0" the way the zero-rated (Z) family does. ---
+  "BR-AF-01": {
+    summary: "The invoice has an IGIC line, allowance or charge, but no matching IGIC entry in the VAT breakdown.",
+    why: "Same reasoning as the mainland categories' own \"01\" rule: every VAT-category code used on a line/allowance/charge needs a breakdown group that actually reconciles it.",
+    fix: "Add a VAT breakdown group with category code \"IGIC\", or correct the line's category if it isn't actually taxed under IGIC.",
+  },
+  "BR-AF-02": {
+    summary: "An IGIC invoice line is present, but none of the seller's VAT identifier (BT-31), tax registration identifier (BT-32), or tax representative's VAT identifier (BT-63) is set.",
+    why: "IGIC is a real tax the seller is registered to charge under; the invoice needs to show which registration.",
+    fix: "Set at least one of BT-31, BT-32, or BT-63.",
+  },
+  "BR-AF-03": {
+    summary: "An IGIC document-level allowance is present, but none of the seller's VAT identifier (BT-31), tax registration identifier (BT-32), or tax representative's VAT identifier (BT-63) is set.",
+    why: "Same reasoning as BR-AF-02, applied to a document-level discount.",
+    fix: "Set at least one of BT-31, BT-32, or BT-63.",
+  },
+  "BR-AF-04": {
+    summary: "An IGIC document-level charge is present, but none of the seller's VAT identifier (BT-31), tax registration identifier (BT-32), or tax representative's VAT identifier (BT-63) is set.",
+    why: "Same reasoning as BR-AF-02, applied to a document-level charge.",
+    fix: "Set at least one of BT-31, BT-32, or BT-63.",
+  },
+  "BR-AF-05": {
+    summary: "An IGIC line's VAT rate (BT-152) isn't greater than 0.",
+    why: "IGIC is a chargeable tax with real rates — unlike the zero-rated category, an IGIC line is expected to actually carry a positive rate.",
+    fix: "Set the line's IGIC rate to the actual percentage charged, or use a different category if this line is genuinely rated at 0%.",
+  },
+  "BR-AF-06": {
+    summary: "An IGIC document-level allowance's VAT rate (BT-96) is negative.",
+    why: "A negative rate has no meaning here — the allowance's rate should be 0 or a real positive IGIC rate.",
+    fix: "Set the allowance's rate to 0 or greater.",
+  },
+  "BR-AF-07": {
+    summary: "An IGIC document-level charge's VAT rate (BT-103) is negative.",
+    why: "Same reasoning as BR-AF-06, for a charge.",
+    fix: "Set the charge's rate to 0 or greater.",
+  },
+  "BR-AF-08": {
+    summary: "For an IGIC rate, the VAT breakdown's taxable amount (BT-116) doesn't equal the matching IGIC lines and charges minus the matching IGIC allowances.",
+    why: "Same per-category reconciliation the mainland families check, applied to IGIC.",
+    fix: "Recompute the IGIC breakdown's taxable amount from exactly the lines, allowances and charges at that same IGIC rate.",
+  },
+  "BR-AF-09": {
+    summary: "An IGIC VAT breakdown's tax amount (BT-117) doesn't equal its taxable amount (BT-116) multiplied by its rate (BT-119).",
+    why: "This is the basic arithmetic identity every VAT breakdown has to satisfy, checked here for the IGIC category specifically.",
+    fix: "Recompute BT-117 as BT-116 × BT-119 for this breakdown.",
+  },
+  "BR-AF-10": {
+    summary: "An IGIC VAT breakdown carries a VAT exemption reason code (BT-121) or text (BT-120), which it shouldn't.",
+    why: "IGIC is an actually-charged tax, not an exemption — giving it an exemption reason contradicts the category.",
+    fix: "Remove BT-120/BT-121 from the IGIC breakdown group.",
+  },
+
+  // --- IPSI (BR-AG-*): the equivalent of IGIC for Ceuta and Melilla, Spain's
+  // two North African autonomous cities. Identical shape to BR-AF-* above,
+  // one rule per position. ---
+  "BR-AG-01": {
+    summary: "The invoice has an IPSI line, allowance or charge, but no matching IPSI entry in the VAT breakdown.",
+    why: "Same reasoning as BR-AF-01, for IPSI instead of IGIC.",
+    fix: "Add a VAT breakdown group with category code \"IPSI\", or correct the line's category if it isn't actually taxed under IPSI.",
+  },
+  "BR-AG-02": {
+    summary: "An IPSI invoice line is present, but none of the seller's VAT identifier (BT-31), tax registration identifier (BT-32), or tax representative's VAT identifier (BT-63) is set.",
+    why: "Same reasoning as BR-AF-02, for IPSI.",
+    fix: "Set at least one of BT-31, BT-32, or BT-63.",
+  },
+  "BR-AG-03": {
+    summary: "An IPSI document-level allowance is present, but none of the seller's VAT identifier (BT-31), tax registration identifier (BT-32), or tax representative's VAT identifier (BT-63) is set.",
+    why: "Same reasoning as BR-AF-03, for IPSI.",
+    fix: "Set at least one of BT-31, BT-32, or BT-63.",
+  },
+  "BR-AG-04": {
+    summary: "An IPSI document-level charge is present, but none of the seller's VAT identifier (BT-31), tax registration identifier (BT-32), or tax representative's VAT identifier (BT-63) is set.",
+    why: "Same reasoning as BR-AF-04, for IPSI.",
+    fix: "Set at least one of BT-31, BT-32, or BT-63.",
+  },
+  "BR-AG-05": {
+    summary: "An IPSI line's VAT rate (BT-152) is negative.",
+    why: "Same reasoning as BR-AF-05, for IPSI — the rate should be 0 or a real positive IPSI rate, not negative.",
+    fix: "Set the line's IPSI rate to 0 or greater.",
+  },
+  "BR-AG-06": {
+    summary: "An IPSI document-level allowance's VAT rate (BT-96) is negative.",
+    why: "Same reasoning as BR-AF-06, for IPSI.",
+    fix: "Set the allowance's rate to 0 or greater.",
+  },
+  "BR-AG-07": {
+    summary: "An IPSI document-level charge's VAT rate (BT-103) is negative.",
+    why: "Same reasoning as BR-AF-07, for IPSI.",
+    fix: "Set the charge's rate to 0 or greater.",
+  },
+  "BR-AG-08": {
+    summary: "For an IPSI rate, the VAT breakdown's taxable amount (BT-116) doesn't equal the matching IPSI lines and charges minus the matching IPSI allowances.",
+    why: "Same reasoning as BR-AF-08, for IPSI.",
+    fix: "Recompute the IPSI breakdown's taxable amount from exactly the lines, allowances and charges at that same IPSI rate.",
+  },
+  "BR-AG-09": {
+    summary: "An IPSI VAT breakdown's tax amount (BT-117) doesn't equal its taxable amount (BT-116) multiplied by its rate (BT-119).",
+    why: "Same reasoning as BR-AF-09, for IPSI.",
+    fix: "Recompute BT-117 as BT-116 × BT-119 for this breakdown.",
+  },
+  "BR-AG-10": {
+    summary: "An IPSI VAT breakdown carries a VAT exemption reason code (BT-121) or text (BT-120), which it shouldn't.",
+    why: "Same reasoning as BR-AF-10 — IPSI is an actually-charged tax, not an exemption.",
+    fix: "Remove BT-120/BT-121 from the IPSI breakdown group.",
+  },
+
+  // --- Italy's split-payment mechanism (BR-B-*): a payment-routing regime
+  // for invoices to Italian public bodies (the buyer pays VAT directly to
+  // the tax authority instead of to the seller), not a VAT rate category —
+  // "Split payment" is a VAT category code in its own right, orthogonal to
+  // the rate families above. ---
+  "BR-B-01": {
+    summary: "The invoice uses the \"Split payment\" VAT category code, but isn't a domestic Italian invoice.",
+    why: "Split payment is a mechanism specific to Italian public-sector procurement; it has no meaning for a cross-border or non-Italian invoice.",
+    fix: "Use \"Split payment\" only for a domestic Italian invoice to a public body that the mechanism actually applies to; otherwise use the ordinary VAT category for the transaction.",
+  },
+  "BR-B-02": {
+    summary: "The invoice mixes a \"Split payment\" line, allowance or charge with a \"Standard rated\" one.",
+    why: "Split payment changes who physically pays the VAT to the tax authority; mixing it with standard-rated items on the same invoice would make that routing ambiguous.",
+    fix: "Keep split-payment items on their own invoice, separate from standard-rated items, or correct whichever category is wrong for this line.",
+  },
+
+  // --- Factur-X-specific extensions: rules from the Factur-X profile layer
+  // itself (not plain EN 16931), covering delivery-date presence and a
+  // French-extension line-grouping consistency check. ---
+  "BR-FX-EN-04": {
+    summary: "The invoice has no actual delivery date (BT-72), invoicing period (BG-14), or invoice line period (BG-26) anywhere, and it isn't a down-payment invoice.",
+    why: "Factur-X requires the invoice to state, in some form, when the goods or service were actually delivered — without any of these three, there's no delivery/service date at all.",
+    fix: "Set BT-72 to the delivery date, or give the invoice (or at least one line) an invoicing/line period. If none of these apply, set the buyer's delivery country code (BT-80) instead.",
+  },
+  "BR-FXEXT-12": {
+    summary: "An invoice line marked as a \"GROUP\" subtype has a line net amount (BT-131), but a line below it — also marked \"GROUP\" — has none.",
+    why: "This is a Factur-X extension for grouping invoice lines (e.g. sub-totals within a larger item); a group line with an amount implies every nested group line needs one too, or the grouped total can't be verified.",
+    fix: "Set a line net amount on every nested \"GROUP\" line, or remove the amount from the parent group if the nested lines aren't meant to carry their own totals.",
   },
 
   // --- French CTC (BR-FR-*, Flux 2): the layer this project's own sample

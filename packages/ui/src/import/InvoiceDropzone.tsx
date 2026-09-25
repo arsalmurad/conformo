@@ -32,9 +32,11 @@ export function InvoiceDropzone({ onImport }: Props) {
   const [status, setStatus] = useState<Status>({ kind: 'idle' });
   const [dragOver, setDragOver] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [fileName, setFileName] = useState<string | undefined>(undefined);
 
   const handleFile = useCallback(async (file: File | undefined) => {
     if (!file) return;
+    setFileName(file.name);
     setBusy(true);
     setStatus({ kind: 'idle' });
     try {
@@ -87,16 +89,19 @@ export function InvoiceDropzone({ onImport }: Props) {
         void handleFile(e.dataTransfer.files?.[0]);
       }}
     >
-      <label className="field-label" htmlFor="invoice-import-input">
-        Import an invoice (replaces the current draft)
+      <span className="field-label">Import an invoice (replaces the current draft)</span>
+      <label className="file-picker-button" htmlFor="invoice-import-input">
+        Choose file
+        <input
+          id="invoice-import-input"
+          className="file-input-hidden"
+          type="file"
+          accept=".xml,.pdf,application/xml,text/xml,application/pdf"
+          disabled={busy}
+          onChange={(e) => void handleFile(e.target.files?.[0])}
+        />
       </label>
-      <input
-        id="invoice-import-input"
-        type="file"
-        accept=".xml,.pdf,application/xml,text/xml,application/pdf"
-        disabled={busy}
-        onChange={(e) => void handleFile(e.target.files?.[0])}
-      />
+      <p className="file-picker-name">{fileName ?? 'No file chosen'}</p>
       <p className="invoice-dropzone-hint">Factur-X/ZUGFeRD PDF, CII, UBL or XRechnung XML. Drag a file here or use the picker.</p>
       {status.kind === 'error' && <p className="field-hint invoice-dropzone-error">{status.message}</p>}
       {status.kind === 'success' && <p className="field-hint invoice-dropzone-success">{status.message}</p>}
