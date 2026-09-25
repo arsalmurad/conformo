@@ -94,7 +94,7 @@ official CEN Schematron plus each country's CIUS rules.</p>
   <li><a href="https://github.com/arsalmurad/conformo/blob/main/CONTRIBUTING.md">Contributing</a></li>
 </ul>
 `;
-  return page({ title: 'Conformo', description: 'Legally valid electronic invoices, EN 16931, Factur-X, XRechnung, UBL, Peppol.', active: 'home', depth: 0 }, body);
+  return page({ title: 'Home', description: 'Legally valid electronic invoices, EN 16931, Factur-X, XRechnung, UBL, Peppol.', active: 'home', depth: 0 }, body);
 }
 
 function write(relPath: string, html: string): void {
