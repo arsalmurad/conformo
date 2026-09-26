@@ -1,14 +1,22 @@
 {
   "name": "@conformo/parse",
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "description": "Reads a Factur-X/ZUGFeRD PDF or CII/UBL/XRechnung XML back into an EN 16931 Invoice, checking a PDF's visible totals against its embedded XML.",
+  "license": "Apache-2.0",
+  "repository": { "type": "git", "url": "git+https://github.com/arsalmurad/conformo.git", "directory": "packages/parse" },
+  "homepage": "https://github.com/arsalmurad/conformo/tree/main/packages/parse#readme",
+  "keywords": ["invoice", "pdf", "factur-x", "zugferd", "ubl", "xrechnung", "parser", "en16931"],
   "type": "module",
   "main": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts"
   },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node ../../tools/write-dist-manifest.mjs ."
+  },
   "dependencies": {
-    "@conformo/core": "*",
-    "@conformo/formats": "*",
+    "@conformo/core": "^0.1.0",
+    "@conformo/formats": "^0.1.0",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^6.3.289"
   }

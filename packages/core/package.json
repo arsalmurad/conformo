@@ -1,7 +1,15 @@
 {
   "name": "@conformo/core",
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "description": "EN 16931 electronic invoice model: exact-decimal money, tax and totals. Zero runtime dependencies.",
+  "license": "Apache-2.0",
+  "repository": { "type": "git", "url": "git+https://github.com/arsalmurad/conformo.git", "directory": "packages/core" },
+  "homepage": "https://github.com/arsalmurad/conformo/tree/main/packages/core#readme",
+  "keywords": ["invoice", "en16931", "e-invoicing", "einvoicing", "money", "typescript"],
   "type": "module",
   "main": "./src/index.ts",
-  "exports": { ".": "./src/index.ts" }
+  "exports": { ".": "./src/index.ts" },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node ../../tools/write-dist-manifest.mjs ."
+  }
 }

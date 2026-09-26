@@ -3,15 +3,21 @@
   "version": "0.1.0",
   "description": "MCP server exposing create/validate/convert so agents can issue and check EN 16931 electronic invoices.",
   "license": "Apache-2.0",
+  "repository": { "type": "git", "url": "git+https://github.com/arsalmurad/conformo.git", "directory": "packages/mcp-server" },
+  "homepage": "https://github.com/arsalmurad/conformo/tree/main/packages/mcp-server#readme",
+  "keywords": ["mcp", "model-context-protocol", "invoice", "en16931", "e-invoicing", "agent"],
   "type": "module",
   "bin": {
     "conformo-mcp": "./src/server.ts"
   },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node ../../tools/write-dist-manifest.mjs ."
+  },
   "dependencies": {
-    "@conformo/core": "*",
-    "@conformo/formats": "*",
-    "@conformo/parse": "*",
-    "@conformo/validate": "*",
+    "@conformo/core": "^0.1.0",
+    "@conformo/formats": "^0.1.0",
+    "@conformo/parse": "^0.1.0",
+    "@conformo/validate": "^0.1.0",
     "@modelcontextprotocol/sdk": "^1.30.0",
     "zod": "^3.24.0"
   }

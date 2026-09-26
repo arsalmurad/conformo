@@ -1,13 +1,21 @@
 {
   "name": "@conformo/pdf",
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "description": "PDF/A-3 writer that embeds a structured invoice XML (Factur-X/ZUGFeRD) inside a readable, deterministic PDF.",
+  "license": "Apache-2.0",
+  "repository": { "type": "git", "url": "git+https://github.com/arsalmurad/conformo.git", "directory": "packages/pdf" },
+  "homepage": "https://github.com/arsalmurad/conformo/tree/main/packages/pdf#readme",
+  "keywords": ["pdf", "pdf-a", "invoice", "factur-x", "zugferd", "en16931"],
   "type": "module",
   "main": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts"
   },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node ../../tools/write-dist-manifest.mjs ."
+  },
   "dependencies": {
-    "@conformo/core": "*",
+    "@conformo/core": "^0.1.0",
     "pdf-lib": "^1.17.1"
   }
 }

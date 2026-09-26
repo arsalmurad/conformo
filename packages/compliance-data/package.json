@@ -3,16 +3,14 @@
   "version": "0.1.0",
   "description": "A versioned, sourced dataset of e-invoicing mandate requirements per country. Every row cites a tax authority, ministry, or official EU source, or is marked unverified.",
   "license": "Apache-2.0",
+  "repository": { "type": "git", "url": "git+https://github.com/arsalmurad/conformo.git", "directory": "packages/compliance-data" },
+  "homepage": "https://github.com/arsalmurad/conformo/tree/main/packages/compliance-data#readme",
   "type": "module",
   "main": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
     "./data.json": "./dist/compliance-data.json"
   },
-  "files": [
-    "src",
-    "dist"
-  ],
   "keywords": [
     "e-invoicing",
     "einvoicing",
@@ -21,5 +19,8 @@
     "xrechnung",
     "peppol",
     "factur-x"
-  ]
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node -e \"require('fs').cpSync('src/data','dist/src/data',{recursive:true})\" && node ../../tools/write-dist-manifest.mjs ."
+  }
 }
