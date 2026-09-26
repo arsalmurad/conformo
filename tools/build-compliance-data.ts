@@ -1,6 +1,6 @@
 /**
- * Emits the "plain JSON file" the project's own conventions asks for
- * alongside the npm package: a single file a non-Node consumer (a docs site,
+ * Emits a plain JSON file alongside the npm package: a single file a
+ * non-Node consumer (a docs site,
  * a spreadsheet, curl) can fetch without installing anything. Importing
  * @conformo/compliance-data already validates every row (see
  * packages/compliance-data/src/validate.ts), so a bad row fails this build

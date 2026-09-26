@@ -14,7 +14,7 @@ import { UnlockScreen } from './UnlockScreen.js';
 import './App.css';
 
 /** Only France's CIUS Schematron is actually compiled into this build (see
- * CONTRIBUTING.md invariant 6: "never claim compliance, show it"). The selector
+ * CLAUDE.md invariant 6: "never claim compliance, show it"). The selector
  * still lists every country packages/compliance-data ships, so adding a
  * country to the dataset grows this list on its own, but every option
  * except France stays disabled until its own layer is compiled and proven —

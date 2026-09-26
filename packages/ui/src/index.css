@@ -1,7 +1,8 @@
 /**
- * Design tokens . Every other
- * stylesheet in this app reads these variables rather than hardcoding a
- * color or a pixel value, so a single edit here is the whole theme.
+ * Design tokens for colour, type scale, spacing and radius, in both light
+ * and dark. Every other stylesheet in this app reads these variables rather
+ * than hardcoding a color or a pixel value, so a single edit here is the
+ * whole theme.
  */
 :root {
   color-scheme: light;
@@ -93,10 +94,9 @@ button {
   cursor: pointer;
 }
 
-/* One visible focus style for every interactive element in the app —
- * "Consistent focus states" (an earlier pass) — rather than each browser's own
- * default outline, which varies and sometimes has too little contrast
- * against --surface in dark mode. */
+/* One consistent, visible focus style for every interactive element in the
+ * app, rather than each browser's own default outline, which varies and
+ * sometimes has too little contrast against --surface in dark mode. */
 :focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;

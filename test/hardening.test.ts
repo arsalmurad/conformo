@@ -21,7 +21,7 @@ describe("stripHtml(): defends against a pasted rich-text payload", () => {
   });
 });
 
-describe("checkPaymentLink(): the exact attack shapes named in the project's own conventions", () => {
+describe("checkPaymentLink(): rejects the real-world attack shapes for a payment link field", () => {
   it("accepts a real HTTPS checkout link", () => {
     expect(checkPaymentLink("https://buy.stripe.com/test_abc123").valid).toBe(true);
   });

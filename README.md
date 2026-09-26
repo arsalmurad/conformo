@@ -118,8 +118,8 @@ or a server. If that's what you need, [Akaunting](https://akaunting.com) and
 ## Contributing / building from source
 
 See [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) to build, test, or run this
-repo yourself, and [`CONTRIBUTING.md`](CONTRIBUTING.md) for the project's non-negotiable
-invariants.
+repo yourself, and [`CONTRIBUTING.md`](CONTRIBUTING.md) for the project's
+non-negotiable invariants.
 
 ## License
 

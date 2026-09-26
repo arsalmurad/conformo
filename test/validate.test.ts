@@ -15,7 +15,7 @@ describe("validate(): the sample invoice", () => {
     expect(result.results.filter((r) => r.severity === "error" || r.severity === "fatal")).toEqual([]);
   });
 
-  it("also passes the French CTC (BR-FR Flux 2) layer, matching the 77/0 result the project's own tracker records", async () => {
+  it("also passes the French CTC (BR-FR Flux 2) layer", async () => {
     const result = await validate(validCii, { country: "FR" });
     expect(result.valid).toBe(true);
   });
@@ -25,7 +25,7 @@ describe("validate(): the sample invoice", () => {
   });
 });
 
-describe("validate(): a deliberately broken invoice ", () => {
+describe("validate(): a deliberately broken invoice", () => {
   it("flags at least 10 distinct rules, each with a location, a message, and — where we have one — a plain-language explanation", async () => {
     const result = await validate(brokenCii);
     expect(result.valid).toBe(false);
@@ -51,9 +51,8 @@ describe("validate(): a deliberately broken invoice ", () => {
       expect(f!.plainLanguage!.fix.length).toBeGreaterThan(0);
     }
 
-    // Printed for the human reviewing this gate, per the project's own build plan
-    // ("paste the real output") — see the an earlier pass gate transcript in
-    // the project's own tracker for the captured run.
+    // Printed so a human reviewing this test can see the real output, not
+    // just a pass/fail.
     console.log(`\n${distinctRuleIds.size} distinct rules fired on the broken fixture:\n`);
     for (const id of [...distinctRuleIds].sort()) {
       const f = byId.get(id)!;
@@ -67,14 +66,13 @@ describe("validate(): a deliberately broken invoice ", () => {
     }
   });
 
-  // the project's own conventions Part B gate: "no rule should
-  // ever reach a user as raw Schematron". The official Factur-X CII
-  // Schematron puts each rule's human id as a "[BR-XX]-" prefix directly on
-  // the message text (see svrl.ts's own comment on why); that prefix is
-  // redundant with `ruleId` (already reported separately) and is exactly the
-  // "raw machine sentence" the project's own tracker's independent review flagged.
-  // This fixture alone fires 20+ distinct rules, which is enough surface to
-  // prove the stripping is unconditional, not tuned to one rule.
+  // No rule should ever reach a user as raw Schematron. The official
+  // Factur-X CII Schematron puts each rule's human id as a "[BR-XX]-" prefix
+  // directly on the message text (see svrl.ts's own comment on why); that
+  // prefix is redundant with `ruleId` (already reported separately) and
+  // reads as a raw machine sentence otherwise. This fixture alone fires 20+
+  // distinct rules, which is enough surface to prove the stripping is
+  // unconditional, not tuned to one rule.
   it("never leaves a raw [BR-XX]- bracket in a rule's message text", async () => {
     const result = await validate(brokenCii);
     expect(result.results.length).toBeGreaterThan(10);

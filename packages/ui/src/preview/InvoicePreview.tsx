@@ -5,10 +5,9 @@ import { InvoiceInputError } from '@conformo/formats';
 import { buildPreviewPdf, type EmbeddableLogo } from '../pdf/exportPdf.js';
 import { pdfjsReady, sharedWorker } from '../pdfjsWorker.js';
 
-// Small on purpose:  is "the
-// live preview reflects an edit within 500ms" end to end. This still
-// coalesces a fast burst of keystrokes into one rebuild; it just doesn't
-// make the user wait for it.
+// Small on purpose: the live preview must reflect an edit within 500ms end
+// to end. This still coalesces a fast burst of keystrokes into one rebuild;
+// it just doesn't make the user wait for it.
 const DEBOUNCE_MS = 80;
 
 interface Props {
@@ -19,8 +18,7 @@ interface Props {
 }
 
 /**
- * "There is currently no preview component anywhere in packages/ui/src. The
- * user fills a form and hopes."  — this
+ * A live preview, so the user isn't filling a form and hoping. This
  * rasterizes the invoice page onto a <canvas> with pdf.js, at
  * devicePixelRatio for a crisp render on high-DPI screens. An earlier
  * version used an <iframe src="blob:...">, which avoided pdf.js's render

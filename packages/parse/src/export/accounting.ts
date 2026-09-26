@@ -3,7 +3,7 @@
  * basic bookkeeping system posts (line total, VAT breakdown, grand total,
  * amount due), computed the same way the PDF and the XML formats compute
  * them (packages/core/src/totals.ts) so this can never disagree with either.
- * This is a data bridge, not a ledger: the project's anti-goals rule out this
+ * This is a data bridge, not a ledger: CLAUDE.md's anti-goals rule out this
  * project ever becoming an accounting system, and this export doesn't decide
  * how a receiving system books the entry — it just states the facts.
  * Amounts are Minor (integer cents), unlike the CSV export, because this is

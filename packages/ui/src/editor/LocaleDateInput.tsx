@@ -20,9 +20,9 @@ interface Props extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'
 }
 
 /**
- * the project's own conventions: "Replace every native... date input
- * with styled components" — the one native-chrome item the earlier an earlier pass
- * pass under-scoped. Recoloring `::-webkit-calendar-picker-indicator` (still
+ * Every native date input needed replacing with a styled component — the
+ * one native-chrome item an earlier pass under-scoped. Recoloring
+ * `::-webkit-calendar-picker-indicator` (still
  * done, in App.css) fixes the icon, but a native `<input type="date">`'s own
  * displayed text — including "mm/dd/yyyy" for an empty field — is formatted
  * by the OS/browser locale, not the page, and Chrome (unlike Firefox) does

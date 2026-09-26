@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 //
-// Proves the project's own conventions requirement 4 ("must run in a browser
-// with no server") for real, not by inspection: this file runs under
+// Proves the validator runs in a browser with no server, for real, not by
+// inspection: this file runs under
 // happy-dom (a browser-like DOM/window environment, not Node's), loads the
 // FREE SaxonJS2.rt.js RUNTIME build (no Node built-ins — see
 // tools/fetch-saxonjs.mjs; `grep -c "require(" SaxonJS2.rt.js` is 0, unlike

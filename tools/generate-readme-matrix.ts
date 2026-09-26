@@ -1,10 +1,9 @@
 /**
  * Regenerates the compliance matrix in README.md from
  * @conformo/compliance-data, between the COMPLIANCE-MATRIX markers, so
- * the table in the README can never drift from the sourced dataset (the gate
- * in the project's own conventions: "the compliance matrix in the README
- * regenerates from the dataset"). Never hand-edit the table itself — edit the
- * data in packages/compliance-data/src/data/*.json and rerun this script.
+ * the table in the README can never drift from the sourced dataset. Never
+ * hand-edit the table itself — edit the data in
+ * packages/compliance-data/src/data/*.json and rerun this script.
  */
 import fs from 'node:fs';
 import { countries } from '@conformo/compliance-data';

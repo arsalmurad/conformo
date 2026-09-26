@@ -1,11 +1,25 @@
 {
   "name": "@conformo/formats",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Serializes the EN 16931 invoice model to Factur-X/ZUGFeRD (CII), UBL 2.1, XRechnung and Peppol BIS XML.",
+  "author": "Muhammad Arsal Murad",
   "license": "Apache-2.0",
-  "repository": { "type": "git", "url": "git+https://github.com/arsalmurad/conformo.git", "directory": "packages/formats" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arsalmurad/conformo.git",
+    "directory": "packages/formats"
+  },
   "homepage": "https://github.com/arsalmurad/conformo/tree/main/packages/formats#readme",
-  "keywords": ["invoice", "en16931", "factur-x", "zugferd", "ubl", "xrechnung", "peppol", "e-invoicing"],
+  "keywords": [
+    "invoice",
+    "en16931",
+    "factur-x",
+    "zugferd",
+    "ubl",
+    "xrechnung",
+    "peppol",
+    "e-invoicing"
+  ],
   "type": "module",
   "main": "./src/index.ts",
   "exports": {

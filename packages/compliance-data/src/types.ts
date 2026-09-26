@@ -1,11 +1,11 @@
 /**
- * Schema for the e-invoicing compliance dataset .
- * This package's entire value is trustworthiness: every fact traces to a
- * `sourceUrl` that must be a tax authority, ministry, or official EU page —
- * never a vendor blog, law firm summary, or encyclopedia. A fact that cannot
- * be sourced that way is recorded with `status: "unverified"` rather than
- * silently presented as fact (CONTRIBUTING.md invariant 6, "Never claim
- * compliance, show it", applies here just as much as to Schematron results).
+ * Schema for the e-invoicing compliance dataset. This package's entire value
+ * is trustworthiness: every fact traces to a `sourceUrl` that must be a tax
+ * authority, ministry, or official EU page, never a vendor blog, law firm
+ * summary, or encyclopedia. A fact that cannot be sourced that way is
+ * recorded with `status: "unverified"` rather than silently presented as
+ * fact ("never claim compliance, show it" applies here just as much as to
+ * Schematron results).
  *
  * This is a read-only reference dataset, not a rules engine: it does not
  * decide whether a specific invoice complies (that's `@conformo/validate`'s
@@ -98,8 +98,8 @@ export interface CountryCompliance {
 
 export interface ComplianceDataset {
   /** Bumped on any breaking shape change — this dataset is published
-   * standalone , so a consumer pinning to a
-   * version needs a way to detect an incompatible shape. */
+   * standalone, so a consumer pinning to a version needs a way to detect an
+   * incompatible shape. */
   schemaVersion: 1;
   generatedAt: string;
   countries: CountryCompliance[];

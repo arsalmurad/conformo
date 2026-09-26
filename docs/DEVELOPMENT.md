@@ -72,7 +72,8 @@ To run the standalone validator page or the docs site on their own:
 - No new runtime dependency in core or formats
 - Public API documented with the BT/BG identifier it maps to
 
-See [`CONTRIBUTING.md`](../CONTRIBUTING.md) for the full contract (non-negotiable
-invariants, anti-goals, the two files you cannot touch without rerunning
-validation) and [`the project's own tracker`](../the project's own tracker) for the phase-by-phase
-build history and day-to-day project log.
+See [`CONTRIBUTING.md`](../CONTRIBUTING.md) for the full contract
+(non-negotiable invariants and anti-goals). `packages/pdf/src/pdfa.ts` and
+the element order in `packages/formats/src/cii.ts` encode non-obvious
+requirements found the hard way (see `docs/pdf-traps.md`); rerun
+`npm run build:sample && npm run validate` after touching either.

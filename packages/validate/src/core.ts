@@ -3,7 +3,8 @@ import { getPlainLanguageMessage } from "./messages/index.js";
 import type { CompiledSchematron, RuleResult, SaxonJSLike, ValidationResult } from "./types.js";
 
 /** Is this a Factur-X/CII document? The only syntax whose Schematron is
- * compiled today . A UBL document — or any non-invoice XML —
+ * compiled today (EN 16931 + French CTC, both CII). A UBL document — or any
+ * non-invoice XML —
  * is rejected rather than silently validated against a Schematron that fires
  * zero rules against it and reports a false "valid".
  *
@@ -17,7 +18,7 @@ export function assertCii(xml: string): void {
   if (!/<(?:\w+:)?CrossIndustryInvoice\b/.test(xml)) {
     throw new Error(
       "This does not look like a Factur-X/CII invoice (no rsm:CrossIndustryInvoice root found). " +
-        "UBL Schematron is not yet compiled to SEF; see the project's own tracker.",
+        "UBL Schematron is not yet compiled to SEF.",
     );
   }
 }
@@ -26,8 +27,7 @@ export function assertCii(xml: string): void {
  * structured results with plain-language messages attached where we have
  * one. `saxonJs` is either the `saxon-js` Node package or the browser
  * `SaxonJS2.rt.js` global — both implement the same `.transform()` API,
- * which is what makes this function usable unmodified on both sides
- * . */
+ * which is what makes this function usable unmodified on both sides. */
 export async function runSchematron(
   saxonJs: SaxonJSLike,
   xmlText: string,

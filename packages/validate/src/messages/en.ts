@@ -25,7 +25,7 @@ import type { PlainLanguageMessage } from "../types.js";
  * BR-17..65 single-field presence/format rule, every BR-DEC-* "at most 2
  * decimal places" rule, the two Factur-X-specific extension rules
  * (BR-FX-EN-04, BR-FXEXT-12), and the French CTC rules this project's own
- * sample invoice failed against in an earlier pass (see docs/pdf-traps.md). None of
+ * sample invoice failed against early on (see docs/pdf-traps.md). None of
  * this coverage is a hard guarantee against a gap regardless: no rule ever
  * reaches a caller as raw `[BR-XX]-` text — the SVRL parser (src/svrl.ts)
  * strips that bracket from every message unconditionally, hand-written or

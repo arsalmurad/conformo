@@ -21,7 +21,7 @@ interface Props {
  * "project" spanning multiple invoices — used here only to compute the one
  * thing the model DOES represent: a line item and a prepaid amount, on THIS
  * invoice. Remaining-balance tracking is therefore necessarily a manual
- * running total: nothing before this codebase knows what a project's earlier
+ * running total: nothing before this session knows what a project's earlier
  * invoices billed unless the user says so, since two invoices are always
  * separate encrypted-and-exported documents, never a shared record. */
 export function BillingPanel({ invoice, onChange }: Props) {

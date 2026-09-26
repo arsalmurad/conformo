@@ -100,7 +100,7 @@ export async function runParse(args: string[]): Promise<void> {
     console.log(`Validation: ${report.valid ? "VALID" : "INVALID"} — ${report.firedCount} rules checked, ${failures.length} failed.`);
     if (!report.valid) process.exitCode = 1;
   } else {
-    console.log("Validation: skipped (Schematron validation only covers the CII syntax today; see the project's own tracker).");
+    console.log("Validation: skipped (Schematron validation only covers the CII syntax today).");
   }
 
   if (csv) {

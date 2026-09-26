@@ -1,7 +1,7 @@
-# Builds and serves packages/ui — the one app in this repo (CONTRIBUTING.md
-# invariant 4: the app itself runs entirely client-side once loaded, with no
-# server and no account). This container exists for "one command to try it,"
-# not because the app needs a backend to function.
+# Builds and serves packages/ui — the one app in this repo. The app itself
+# runs entirely client-side once loaded, with no server and no account. This
+# container exists for "one command to try it," not because the app needs a
+# backend to function.
 #
 # Multi-stage: the builder needs Python (the `factur-x` pip package supplies
 # the official Schematron XSLT source that gets compiled to SaxonJS SEF — see

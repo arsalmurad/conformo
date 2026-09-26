@@ -1,7 +1,7 @@
 /**
  * End-to-end smoke build: JSON invoice -> CII XML -> PDF/A-3 with the XML
- * embedded. Layout is packages/pdf's data-driven template renderer (an earlier pass) —
- * the same function packages/ui calls in the browser, proven here to also run
+ * embedded. Layout is packages/pdf's data-driven template renderer, the
+ * same function packages/ui calls in the browser, proven here to also run
  * in Node, not two implementations that happen to agree.
  */
 import fs from 'node:fs';

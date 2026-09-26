@@ -1,11 +1,23 @@
 {
   "name": "@conformo/cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Command-line validate and parse for EN 16931 electronic invoices (Factur-X/ZUGFeRD, CII, UBL, XRechnung).",
+  "author": "Muhammad Arsal Murad",
   "license": "Apache-2.0",
-  "repository": { "type": "git", "url": "git+https://github.com/arsalmurad/conformo.git", "directory": "packages/cli" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arsalmurad/conformo.git",
+    "directory": "packages/cli"
+  },
   "homepage": "https://github.com/arsalmurad/conformo/tree/main/packages/cli#readme",
-  "keywords": ["cli", "invoice", "en16931", "e-invoicing", "factur-x", "validate"],
+  "keywords": [
+    "cli",
+    "invoice",
+    "en16931",
+    "e-invoicing",
+    "factur-x",
+    "validate"
+  ],
   "type": "module",
   "bin": {
     "conformo": "./src/cli.ts"

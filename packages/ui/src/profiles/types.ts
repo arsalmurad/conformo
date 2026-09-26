@@ -1,9 +1,8 @@
 import type { Party } from '@conformo/core';
 
-/** A saved, reusable seller/buyer entity — the "profiles" hard requirement
- * from the project's own conventions. Wraps the same `Party` shape the core model
- * uses, so a profile drops straight into `Invoice.seller`/`.buyer` with no
- * translation layer. */
+/** A saved, reusable seller/buyer entity. Wraps the same `Party` shape the
+ * core model uses, so a profile drops straight into
+ * `Invoice.seller`/`.buyer` with no translation layer. */
 export interface PartyProfile {
   id: string;
   /** A label for the picker, e.g. "Northwind Studio SARL" — not itself part

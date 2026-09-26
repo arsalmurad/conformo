@@ -1,6 +1,6 @@
-// the project's own conventions: "Under 10 seconds from opening the app to a
-// downloaded invoice for a returning user. Measure it, and put the number
-// in the README." This is a one-off measurement script, not a pass/fail
+// Measures time from opening the app to a downloaded invoice for a
+// returning user, against a target of under 10 seconds. This is a one-off
+// measurement script, not a pass/fail
 // CI gate (a laptop's exact timing isn't something to assert on in CI,
 // where runner speed varies run to run) — its output is what actually went
 // into README.md, not a number picked in advance and then justified.

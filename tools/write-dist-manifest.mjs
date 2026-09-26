@@ -33,6 +33,7 @@ const manifest = {
   name: pkg.name,
   version: pkg.version,
   description: pkg.description,
+  author: pkg.author,
   license: pkg.license,
   repository: pkg.repository,
   homepage: pkg.homepage,

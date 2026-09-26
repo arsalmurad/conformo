@@ -1,11 +1,24 @@
 {
   "name": "@conformo/validate",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Validates EN 16931 electronic invoices against the official CEN Schematron (plus country CIUS rules), in Node or a browser.",
+  "author": "Muhammad Arsal Murad",
   "license": "Apache-2.0",
-  "repository": { "type": "git", "url": "git+https://github.com/arsalmurad/conformo.git", "directory": "packages/validate" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arsalmurad/conformo.git",
+    "directory": "packages/validate"
+  },
   "homepage": "https://github.com/arsalmurad/conformo/tree/main/packages/validate#readme",
-  "keywords": ["schematron", "en16931", "validation", "e-invoicing", "xrechnung", "peppol", "factur-x"],
+  "keywords": [
+    "schematron",
+    "en16931",
+    "validation",
+    "e-invoicing",
+    "xrechnung",
+    "peppol",
+    "factur-x"
+  ],
   "type": "module",
   "main": "./src/index.ts",
   "exports": {

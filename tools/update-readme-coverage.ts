@@ -1,9 +1,9 @@
 /**
  * Regenerates the plain-language coverage line in docs/DEVELOPMENT.md
  * between the COVERAGE markers, from the same computeCoverage() the CLI and
- * the message table's own header comment reference — the project's own conventions Part B: "It should be a fact you track, not a
- * thing discovered by a reviewer." Never hand-edit the number; edit
- * packages/validate/src/messages/en.ts and rerun this script.
+ * the message table's own header comment reference. It should be a fact
+ * tracked here, not a thing discovered by a reviewer. Never hand-edit the
+ * number; edit packages/validate/src/messages/en.ts and rerun this script.
  */
 import fs from 'node:fs';
 import { computeCoverage } from '@conformo/validate/coverage';

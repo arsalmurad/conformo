@@ -1,6 +1,7 @@
 /**
  * How many of the EN 16931 Schematron's own rules have a hand-written
- * plain-language message .
+ * plain-language message. It should be a fact tracked here, not a thing
+ * discovered by a reviewer.
  *
  * Reads the actual compiled artefact rather than a hardcoded rule count, so
  * this number can never drift from what the validator really runs: every

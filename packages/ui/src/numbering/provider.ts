@@ -1,7 +1,7 @@
 /**
- * "Gapless sequential numbering with a pluggable series provider: local,
+ * Gapless sequential numbering with a pluggable series provider: local,
  * SQLite, Postgres or webhook. The user must not be able to free-type a
- * number that breaks the sequence." 
+ * number that breaks the sequence.
  *
  * A provider's only contract is `next()`: hand out the next number in the
  * series, exactly once, atomically. That is what "gapless" actually means —

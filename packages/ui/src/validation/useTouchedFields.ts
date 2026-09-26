@@ -1,9 +1,8 @@
 import { useCallback, useState } from 'react';
 
 /**
- * "Do not flag fields the user has not touched yet. Validate a field on
- * blur, and the whole document on first export attempt."
- *  A brand-new, empty
+ * Do not flag fields the user has not touched yet: validate a field on
+ * blur, and the whole document on first export attempt. A brand-new, empty
  * invoice used to show every mandatory-field error at once — "7 issues to
  * fix" before the user had typed a single character. This tracks which
  * fields have been blurred at least once, plus a one-way switch flipped by

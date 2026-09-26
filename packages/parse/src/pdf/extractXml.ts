@@ -7,7 +7,7 @@
  * guaranteed present and is the shorter path to the same file.
  *
  * pdf-lib only (no node:fs, no Buffer): this must run in a browser, same as
- * the writer (CONTRIBUTING.md invariant 4).
+ * the writer (CLAUDE.md invariant 4).
  */
 import { PDFArray, PDFDict, PDFName, PDFRawStream, PDFStream, PDFString, PDFHexString, decodePDFRawStream } from 'pdf-lib';
 import { PDFDocument } from 'pdf-lib';

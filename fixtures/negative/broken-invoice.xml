@@ -4,8 +4,8 @@
   @conformo/formats on purpose: the serializer's whole job is to make
   documents like this impossible to produce, so proving the validator catches
   a bad document means bypassing it. Exists only to drive
-  test/validate.test.ts's "at least 10 distinct rules" gate
-   — never fed through build:sample or shipped.
+  test/validate.test.ts's "at least 10 distinct rules" gate — never fed
+  through build:sample or shipped.
 
   What's deliberately wrong, and which rule each is meant to trip:
     - No Specification identifier                        BR-01

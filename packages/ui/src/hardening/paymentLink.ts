@@ -1,6 +1,6 @@
 /**
- * "HTTPS-only payment links that reject javascript:, localhost and embedded
- * credentials" . A payment link (a Stripe/PayPal/etc.
+ * Payment links are HTTPS-only and reject javascript:, localhost and
+ * embedded credentials. A payment link (a Stripe/PayPal/etc.
  * checkout URL) is the one field on an invoice a buyer is actively invited to
  * click — so it's exactly the field a malicious "invoice" would weaponize:
  * `javascript:` for script execution if it's ever rendered clickable rather

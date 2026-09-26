@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 
 /**
- *  Creates a real invoice through the
+ * The end-to-end gate. Creates a real invoice through the
  * real UI — profiles, live validation, gapless numbering, the whole editor
  * — downloads the PDF the app actually produces, and shells out to the
  * project's own tools/validate.py against that exact file: the same
@@ -67,9 +67,9 @@ test('creates an invoice end to end and the downloaded PDF passes tools/validate
   const pdfPath = path.join(tmpDir, 'invoice.pdf');
   await download.saveAs(pdfPath);
 
-  // tools/validate.py checks out/invoice.pdf specifically (see the project's own build plan);
-  // no CLI arg for an arbitrary path, so this drops the real downloaded file
-  // there rather than teaching the shared validator script a one-off flag.
+  // tools/validate.py checks out/invoice.pdf specifically; no CLI arg for
+  // an arbitrary path, so this drops the real downloaded file there rather
+  // than teaching the shared validator script a one-off flag.
   const repoRoot = path.resolve(here, '..');
   const outDir = path.join(repoRoot, 'out');
   const originalPdf = path.join(outDir, 'invoice.pdf');
@@ -103,9 +103,8 @@ test('creates an invoice end to end and the downloaded PDF passes tools/validate
 });
 
 /**
- *  "a new e2e assertion that
- * the live preview reflects an edit within 500ms." Measures from the moment
- * the field edit lands (Playwright's fill() resolves) to the moment the
+ * Asserts the live preview reflects an edit within 500ms. Measures from the
+ * moment the field edit lands (Playwright's fill() resolves) to the moment the
  * preview canvas has actually painted the new page — canvas.dataset.
  * renderedGeneration (InvoicePreview.tsx) only gets set after the full
  * build-PDF -> pdf.js render -> blit-to-visible-canvas pipeline completes,
@@ -135,8 +134,8 @@ test('live preview reflects an edit within 500ms', async ({ page }) => {
 });
 
 /**
- * the project's own conventions: the live preview must have no browser
- * PDF-viewer toolbar and no "blob:..." identity — checked here rather than
+ * The live preview must have no browser PDF-viewer toolbar and no
+ * "blob:..." identity — checked here rather than
  * just by construction (canvas + pdf.js instead of <iframe src="blob:...">)
  * because a regression back to an iframe would otherwise only be caught by
  * eyeballing a screenshot.
@@ -151,8 +150,8 @@ test('live preview has no iframe/blob chrome', async ({ page }) => {
 });
 
 /**
- * the project's own conventions: "add a Playwright check that the
- * preview canvas has non-blank pixels ... at 1440px and 390px wide."
+ * The preview canvas must have non-blank pixels at both a desktop and a
+ * mobile viewport width.
  */
 for (const width of [1440, 390]) {
   test(`live preview canvas has real content at ${width}px wide`, async ({ page }) => {

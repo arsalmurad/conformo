@@ -10,8 +10,8 @@ interface Props {
 
 const MIME_BY_KIND = { png: 'image/png', jpeg: 'image/jpeg', webp: 'image/webp' } as const;
 
-/** "logo uploads limited to PNG/JPEG/WebP under 2 MB with SVG blocked"
- * . The validation (hardening/logo.ts) checks the
+/** Logo uploads are limited to PNG/JPEG/WebP under 2 MB, with SVG blocked.
+ * The validation (hardening/logo.ts) checks the
  * file's actual bytes, not its name or reported MIME type. WebP is accepted
  * on upload but converted to PNG before use, since pdf-lib has no WebP
  * embedder (see hardening/imageConvert.ts) — the size/type/SVG rules are

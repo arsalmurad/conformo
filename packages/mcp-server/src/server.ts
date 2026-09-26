@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * MCP server exposing create/validate/convert 
+ * MCP server exposing create/validate/convert
  * so an agent can issue an EN 16931 electronic invoice, check one against the
  * official Schematron, or convert between syntaxes — without shelling out to
  * the CLI or importing this project's packages directly. Stdio transport,

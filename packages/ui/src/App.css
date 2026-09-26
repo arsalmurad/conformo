@@ -38,8 +38,8 @@
   gap: 2px;
 }
 
-/* A real first-load state (an earlier pass: "make it obvious what this is and what
-   to do, not present a blank form with seven errors on it") — shown only
+/* A real first-load state: it should be obvious what this is and what
+   to do, not a blank form with seven errors on it. Shown only
    before the user has touched anything or loaded a saved draft, and it
    never blocks the form underneath: no wizard, no dismiss button to hunt
    for, it just stops being the first thing you see once you start typing. */
@@ -265,11 +265,11 @@ fieldset.party legend {
   border-color: var(--bad);
 }
 
-/* "A missing buyer name while typing is not the same class of thing as a
-   structurally invalid VAT breakdown, and they should not look identical"
-   : a required field
-   that's simply still empty gets a neutral dashed border, not the same solid
-   red as a field that has a value the tax authority will actually reject. */
+/* A missing buyer name while typing is not the same class of thing as a
+   structurally invalid VAT breakdown, and they should not look identical: a
+   required field that's simply still empty gets a neutral dashed border,
+   not the same solid red as a field that has a value the tax authority will
+   actually reject. */
 .field-incomplete input,
 .field-incomplete select {
   border-color: var(--mute-2);
@@ -308,8 +308,8 @@ fieldset.party legend {
   color: var(--bad);
 }
 
-/* Custom select chrome (an earlier pass: "No OS chrome anywhere in the main flow"):
-   normalizes the closed-state control to the same border/radius/focus ring
+/* Custom select chrome: no OS chrome anywhere in the main flow. Normalizes
+   the closed-state control to the same border/radius/focus ring
    as every text input, with our own chevron instead of the browser's. The
    open dropdown list itself is still rendered by the OS/browser — there is
    no cross-browser way to restyle that part without giving up native
@@ -345,8 +345,8 @@ select:focus-visible {
 /* File inputs: ::file-selector-button styling (restyling the real control's
  * own button) turned out to still leave a native "no file chosen" label next
  * to it that no CSS reaches, so the control reads as native regardless
- * (found by actually loading the page at 390px: the project's own conventions's own gate wants no native-looking file controls, and half a
- * native control still counts). Hidden instead — visually, not from the
+ * (found by actually loading the page at 390px: half a native control
+ * still counts as a native-looking control). Hidden instead — visually, not from the
  * accessibility tree or the tab order — behind a real <label> styled as a
  * button, the standard robust pattern: a screen reader still sees a real
  * file input with its real label, Tab still reaches it directly and
@@ -711,8 +711,8 @@ select:focus-visible {
   line-height: 1;
 }
 
-/* "Fix the sticky action bar. It currently overlaps and cuts off the
-   invoice lines row" (an earlier pass). Root cause: a hardcoded 100px of bottom
+/* Fix for the sticky action bar overlapping and cutting off the invoice
+   lines row. Root cause: a hardcoded 100px of bottom
    padding on .app assumed a one-line footer, which broke the moment the
    encrypted-autosave prompt (its own <form>) wrapped to two lines on a
    narrower viewport. Fixed two ways: the footer itself wraps and never
@@ -814,8 +814,8 @@ button.secondary {
   margin-top: var(--space-4);
 }
 
-/* Live preview panel (an earlier pass: "the single biggest functional gap"). Shows
-   the exact PDF bytes buildInvoicePdf() would download, rasterized onto a
+/* Live preview panel. Shows the exact PDF bytes buildInvoicePdf() would
+   download, rasterized onto a
    <canvas> with pdf.js at devicePixelRatio — not a parallel HTML mockup that
    could silently drift from the real output. An <iframe src="blob:...">
    version was faster but showed the browser's own PDF-viewer toolbar and a

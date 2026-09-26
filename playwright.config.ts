@@ -1,14 +1,12 @@
 import { defineConfig } from '@playwright/test';
 
 /**
- *  "a Playwright test that creates an
- * invoice end to end and asserts the downloaded PDF passes
- * tools/validate.py." Runs against the PRODUCTION build (`vite build` +
- * `vite preview`), not the dev server — that's what actually ships, and
- * it's the only mode where the service worker (and therefore the offline
- * story) is real. The dev server was already used for every manual
- * verification recorded in the project's own tracker; this gate exists so the same
- * path is checked by CI on every push, not just by hand once.
+ * The end-to-end gate: a Playwright test that creates an invoice end to end
+ * and asserts the downloaded PDF passes tools/validate.py. Runs against the
+ * PRODUCTION build (`vite build` + `vite preview`), not the dev server —
+ * that's what actually ships, and it's the only mode where the service
+ * worker (and therefore the offline story) is real. This gate exists so
+ * that path is checked by CI on every push, not just by hand.
  */
 export default defineConfig({
   testDir: './e2e',

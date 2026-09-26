@@ -3,7 +3,9 @@
 // from packages/compliance-data's own source files — not its gitignored
 // dist/compliance-data.json build artefact, so this needs no separate build
 // step and can never go stale relative to the country data itself. Read at
-// runtime by src/CountrySelect.tsx .
+// runtime so the country selector is driven from the dataset: adding a
+// country to the data adds it to the app, rather than the selector
+// silently lagging behind what packages/compliance-data actually ships.
 import { readFileSync, readdirSync, writeFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 

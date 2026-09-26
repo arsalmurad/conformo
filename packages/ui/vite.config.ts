@@ -37,8 +37,8 @@ export default defineConfig({
           'validator/*.{json,js}',
         ],
         // The SEF artefacts are raw (uncompressed) JSON on disk — ~9.1 MB and
-        // ~2.7 MB, gzipping to the 191 KB / 76 KB actually sent over the wire
-        // (see the project's own tracker) — and the SaxonJS runtime. Real, needed weight
+        // ~2.7 MB, gzipping to the 191 KB / 76 KB actually sent over the
+        // wire — and the SaxonJS runtime. Real, needed weight
         // for offline live-validation to work at all: raise Workbox's default
         // 2 MB per-file cap rather than silently excluding them from the
         // precache, which would make the very first offline validation fail.

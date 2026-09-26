@@ -1,12 +1,14 @@
 /**
- * Presentation-only locale formatting for the PDF template (the project's own conventions: "Dates, number formatting and currency display
- * should follow the invoice's country and currency, not the browser's US
- * default. A EUR invoice to a French buyer should not render 09/23/2026").
+ * Presentation-only locale formatting for the PDF template. Dates, number
+ * formatting and currency display follow the invoice's country and
+ * currency, not the browser's US default: a EUR invoice to a French buyer
+ * should not render 09/23/2026.
  *
  * Deliberately separate from packages/core/src/money.ts: that module's
  * `toMajor()` produces the exact, locale-independent decimal text the XML
- * and the money math need (CONTRIBUTING.md invariant 1) and must never change.
- * This module only decides how that same value is *drawn* on the page.
+ * and the money math need (money is always integer minor units, never a
+ * float) and must never change. This module only decides how that same
+ * value is *drawn* on the page.
  *
  * `Intl.DateTimeFormat`/`Intl.NumberFormat` are pure functions of their
  * input — no clock, no randomness — so this doesn't touch invariant 5
@@ -57,8 +59,8 @@ export function formatInvoiceDate(iso: string, locale: string): string {
  *
  * `useGrouping: false` is deliberate, not an oversight: packages/parse/src/
  * pdf/visibleTotals.ts re-reads this exact text off the rendered page to
- * cross-check it against the embedded XML (the fraud check named in
- * the project's own conventions). A thousands separator would be ambiguous to
+ * cross-check it against the embedded XML (the visible-totals fraud check).
+ * A thousands separator would be ambiguous to
  * parse back out — several locales group with a plain or non-breaking space,
  * which pdfjs's own text extraction already collapses and re-inserts between
  * unrelated text runs, making a grouping space indistinguishable from word

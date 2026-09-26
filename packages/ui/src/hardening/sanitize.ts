@@ -1,6 +1,6 @@
 /**
- * "HTML sanitisation on rich input, paste-to-plain-text"
- * . Every free-text field on an invoice (a note, a
+ * HTML sanitisation on rich input, paste-to-plain-text. Every free-text
+ * field on an invoice (a note, a
  * line description, a party name) ends up embedded in generated XML and,
  * eventually, wherever this project's own free HTML validator or an invoice
  * preview renders it — so accepting raw HTML from a paste (Word and Google

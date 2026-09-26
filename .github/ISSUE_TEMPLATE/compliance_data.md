@@ -12,8 +12,7 @@ Which field (`status`, `effectiveDate`, `requiredFormats`, `thresholdNote`, ...)
 
 **Authoritative source**
 A link to a tax authority, ministry, or official EU page — not a vendor blog,
-law firm summary, or encyclopedia (see the "Note on accuracy" in
-`the project's own conventions`). If you don't have one, say so; the row
+law firm summary, or encyclopedia. If you don't have one, say so; the row
 can still be marked `status: "unverified"` rather than left wrong.
 
 **What it should say**

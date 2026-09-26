@@ -1,6 +1,6 @@
 /**
- * Fraud check named explicitly in the project's own conventions: an invoice PDF
- * carries two representations of the same money — the page a human reads and
+ * A fraud check: an invoice PDF carries two representations of the same
+ * money — the page a human reads and
  * the embedded XML a machine posts to accounting. Nothing stops a bad actor
  * from handing you a PDF where the two disagree (a page edited after the fact,
  * or a PDF generator that never kept them in sync). This reads the PDF's own

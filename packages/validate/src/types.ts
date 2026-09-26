@@ -35,8 +35,8 @@ export interface PlainLanguageMessage {
 
 /** Which ruleset(s) to run. "en16931" is the base EN 16931 semantic rules,
  * required for every profile; a country layer is additive on top of it.
- * Only the CII/Factur-X syntax is compiled today ;
- * a UBL profile throws rather than silently skipping rules it cannot run. */
+ * Only the CII/Factur-X syntax is compiled today; a UBL profile throws
+ * rather than silently skipping rules it cannot run. */
 export interface ValidateOptions {
   profile?: "en16931";
   country?: "FR";

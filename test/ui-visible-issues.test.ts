@@ -14,10 +14,9 @@ function touchedFieldsOf(visible: string[]): TouchedFields {
   return { isVisible: (key) => set.has(key), markTouched: () => {}, revealAll: () => {} };
 }
 
-// Regression for the project's own conventions Part C: "Do not
-// flag fields the user has not touched yet" — a nearly-empty form used to
-// show every mandatory-field error at once regardless of what the user had
-// actually interacted with.
+// Regression: do not flag fields the user has not touched yet. A
+// nearly-empty form used to show every mandatory-field error at once
+// regardless of what the user had actually interacted with.
 describe('visibleIssues(): only shows issues for fields the user has touched (or after revealAll)', () => {
   const validation: LiveValidation = {
     checking: false,

@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Same pattern as packages/ui/scripts/copy-validator-assets.mjs — this page
-// is deliberately a separate deployable unit , so it copies its own assets rather than
-// depending on packages/ui's public/ directory at build time.
+// is deliberately a separate, separately-deployable unit, so it copies its
+// own assets rather than depending on packages/ui's public/ directory at
+// build time.
 import { copyFileSync, existsSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 

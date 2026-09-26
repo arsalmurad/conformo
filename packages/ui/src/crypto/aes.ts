@@ -1,6 +1,7 @@
 /**
  * Local persistence is encrypted with AES-256-GCM; the key is derived from a
- * user passphrase via PBKDF2 and never stored . Only the salt, the PBKDF2 iteration count and the
+ * user passphrase via PBKDF2 and never stored. Only the salt, the PBKDF2
+ * iteration count and the
  * ciphertext are ever written to disk — see storage.ts. Losing the
  * passphrase means losing the data: there is no recovery path, by design,
  * since a recoverable key is a stored key.

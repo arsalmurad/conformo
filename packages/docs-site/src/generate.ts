@@ -1,8 +1,8 @@
 /**
  * Generates one static HTML page per mandate country from
- * @conformo/compliance-data, plus an index. "So it cannot drift"
- * : there is no hand-written country page
- * anywhere in this package, only this generator and the dataset it reads.
+ * @conformo/compliance-data, plus an index. So it cannot drift: there is no
+ * hand-written country page anywhere in this package, only this generator
+ * and the dataset it reads.
  */
 import fs from 'node:fs';
 import path from 'node:path';

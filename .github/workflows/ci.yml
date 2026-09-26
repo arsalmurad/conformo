@@ -29,21 +29,21 @@ jobs:
           diff a.txt b.txt || (echo "PDF output is not deterministic" && exit 1)
       - name: Install Playwright's Chromium (+ system deps)
         run: npx playwright install --with-deps chromium
-      - name: End-to-end gate  - create an invoice through the real UI, assert the downloaded PDF passes tools/validate.py
+      - name: End-to-end gate - create an invoice through the real UI, assert the downloaded PDF passes tools/validate.py
         run: npm run e2e
-      - name: Docs site builds 
+      - name: Docs site builds
         run: |
           npm run build:compliance-data
           npm run docs:build
-      - name: Compliance matrix in the README regenerates from the dataset 
+      - name: Compliance matrix in the README regenerates from the dataset
         run: |
           npm run readme:matrix
           git diff --exit-code README.md || (echo "README.md's compliance matrix is out of date - run 'npm run build:compliance-data && npm run readme:matrix' and commit the result" && exit 1)
-      - name: Plain-language coverage in the README matches the compiled artefact 
+      - name: Plain-language coverage note matches the compiled artefact
         run: |
           npm run readme:coverage
-          git diff --exit-code README.md || (echo "README.md's coverage line is out of date - run 'npm run readme:coverage' and commit the result" && exit 1)
-      - name: Docker image runs and serves the app 
+          git diff --exit-code docs/DEVELOPMENT.md || (echo "docs/DEVELOPMENT.md's coverage line is out of date - run 'npm run readme:coverage' and commit the result" && exit 1)
+      - name: Docker image runs and serves the app
         run: |
           docker compose build
           docker compose up -d

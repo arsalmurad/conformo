@@ -14,7 +14,7 @@ labels: bug
 **Minimal reproduction**
 If this is a wrong invoice, attach the smallest fixture (JSON `Invoice` or
 generated XML) that reproduces it. Redact real names, VAT numbers, IBANs and
-bank details — this repo is public and synthetic-data-only (`CONTRIBUTING.md`).
+bank details — this repo is public and synthetic-data-only.
 
 **If this is a validation/Schematron result**
 Which rule ID (e.g. `BR-CO-15`)? Paste the exact message.

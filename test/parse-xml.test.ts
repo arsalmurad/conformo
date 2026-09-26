@@ -66,7 +66,7 @@ describe("parseXml(): correctness on well-formed, realistic invoice XML", () => 
   });
 });
 
-describe("parseXml(): security — the exact attack shapes the project's own conventions names", () => {
+describe("parseXml(): security — rejects real-world XML attack shapes", () => {
   it("rejects a DOCTYPE with an XXE external-entity payload", () => {
     const xxe = `<?xml version="1.0"?>
       <!DOCTYPE foo [ <!ENTITY xxe SYSTEM "file:///etc/passwd"> ]>

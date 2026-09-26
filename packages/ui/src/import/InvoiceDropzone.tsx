@@ -22,11 +22,11 @@ function isPdf(bytes: Uint8Array): boolean {
 
 /**
  * Import a Factur-X/ZUGFeRD PDF, a bare CII XML, a UBL XML or an XRechnung
- * file, and replace the current draft with it .
- * A PDF whose visible totals disagree with its own embedded XML is refused
- * outright rather than imported with a warning: that mismatch is the fraud
- * vector the phase brief calls out, and a form the user could still submit
- * despite the warning is not actually a safeguard.
+ * file, and replace the current draft with it. A PDF whose visible totals
+ * disagree with its own embedded XML is refused outright rather than
+ * imported with a warning: that mismatch is a real fraud vector, and a form
+ * the user could still submit despite the warning is not actually a
+ * safeguard.
  */
 export function InvoiceDropzone({ onImport }: Props) {
   const [status, setStatus] = useState<Status>({ kind: 'idle' });

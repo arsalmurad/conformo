@@ -35,7 +35,7 @@ function printUsage(): void {
       "                                        XRechnung file into an Invoice, checking a",
       "                                        PDF's visible totals against its embedded XML",
       "",
-      "More commands (create, convert, render) land in later phases — see the project's own tracker.",
+      "More commands (create, convert, render) are planned.",
     ].join("\n"),
   );
 }

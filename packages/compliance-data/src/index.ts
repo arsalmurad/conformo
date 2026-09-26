@@ -5,9 +5,7 @@
  * (tools/generate-docs.ts, tools/generate-readme-matrix.ts, and any external
  * npm consumer), not the browser app. A future browser feature that wants
  * this data at runtime should fetch the published plain JSON file (see
- * tools/build-compliance-data.ts) rather than needing this package bundled —
- * that file is exactly what the project's own conventions's "publish as
- * npm plus a plain JSON file" asks for.
+ * tools/build-compliance-data.ts) rather than needing this package bundled.
  */
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -32,9 +30,9 @@ export const countries: CountryCompliance[] = loadCountries();
 
 /** The most recent `lastVerified` across every row, not `new Date()` — this
  * value ends up in a published artifact (tools/build-compliance-data.ts), and
- * a clock reading "now" on every import would make that artifact non-
- * reproducible from the same data (the same discipline the project's invariant
- * 5 requires of an invoice document, applied to this one too). */
+ * a clock reading "now" on every import would make that artifact
+ * non-reproducible from the same data (the same determinism an invoice
+ * document itself needs, applied here too). */
 function latestVerifiedDate(list: CountryCompliance[]): string {
   return list.reduce((latest, c) => (c.lastVerified > latest ? c.lastVerified : latest), '0000-00-00');
 }

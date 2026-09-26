@@ -27,8 +27,8 @@ export function parseSvrl(svrl: string): { results: RuleResult[]; firedCount: nu
     // the "[BR-Z-10]-" bracket is redundant with `ruleId` (already reported
     // separately) and reads as raw machine output to someone who isn't a
     // Schematron author. Stripping it here, once, means every caller gets a
-    // readable sentence with no special-casing of their own (the project's own conventions Part B: "no rule should ever reach a user
-    // as raw Schematron").
+    // readable sentence with no special-casing of their own: no rule should
+    // ever reach a user as raw Schematron.
     const message = stripLeadingBracketId(rawMessage);
     results.push({
       ruleId,

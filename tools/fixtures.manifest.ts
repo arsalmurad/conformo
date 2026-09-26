@@ -33,7 +33,7 @@ export const FIXTURES: FixtureSpec[] = [
   // UBL only: empirically, the EN16931 Schematron for CII bundled in the pip
   // `factur-x` package does not implement BR-Z-10 (confirmed by running this
   // exact fixture through it), while the UBL one does. That is a real gap in a
-  // third-party artefact, recorded in the project's own tracker, not something to route
-  // around by testing a format where the gap is invisible.
+  // third-party artefact, not something to route around by testing a format
+  // where the gap is invisible.
   { file: 'negative/z-with-vatex.json', targets: ['ubl-en16931'], negative: true },
 ];

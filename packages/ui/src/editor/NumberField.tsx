@@ -9,9 +9,8 @@ interface Props {
   errors?: RuleResult[];
 }
 
-/** Replaces a free-text invoice number with an assigned one: the hard
- * requirement is literally that the user "must not be able to free-type a
- * number that breaks the sequence" , so once a
+/** Replaces a free-text invoice number with an assigned one: the user must
+ * not be able to free-type a number that breaks the sequence, so once a
  * number is assigned this field shows it read-only rather than editable.
  * A gapless number, once drawn, stays drawn even if this draft is later
  * abandoned — that's what gapless means in real bookkeeping, not a bug to

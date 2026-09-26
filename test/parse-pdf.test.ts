@@ -59,8 +59,8 @@ describe('readInvoiceFromPdf(): extraction + the visible-totals fraud check', ()
 
   it('flags a mismatch when the embedded XML disagrees with the rendered page', async () => {
     // Render the page for one invoice, but embed a tampered XML (a different
-    // amount due) as if the two had been swapped after the fact — the exact
-    // fraud shape the project's own conventions calls out.
+    // amount due) as if the two had been swapped after the fact — a real
+    // fraud shape this check exists to catch.
     const tampered: Invoice = { ...invoice, lines: invoice.lines.map((l) => ({ ...l, unitPriceMinor: l.unitPriceMinor * 2 })) };
     const t = totals(invoice); // totals for the ORIGINAL amounts, drawn on the page
     const tamperedXml = buildCII(tampered); // but the embedded XML says something else

@@ -9,7 +9,7 @@ export interface ComplianceCountry {
 /** Fetches the {country, name} list scripts/copy-compliance-data.mjs writes
  * from packages/compliance-data's own source at build time — so the "Country
  * rules" selector grows automatically when a country is added to the
- * dataset, without a matching UI change . */
+ * dataset, without a matching UI change. */
 export function useComplianceCountries(): ComplianceCountry[] {
   const [countries, setCountries] = useState<ComplianceCountry[]>([]);
   useEffect(() => {

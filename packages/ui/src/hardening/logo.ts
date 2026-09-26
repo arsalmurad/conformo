@@ -1,6 +1,6 @@
 /**
- * "logo uploads limited to PNG/JPEG/WebP under 2 MB with SVG blocked"
- * . SVG is blocked specifically because it's an XML
+ * Logo uploads are limited to PNG/JPEG/WebP under 2 MB, with SVG blocked.
+ * SVG is blocked specifically because it's an XML
  * format that can embed `<script>` and event-handler attributes — a "logo"
  * upload is exactly the kind of file a user expects to be inert, and an SVG
  * rendered inline or given a same-origin URL is not. The check reads the
