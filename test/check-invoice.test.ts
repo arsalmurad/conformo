@@ -80,3 +80,10 @@ describe('prices may have more decimals than the currency (BT-146), exactly', ()
     expect(buildCII(inv)).toContain('<ram:ChargeAmount>0.0125</ram:ChargeAmount>');
   });
 });
+
+describe('checkInvoice(): mistakes the Schematron would reject later', () => {
+  it('warns about category S with a 0% rate (BR-S-05)', () => {
+    const inv = { ...ok, lines: [{ ...ok.lines[0]!, taxCategory: 'S' as const, taxRate: 0 }] };
+    expect(checkInvoice(inv).find((i) => i.path === 'lines[0].taxRate')).toMatchObject({ severity: 'warning', bt: 'BT-152' });
+  });
+});

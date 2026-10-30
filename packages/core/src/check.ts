@@ -198,6 +198,7 @@ export function checkInvoice(input: unknown): InvoiceIssue[] {
       needNumber(l.quantity, `${p}.quantity`, 'BT-129', 'quantity');
       if (typeof l.unitPriceMinor !== 'number' || !Number.isFinite(l.unitPriceMinor)) err(`${p}.unitPriceMinor`, 'BT-146', 'net unit price is required (minor units; may be fractional for sub-cent prices)');
       category(l.taxCategory, `${p}.taxCategory`, 'BT-151');
+      if (l.taxCategory === 'S' && l.taxRate === 0) add('warning', `${p}.taxRate`, 'BT-152', 'category S (standard rate) with a 0% rate breaks BR-S-05; use category Z (zero rated) or E (exempt)');
       if (l.taxCategory !== 'O') needNumber(l.taxRate, `${p}.taxRate`, 'BT-152', 'VAT rate');
       if (l.standardItemId && !l.standardItemIdScheme) err(`${p}.standardItemIdScheme`, 'BT-157', 'is required when standardItemId is set (e.g. 0160 for a GTIN)');
       if (l.originCountry !== undefined && !COUNTRY.test(l.originCountry)) err(`${p}.originCountry`, 'BT-159', 'must be a 2-letter ISO 3166-1 code');

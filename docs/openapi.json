@@ -51,16 +51,7 @@
                     "$ref": "#/components/schemas/Invoice"
                   },
                   "format": {
-                    "type": "string",
-                    "enum": [
-                      "cii",
-                      "cii-extended",
-                      "ubl",
-                      "xrechnung-cii",
-                      "xrechnung-ubl",
-                      "peppol-ubl"
-                    ],
-                    "description": "Output XML syntax."
+                    "$ref": "#/components/schemas/FormatId"
                   }
                 },
                 "required": [
@@ -514,16 +505,7 @@
                     "description": "The source as a Factur-X / ZUGFeRD PDF, base64. Provide this OR source."
                   },
                   "to": {
-                    "type": "string",
-                    "enum": [
-                      "cii",
-                      "cii-extended",
-                      "ubl",
-                      "xrechnung-cii",
-                      "xrechnung-ubl",
-                      "peppol-ubl"
-                    ],
-                    "description": "Output XML syntax."
+                    "$ref": "#/components/schemas/FormatId"
                   }
                 },
                 "required": [
