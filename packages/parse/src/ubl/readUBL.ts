@@ -8,13 +8,13 @@
  * (default EM) are read back literally, not un-defaulted.
  */
 import type {
-  AllowanceCharge, Contact, Delivery, DocumentTypeCode, Invoice, Line, Note, Party,
-  PrecedingInvoice, TaxCategory, TaxRepresentative,
+  AllowanceCharge, Attachment, Contact, Delivery, DocumentTypeCode, Invoice, Line, LineAllowanceCharge, Note, Party,
+  Payee, Payment, PrecedingInvoice, TaxCategory, TaxRepresentative,
 } from '@conformo/core';
 import { UBL_NS } from '@conformo/formats';
 import { attr, child, children, descend, text } from '../xml/query.js';
 import type { XmlElement } from '../xml/types.js';
-import { arrOrUndefined, parseDec, parseMoney, pickLineExemption } from '../values.js';
+import { arrOrUndefined, dropDefaultLineIds, parseDec, parseMoney, parsePrice, pickLineExemption } from '../values.js';
 import type { ExemptionGroup } from '../values.js';
 
 const CAC = UBL_NS.cac;
@@ -33,12 +33,15 @@ function readNote(raw: string): Note {
   return m ? { subjectCode: m[1]!, text: m[2]! } : { text: raw };
 }
 
-function readParty(wrapperEl: XmlElement): Party {
+function readParty(wrapperEl: XmlElement): { party: Party; sepaCreditorId?: string } {
   const el = child(wrapperEl, 'Party', CAC)!;
   const endpointEl = child(el, 'EndpointID', CBC);
-  const idEl = descend(el, 'PartyIdentification', 'ID');
+  const allIds = children(el, 'PartyIdentification', CAC).map((pi) => child(pi, 'ID', CBC)!).filter(Boolean)
+    .map((e) => ({ id: text(e)!, scheme: attr(e, 'schemeID') }));
+  const sepaCreditorId = allIds.find((x) => x.scheme === 'SEPA')?.id;   // BT-90 travels as a seller identifier
+  const ids = allIds.filter((x) => x.scheme !== 'SEPA');
   const addr = child(el, 'PostalAddress', CAC);
-  const legalEl = child(el, 'PartyLegalEntity', CAC)!;
+  const legalEl = child(el, 'PartyLegalEntity', CAC);
   const legalIdEl = child(legalEl, 'CompanyID', CBC);
   const contactEl = child(el, 'Contact', CAC);
   const contactName = text(child(contactEl, 'Name', CBC));
@@ -52,11 +55,12 @@ function readParty(wrapperEl: XmlElement): Party {
   const vatTs = taxSchemes.find((ts) => schemeOf(ts) === 'VAT');
   const fcTs = taxSchemes.find((ts) => schemeOf(ts) === 'FC');
 
-  return {
+  const party: Party = {
     name: text(child(legalEl, 'RegistrationName', CBC))!,
     tradingName: text(descend(el, 'PartyName', 'Name')),
-    id: text(idEl),
-    idScheme: attr(idEl, 'schemeID'),
+    id: ids[0]?.id,
+    idScheme: ids[0]?.scheme,
+    additionalIds: arrOrUndefined(ids.slice(1)),
     legalId: text(legalIdEl),
     legalIdScheme: attr(legalIdEl, 'schemeID'),
     vatId: text(child(vatTs, 'CompanyID', CBC)),
@@ -73,6 +77,7 @@ function readParty(wrapperEl: XmlElement): Party {
     electronicAddressScheme: attr(endpointEl, 'schemeID'),
     contact,
   };
+  return { party, sepaCreditorId };
 }
 
 function readAllowanceCharge(el: XmlElement, exemptionGroups: ExemptionGroup[]): { entry: AllowanceCharge; isCharge: boolean } {
@@ -99,6 +104,21 @@ function readAllowanceCharge(el: XmlElement, exemptionGroups: ExemptionGroup[]):
   };
 }
 
+function readLineAC(el: XmlElement): { entry: LineAllowanceCharge; isCharge: boolean } {
+  const percentText = text(child(el, 'MultiplierFactorNumeric', CBC));
+  const baseText = text(child(el, 'BaseAmount', CBC));
+  return {
+    isCharge: text(child(el, 'ChargeIndicator', CBC)) === 'true',
+    entry: {
+      amountMinor: parseMoney(text(child(el, 'Amount', CBC))!),
+      baseAmountMinor: baseText === undefined ? undefined : parseMoney(baseText),
+      percent: percentText === undefined ? undefined : parseDec(percentText),
+      reason: text(child(el, 'AllowanceChargeReason', CBC)),
+      reasonCode: text(child(el, 'AllowanceChargeReasonCode', CBC)),
+    },
+  };
+}
+
 function readLine(el: XmlElement, credit: boolean, exemptionGroups: ExemptionGroup[]): Line {
   const item = child(el, 'Item', CAC)!;
   const qtyEl = child(el, credit ? 'CreditedQuantity' : 'InvoicedQuantity', CBC);
@@ -107,18 +127,53 @@ function readLine(el: XmlElement, credit: boolean, exemptionGroups: ExemptionGro
   const category = text(child(taxCatEl, 'ID', CBC)) as TaxCategory;
   const rate = rateOf(category, taxCatEl);
   const exemption = pickLineExemption(exemptionGroups, category, rate);
+  const priceEl = child(el, 'Price', CAC);
+  const baseQtyEl = child(priceEl, 'BaseQuantity', CBC);
+  const priceAc = children(priceEl, 'AllowanceCharge', CAC).find((a) => text(child(a, 'ChargeIndicator', CBC)) === 'false');
+  const periodEl = child(el, 'InvoicePeriod', CAC);
+  const objectRef = children(el, 'DocumentReference', CAC).find((d) => text(child(d, 'DocumentTypeCode', CBC)) === '130');
+  const objectIdEl = child(objectRef, 'ID', CBC);
+  const allowances: LineAllowanceCharge[] = [];
+  const charges: LineAllowanceCharge[] = [];
+  for (const ac of children(el, 'AllowanceCharge', CAC)) {
+    const { entry, isCharge } = readLineAC(ac);
+    (isCharge ? charges : allowances).push(entry);
+  }
+  const discount = text(child(priceAc, 'Amount', CBC));
+  const gross = text(child(priceAc, 'BaseAmount', CBC));
 
   return {
+    id: text(child(el, 'ID', CBC)),
+    note: text(child(el, 'Note', CBC)),
+    objectId: text(objectIdEl),
+    objectIdScheme: attr(objectIdEl, 'schemeID'),
+    orderLineReference: text(descend(el, 'OrderLineReference', 'LineID')),
+    buyerAccountingReference: text(child(el, 'AccountingCost', CBC)),
+    periodStart: text(child(periodEl, 'StartDate', CBC)),
+    periodEnd: text(child(periodEl, 'EndDate', CBC)),
     name: text(child(item, 'Name', CBC))!,
     description: text(child(item, 'Description', CBC)),
     sellerAssignedId: text(descend(item, 'SellersItemIdentification', 'ID')),
     buyerAssignedId: text(descend(item, 'BuyersItemIdentification', 'ID')),
     standardItemId: text(standardIdEl),
     standardItemIdScheme: attr(standardIdEl, 'schemeID'),
+    classifications: arrOrUndefined(children(item, 'CommodityClassification', CAC).map((c) => {
+      const code = child(c, 'ItemClassificationCode', CBC);
+      return { code: text(code)!, scheme: attr(code, 'listID')!, schemeVersion: attr(code, 'listVersionID') };
+    })),
     originCountry: text(descend(item, 'OriginCountry', 'IdentificationCode')),
+    attributes: arrOrUndefined(children(item, 'AdditionalItemProperty', CAC).map((a) => ({
+      name: text(child(a, 'Name', CBC))!, value: text(child(a, 'Value', CBC))!,
+    }))),
     quantity: parseDec(text(qtyEl)!),
-    unitPriceMinor: parseMoney(text(descend(el, 'Price', 'PriceAmount'))!),
+    unitPriceMinor: parsePrice(text(child(priceEl, 'PriceAmount', CBC))!),
+    priceDiscountMinor: discount === undefined ? undefined : parsePrice(discount),
+    grossPriceMinor: gross === undefined ? undefined : parsePrice(gross),
+    priceBaseQuantity: baseQtyEl ? parseDec(text(baseQtyEl)!) : undefined,
+    priceBaseUnitCode: attr(baseQtyEl, 'unitCode'),
     unitCode: attr(qtyEl, 'unitCode'),
+    allowances: arrOrUndefined(allowances),
+    charges: arrOrUndefined(charges),
     taxCategory: category,
     taxRate: rate,
     exemptionCode: exemption.code,
@@ -133,9 +188,11 @@ function readPrecedingInvoice(el: XmlElement): PrecedingInvoice {
 
 export function readUBL(root: XmlElement): Invoice {
   const credit = root.namespaceURI === UBL_NS.creditNote;
-  const paymentMeansEl = child(root, 'PaymentMeans', CAC);
+  const paymentMeansAll = children(root, 'PaymentMeans', CAC);
+  const paymentMeansEl = paymentMeansAll[0];
   const monetary = child(root, 'LegalMonetaryTotal', CAC)!;
   const periodEl = child(root, 'InvoicePeriod', CAC);
+  const seller = readParty(child(root, 'AccountingSupplierParty', CAC)!);
   const taxTotalEls = children(root, 'TaxTotal', CAC);
   const taxCurrency = text(child(root, 'TaxCurrencyCode', CBC));
   const taxTotalInTaxCurrency = taxCurrency && taxTotalEls.length > 1 ? taxTotalEls[1] : undefined;
@@ -145,6 +202,7 @@ export function readUBL(root: XmlElement): Invoice {
     name: text(descend(trEl, 'PartyName', 'Name'))!,
     street: text(descend(trEl, 'PostalAddress', 'StreetName')),
     street2: text(descend(trEl, 'PostalAddress', 'AdditionalStreetName')),
+    street3: text(descend(trEl, 'PostalAddress', 'AddressLine', 'Line')),
     city: text(descend(trEl, 'PostalAddress', 'CityName')),
     postcode: text(descend(trEl, 'PostalAddress', 'PostalZone')),
     subdivision: text(descend(trEl, 'PostalAddress', 'CountrySubentity')),
@@ -154,17 +212,67 @@ export function readUBL(root: XmlElement): Invoice {
 
   const deliveryEl = child(root, 'Delivery', CAC);
   const deliveryLocation = child(deliveryEl, 'DeliveryLocation', CAC);
+  const locIdEl = child(deliveryLocation, 'ID', CBC);
+  const dAddr = child(deliveryLocation, 'Address', CAC);
   const delivery: Delivery | undefined = deliveryEl ? {
     partyName: text(descend(deliveryEl, 'DeliveryParty', 'PartyName', 'Name')),
+    locationId: text(locIdEl),
+    locationIdScheme: attr(locIdEl, 'schemeID'),
     date: text(child(deliveryEl, 'ActualDeliveryDate', CBC)),
-    street: text(descend(deliveryLocation, 'Address', 'StreetName')),
-    city: text(descend(deliveryLocation, 'Address', 'CityName')),
-    postcode: text(descend(deliveryLocation, 'Address', 'PostalZone')),
-    country: text(descend(deliveryLocation, 'Address', 'Country', 'IdentificationCode')),
+    street: text(child(dAddr, 'StreetName', CBC)),
+    street2: text(child(dAddr, 'AdditionalStreetName', CBC)),
+    street3: text(descend(dAddr, 'AddressLine', 'Line')),
+    city: text(child(dAddr, 'CityName', CBC)),
+    postcode: text(child(dAddr, 'PostalZone', CBC)),
+    subdivision: text(child(dAddr, 'CountrySubentity', CBC)),
+    country: text(descend(dAddr, 'Country', 'IdentificationCode')),
   } : undefined;
 
-  const acctEl = child(paymentMeansEl, 'PayeeFinancialAccount', CAC);
-  const paymentMeansCodeEl = child(paymentMeansEl, 'PaymentMeansCode', CBC);
+  const objectRef = children(root, 'AdditionalDocumentReference', CAC).find((d) => text(child(d, 'DocumentTypeCode', CBC)) === '130');
+  const objectIdEl = child(objectRef, 'ID', CBC);
+  const attachments: Attachment[] = children(root, 'AdditionalDocumentReference', CAC).filter((d) => d !== objectRef).map((d) => {
+    const bin = descend(d, 'Attachment', 'EmbeddedDocumentBinaryObject');
+    return {
+      id: text(child(d, 'ID', CBC))!,
+      description: text(child(d, 'DocumentDescription', CBC)),
+      url: text(descend(d, 'Attachment', 'ExternalReference', 'URI')),
+      content: text(bin), mimeCode: attr(bin, 'mimeCode'), filename: attr(bin, 'filename'),
+    };
+  });
+
+  const payeeEl = child(root, 'PayeeParty', CAC);
+  const payeeIdEl = descend(payeeEl, 'PartyIdentification', 'ID');
+  const payeeLegalId = descend(payeeEl, 'PartyLegalEntity', 'CompanyID');
+  const payee: Payee | undefined = payeeEl ? {
+    name: text(descend(payeeEl, 'PartyName', 'Name'))!,
+    id: text(payeeIdEl), idScheme: attr(payeeIdEl, 'schemeID'),
+    legalId: text(payeeLegalId), legalIdScheme: attr(payeeLegalId, 'schemeID'),
+  } : undefined;
+
+  const mandate = child(paymentMeansEl, 'PaymentMandate', CAC);
+  const cardEl = child(paymentMeansEl, 'CardAccount', CAC);
+  const mandateId = text(child(mandate, 'ID', CBC));
+  const debitedIban = text(descend(mandate, 'PayerFinancialAccount', 'ID'));
+  const creditorId = seller.sepaCreditorId;
+  const meansCode = text(child(paymentMeansEl, 'PaymentMeansCode', CBC));
+  const sameMeans = paymentMeansAll.slice(1).filter((m) => text(child(m, 'PaymentMeansCode', CBC)) === meansCode);
+  const payment: Payment | undefined = paymentMeansEl ? {
+    meansCode: text(child(paymentMeansEl, 'PaymentMeansCode', CBC))!,
+    meansText: attr(child(paymentMeansEl, 'PaymentMeansCode', CBC), 'name'),
+    reference: text(child(paymentMeansEl, 'PaymentID', CBC)),
+    iban: text(child(child(paymentMeansEl, 'PayeeFinancialAccount', CAC), 'ID', CBC)),
+    accountName: text(child(child(paymentMeansEl, 'PayeeFinancialAccount', CAC), 'Name', CBC)),
+    bic: text(descend(child(paymentMeansEl, 'PayeeFinancialAccount', CAC), 'FinancialInstitutionBranch', 'ID')),
+    additionalAccounts: arrOrUndefined(sameMeans.map((m) => {
+      const a = child(m, 'PayeeFinancialAccount', CAC);
+      return { iban: text(child(a, 'ID', CBC))!, accountName: text(child(a, 'Name', CBC)), bic: text(descend(a, 'FinancialInstitutionBranch', 'ID')) };
+    })),
+    card: cardEl ? { pan: text(child(cardEl, 'PrimaryAccountNumberID', CBC))!, holderName: text(child(cardEl, 'HolderName', CBC)) } : undefined,
+    directDebit: mandateId || creditorId || debitedIban ? { mandateId, creditorId, debitedAccountIban: debitedIban } : undefined,
+  } : undefined;
+  const orderRefEl = child(root, 'OrderReference', CAC);
+  const orderId = text(child(orderRefEl, 'ID', CBC));
+
 
   // BG-23 breakdown: the only place a line's or allowance/charge's own
   // exemptionCode/exemptionReason survive on the wire. See pickLineExemption().
@@ -198,29 +306,34 @@ export function readUBL(root: XmlElement): Invoice {
     taxCurrency,
     taxTotalInTaxCurrencyMinor: taxTotalInTaxCurrency
       ? parseMoney(text(child(taxTotalInTaxCurrency, 'TaxAmount', CBC))!) : undefined,
+    taxPointDate: text(child(root, 'TaxPointDate', CBC)),
+    taxPointDateCode: text(child(periodEl, 'DescriptionCode', CBC)),
     buyerReference: text(child(root, 'BuyerReference', CBC)),
+    projectReference: text(descend(root, 'ProjectReference', 'ID')),
     contractReference: text(descend(root, 'ContractDocumentReference', 'ID')),
-    orderReference: text(descend(root, 'OrderReference', 'ID')),
+    orderReference: orderId === 'NA' && text(child(orderRefEl, 'SalesOrderID', CBC)) ? undefined : orderId,
+    salesOrderReference: text(child(orderRefEl, 'SalesOrderID', CBC)),
+    receivingAdviceReference: text(descend(root, 'ReceiptDocumentReference', 'ID')),
+    despatchAdviceReference: text(descend(root, 'DespatchDocumentReference', 'ID')),
+    tenderOrLotReference: text(descend(root, 'OriginatorDocumentReference', 'ID')),
+    invoicedObjectId: text(objectIdEl),
+    invoicedObjectIdScheme: attr(objectIdEl, 'schemeID'),
+    buyerAccountingReference: text(child(root, 'AccountingCost', CBC)),
     businessProcess: text(child(root, 'ProfileID', CBC)),
     notes: arrOrUndefined(children(root, 'Note', CBC).map((el) => readNote(text(el)!))),
     paymentTerms: text(descend(root, 'PaymentTerms', 'Note')),
-    seller: readParty(child(root, 'AccountingSupplierParty', CAC)!),
-    buyer: readParty(child(root, 'AccountingCustomerParty', CAC)!),
+    seller: seller.party,
+    buyer: readParty(child(root, 'AccountingCustomerParty', CAC)!).party,
     taxRepresentative,
     delivery,
     periodStart: text(child(periodEl, 'StartDate', CBC)),
     periodEnd: text(child(periodEl, 'EndDate', CBC)),
     precedingInvoices: arrOrUndefined(children(root, 'BillingReference', CAC).map(readPrecedingInvoice)),
-    payment: {
-      meansCode: text(paymentMeansCodeEl)!,
-      meansText: attr(paymentMeansCodeEl, 'name'),
-      reference: text(child(paymentMeansEl, 'PaymentID', CBC)),
-      iban: text(child(acctEl, 'ID', CBC)),
-      accountName: text(child(acctEl, 'Name', CBC)),
-      bic: text(descend(acctEl, 'FinancialInstitutionBranch', 'ID')),
-    },
-    lines: children(root, credit ? 'CreditNoteLine' : 'InvoiceLine', CAC)
-      .map((el) => readLine(el, credit, exemptionGroups)),
+    payee,
+    payment,
+    attachments: arrOrUndefined(attachments),
+    lines: dropDefaultLineIds(children(root, credit ? 'CreditNoteLine' : 'InvoiceLine', CAC)
+      .map((el) => readLine(el, credit, exemptionGroups))),
     allowances: arrOrUndefined(allowances),
     charges: arrOrUndefined(charges),
     prepaidMinor: prepaidText === undefined ? undefined : parseMoney(prepaidText),

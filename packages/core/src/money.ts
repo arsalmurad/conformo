@@ -57,10 +57,15 @@ function toMinor(v: bigint): Minor {
  * or decimal strings. This is the one place a quantity, a price or a VAT rate is
  * multiplied: BT-131 (line net), BT-117 (VAT amount) and BT-92/99 percentages.
  */
-export function mulRound(a: number | string, b: number | string, divisor: number = 1): Minor {
+export function mulRound(a: number | string, b: number | string, divisor: number = 1, divisor2: number | string = 1): Minor {
   const x = parseDecimal(a);
   const y = parseDecimal(b);
-  return toMinor(divRound(x.int * y.int, 10n ** BigInt(x.scale + y.scale) * BigInt(divisor)));
+  const d = parseDecimal(divisor2);
+  if (d.int === 0n) throw new RangeError('division by zero');
+  // (x.int/10^xs) * (y.int/10^ys) / divisor / (d.int/10^ds)
+  return toMinor(divRound(
+    x.int * y.int * 10n ** BigInt(d.scale),
+    10n ** BigInt(x.scale + y.scale) * BigInt(divisor) * d.int));
 }
 
 /** "19.99" or 19.99 -> 1999. Half away from zero, exact for any number of decimals. */
@@ -92,3 +97,20 @@ export function decimalToString(x: number | string): string {
 
 /** Half away from zero on a decimal value: 2.5 -> 3, -2.5 -> -3. */
 export const roundHalfUp = (x: number): Minor => mulRound(x, 1);
+
+/**
+ * A unit price in (possibly fractional) minor units -> exact xs:decimal major-unit text.
+ * 1999 -> "19.99", 1.25 -> "0.0125". Prices may carry more decimals than the currency (EN 16931 BT-146).
+ */
+export function priceToMajor(minor: number): string {
+  const { int, scale } = parseDecimal(minor);
+  return decimalToString(`${int}e${-(scale + 2)}`);
+}
+
+/** Exact inverse of priceToMajor: "0.0125" -> 1.25 minor units, "19.99" -> 1999. */
+export function priceFromMajor(major: string): number {
+  const { int, scale } = parseDecimal(major);
+  const n = Number(decimalToString(`${int}e${-(scale - 2)}`));
+  if (!Number.isFinite(n)) throw new RangeError(`not a price: ${major}`);
+  return n;
+}

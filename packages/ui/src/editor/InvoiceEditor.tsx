@@ -207,11 +207,11 @@ export function InvoiceEditor({
       <BillingPanel invoice={invoice} onChange={onChange} />
 
       <section className="editor-row">
-        <Field label="IBAN" errors={sectionErrors('payment')} hint={ibanHint(invoice.payment.iban)}>
+        <Field label="IBAN" errors={sectionErrors('payment')} hint={ibanHint(invoice.payment?.iban)}>
           <input
             data-field="payment"
-            value={invoice.payment.iban ?? ''}
-            onChange={(e) => set('payment', { ...invoice.payment, iban: e.target.value.toUpperCase() })}
+            value={invoice.payment?.iban ?? ''}
+            onChange={(e) => set('payment', { meansCode: '58', ...invoice.payment, iban: e.target.value.toUpperCase() })}
           />
         </Field>
         <Field label="Payment terms">

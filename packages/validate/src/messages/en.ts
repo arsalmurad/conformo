@@ -1139,4 +1139,229 @@ export const en: Record<string, PlainLanguageMessage> = {
     why: "BT-23's closed list of 20 values encodes how this invoice relates to any deposit already invoiced; some combinations with BT-3 are contradictory by definition (a document can't simultaneously be the deposit and the final invoice settling it).",
     fix: "Pick the BT-23 value that actually matches this document's role, or change BT-3 if this genuinely is a deposit invoice/credit note rather than a final one.",
   },
+
+  // --- Code-list rules (BR-CL-*): a coded field must use a value from the
+  // specific official list the rule names; free text or a home-grown code
+  // fails even if a human would understand it. ---
+  "BR-CL-01": {
+    summary: "The document type code (BT-3) isn't a code from the invoice and credit note codes of UNTDID 1001.",
+    why: "BT-3 is a closed list; a receiving system can only tell an invoice from a credit note, or know what to do with it, if the code is one it recognizes.",
+    fix: "Set BT-3 to a valid UNTDID 1001 invoice or credit note code — 380 for a commercial invoice, 381 for a credit note.",
+  },
+  "BR-CL-03": {
+    summary: "A currencyID attribute on an amount isn't an ISO 4217 alpha-3 currency code.",
+    why: "Every amount carries its currency as an attribute, and the totals can only be checked against each other if every one of them names a real currency.",
+    fix: "Use the three-letter ISO 4217 code in uppercase (\"EUR\", \"USD\", \"GBP\") for every currencyID, not a symbol or a country code.",
+  },
+  "BR-CL-04": {
+    summary: "The invoice currency code (BT-5) isn't an ISO 4217 alpha-3 currency code.",
+    why: "BT-5 says what currency the whole invoice is expressed in; the other amounts are all read relative to it.",
+    fix: "Set BT-5 to the three-letter ISO 4217 code of the currency you invoice in, e.g. \"EUR\".",
+  },
+  "BR-CL-05": {
+    summary: "The tax currency code (BT-6) isn't an ISO 4217 alpha-3 currency code.",
+    why: "BT-6 names the currency the VAT total is also stated in when it differs from the invoice currency, so it has to be a real, unambiguous currency.",
+    fix: "Set BT-6 to the three-letter ISO 4217 code of the currency your tax authority requires, or remove it if the VAT is only stated in the invoice currency.",
+  },
+  "BR-CL-06": {
+    summary: "The VAT point date code (BT-8) isn't one of the allowed values from the restricted UNTDID 2005 list.",
+    why: "BT-8 is a coded choice about when VAT becomes due, not a free-text field; any other value can't be interpreted.",
+    fix: "Use one of the UNTDID 2005 codes that EN 16931 permits for BT-8, or drop BT-8 if you give an actual tax point date (BT-7) instead.",
+  },
+  "BR-CL-07": {
+    summary: "An object identifier's scheme identifier isn't a code from the restricted UNTDID 1153 list.",
+    why: "The scheme identifier tells the receiver what kind of reference the object identifier is (for example an invoiced object or a project reference); an unknown scheme can't be interpreted.",
+    fix: "Use a UNTDID 1153 code that EN 16931 permits for the scheme identifier on the invoiced object identifier, or remove the scheme attribute if you don't need one.",
+  },
+  "BR-CL-08": {
+    summary: "An invoice note's subject code isn't a code from the UNCL 4451 list.",
+    why: "The subject code classifies what a note is about (for example general information or payment terms); it has to be one of the codes the list defines.",
+    fix: "Use a valid UNCL 4451 code for the note's subject code, or remove the subject code and keep the plain note text.",
+  },
+  "BR-CL-10": {
+    summary: "An identifier's scheme identifier isn't a code from the ISO 6523 ICD list.",
+    why: "The scheme identifier says what kind of identifier you gave (a DUNS number, a GLN, a national registry number, and so on); only registered ICD codes are recognized.",
+    fix: "Set the scheme identifier to the 4-digit ISO 6523 ICD code for the kind of identifier you're giving, e.g. \"0088\" for a GLN, or remove the scheme if it doesn't apply.",
+  },
+  "BR-CL-11": {
+    summary: "A registration identifier's scheme identifier isn't a code from the ISO 6523 ICD list.",
+    why: "Same reasoning as BR-CL-10, for the seller's or buyer's legal registration identifier.",
+    fix: "Set the scheme identifier to the ISO 6523 ICD code for the registry the identifier comes from, e.g. \"0002\" for a French SIRENE number, or remove the scheme if it doesn't apply.",
+  },
+  "BR-CL-13": {
+    summary: "An item classification identifier's scheme identifier isn't a code from the UNTDID 7143 list.",
+    why: "The scheme identifier tells the receiver which product classification system the code belongs to (for example CPV or UNSPSC); only UNTDID 7143 codes are recognized.",
+    fix: "Set the classification's scheme identifier to a valid UNTDID 7143 code for the system you're using, or remove the classification if you can't.",
+  },
+  "BR-CL-14": {
+    summary: "A country code on the invoice isn't an ISO 3166-1 country code.",
+    why: "Addresses and origins are matched by country code, so a made-up or full-name country can't be validated or routed.",
+    fix: "Use the two-letter ISO 3166-1 alpha-2 code in uppercase (\"FR\", \"DE\", \"ES\"), not the country name; note that the UK is \"GB\" and Greece is \"GR\" here.",
+  },
+  "BR-CL-15": {
+    summary: "A country code on the invoice isn't an ISO 3166-1 country code.",
+    why: "Same reasoning as BR-CL-14; this rule covers a different country field on the same invoice.",
+    fix: "Use the two-letter ISO 3166-1 alpha-2 code in uppercase for every country field, and check which of the address or origin fields was reported.",
+  },
+  "BR-CL-16": {
+    summary: "A payment means type code (BT-81) isn't a code from the UNCL 4461 list.",
+    why: "BT-81 tells the buyer how to pay (credit transfer, direct debit, card, and so on), and a code outside the list can't be mapped to any of those.",
+    fix: "Set BT-81 to a valid UNCL 4461 code, e.g. 30 for a credit transfer or 58 for a SEPA credit transfer.",
+  },
+  "BR-CL-17": {
+    summary: "An invoice tax category code isn't a code from the UNCL 5305 list.",
+    why: "The tax category decides which VAT rules the line or breakdown is held to; an unknown code means none of them can apply.",
+    fix: "Use one of the UNCL 5305 category codes EN 16931 supports (\"S\", \"Z\", \"E\", \"AE\", \"K\", \"G\", \"O\", \"L\", \"M\") on every line, allowance, charge and VAT breakdown group.",
+  },
+  "BR-CL-18": {
+    summary: "An invoice tax category code isn't a code from the UNCL 5305 list.",
+    why: "Same reasoning as BR-CL-17; this rule covers a different place where a category code is used on the invoice.",
+    fix: "Use a valid UNCL 5305 category code everywhere one is required, and check which of the line, allowance, charge or breakdown fields was reported.",
+  },
+  "BR-CL-19": {
+    summary: "A coded allowance reason (BT-98 or BT-140) isn't a code from the UNCL 5189 list.",
+    why: "A reason code on a discount is a closed list so the receiving system can interpret why the discount was given.",
+    fix: "Use a valid UNCL 5189 code for the allowance reason code, or leave the code out and describe the reason in the allowance reason text instead.",
+  },
+  "BR-CL-20": {
+    summary: "A coded charge reason (BT-105 or BT-145) isn't a code from the UNCL 7161 list.",
+    why: "Same reasoning as BR-CL-19, for charges such as freight or packaging.",
+    fix: "Use a valid UNCL 7161 code for the charge reason code, or leave the code out and describe the reason in the charge reason text instead.",
+  },
+  "BR-CL-21": {
+    summary: "An item standard identifier's scheme identifier isn't a code from the ISO 6523 ICD list.",
+    why: "The scheme identifier says which standard (such as GTIN) the item identifier comes from; only registered ICD codes are recognized.",
+    fix: "Set the scheme identifier to the ISO 6523 ICD code for your item identifier, e.g. \"0160\" for a GTIN, or remove the item standard identifier.",
+  },
+  "BR-CL-22": {
+    summary: "A tax exemption reason code's scheme identifier isn't a code from the CEF VATEX list.",
+    why: "The exemption reason code tells the buyer which legal basis applies; it has to be one of the published VATEX codes.",
+    fix: "Use a code from the CEF VATEX list for the exemption reason code (e.g. \"VATEX-EU-AE\" for reverse charge), or give the reason as text in BT-120 instead.",
+  },
+  "BR-CL-23": {
+    summary: "A unit of measure code isn't a UN/ECE Recommendation 20 code (with the Recommendation 21 extension).",
+    why: "The unit code says what a quantity is counted in; the receiving system can only convert or display it if it is on the official list.",
+    fix: "Use a valid UN/ECE Rec 20 (or Rec 21) unit code, e.g. \"C62\" for pieces, \"HUR\" for hours, \"KGM\" for kilograms, not free text like \"pcs\".",
+  },
+  "BR-CL-24": {
+    summary: "An attached document's MIME type code isn't an allowed MIME media type.",
+    why: "The MIME type tells the receiver how to open the attachment; only the permitted media types are accepted.",
+    fix: "Set the attachment's MIME type to one of the allowed media types, e.g. \"application/pdf\", and make sure it matches the actual file.",
+  },
+  "BR-CL-25": {
+    summary: "An electronic address (endpoint) scheme identifier isn't a code from the CEF EAS list.",
+    why: "The scheme identifier tells the network which kind of address the endpoint is (an email, a Peppol participant ID, and so on); only EAS codes are routable.",
+    fix: "Set the endpoint's scheme identifier to a valid code from the CEF EAS list, e.g. \"EM\" for an email address, or \"0088\" for a GLN.",
+  },
+  "BR-CL-26": {
+    summary: "A delivery location identifier's scheme identifier isn't a code from the ISO 6523 ICD list.",
+    why: "Same reasoning as BR-CL-10, for the identifier of the place where goods were delivered.",
+    fix: "Set the scheme identifier to the ISO 6523 ICD code that matches your delivery location identifier (e.g. \"0088\" for a GLN), or remove the scheme.",
+  },
+
+  // --- IGIC, the Canary Islands' VAT-replacement tax (BR-IG-*): the official EN 16931 release names this family
+  // with the same ten-rule shape as the mainland VAT categories above. ---
+  "BR-IG-01": {
+    summary: "The invoice has a line, allowance or charge categorized \"IGIC\", but no matching \"IGIC\" entry in the VAT breakdown.",
+    why: "Every VAT category code used on a line, allowance or charge needs a VAT breakdown group (BG-23) summarizing it.",
+    fix: "Add a VAT breakdown group with category code \"IGIC\", or correct the category on whichever line was marked \"IGIC\" by mistake.",
+  },
+  "BR-IG-02": {
+    summary: "A \"IGIC\" invoice line is present, but none of the seller's VAT identifier (BT-31), tax registration identifier (BT-32), or tax representative's VAT identifier (BT-63) is set.",
+    why: "Charging this tax means the seller is accounting for it under a specific registration; the buyer needs to see which one.",
+    fix: "Set at least one of BT-31, BT-32, or BT-63.",
+  },
+  "BR-IG-03": {
+    summary: "A \"IGIC\" document-level allowance is present, but none of the seller's VAT identifier (BT-31), tax registration identifier (BT-32), or tax representative's VAT identifier (BT-63) is set.",
+    why: "Same reasoning as BR-IG-02, applied to a document-level discount.",
+    fix: "Set at least one of BT-31, BT-32, or BT-63.",
+  },
+  "BR-IG-04": {
+    summary: "A \"IGIC\" document-level charge is present, but none of the seller's VAT identifier (BT-31), tax registration identifier (BT-32), or tax representative's VAT identifier (BT-63) is set.",
+    why: "Same reasoning as BR-IG-02, applied to a document-level charge.",
+    fix: "Set at least one of BT-31, BT-32, or BT-63.",
+  },
+  "BR-IG-05": {
+    summary: "A \"IGIC\" line's VAT rate (BT-152) is negative.",
+    why: "The rate for this category can be 0 or a real positive rate, but a negative rate has no meaning.",
+    fix: "Set the line's rate to 0 or greater.",
+  },
+  "BR-IG-06": {
+    summary: "A \"IGIC\" document-level allowance's VAT rate (BT-96) is negative.",
+    why: "Same reasoning as BR-IG-05, for a document-level allowance.",
+    fix: "Set the allowance's rate to 0 or greater.",
+  },
+  "BR-IG-07": {
+    summary: "A \"IGIC\" document-level charge's VAT rate (BT-103) is negative.",
+    why: "Same reasoning as BR-IG-05, for a document-level charge.",
+    fix: "Set the charge's rate to 0 or greater.",
+  },
+  "BR-IG-08": {
+    summary: "For a \"IGIC\" rate, the VAT breakdown's taxable amount (BT-116) doesn't equal the matching lines and charges minus the matching allowances at that same rate.",
+    why: "Same per-category reconciliation the mainland families check, applied to this category.",
+    fix: "Recompute the breakdown's taxable amount from exactly the lines, charges and allowances in category \"IGIC\" at that same rate.",
+  },
+  "BR-IG-09": {
+    summary: "A \"IGIC\" VAT breakdown's tax amount (BT-117) doesn't equal its taxable amount (BT-116) multiplied by its rate (BT-119).",
+    why: "This is the basic arithmetic identity every VAT breakdown has to satisfy, checked here for this category specifically.",
+    fix: "Recompute BT-117 as BT-116 × BT-119 for this breakdown.",
+  },
+  "BR-IG-10": {
+    summary: "A \"IGIC\" VAT breakdown carries a VAT exemption reason code (BT-121) or text (BT-120), which it shouldn't.",
+    why: "This category is a charged tax, not an exemption, so giving it an exemption reason contradicts the category.",
+    fix: "Remove BT-120 and BT-121 from this breakdown group.",
+  },
+
+  // --- IPSI, the equivalent tax for Ceuta and Melilla (BR-IP-*): the official EN 16931 release names this family
+  // with the same ten-rule shape as the mainland VAT categories above. ---
+  "BR-IP-01": {
+    summary: "The invoice has a line, allowance or charge categorized \"IPSI\", but no matching \"IPSI\" entry in the VAT breakdown.",
+    why: "Every VAT category code used on a line, allowance or charge needs a VAT breakdown group (BG-23) summarizing it.",
+    fix: "Add a VAT breakdown group with category code \"IPSI\", or correct the category on whichever line was marked \"IPSI\" by mistake.",
+  },
+  "BR-IP-02": {
+    summary: "A \"IPSI\" invoice line is present, but none of the seller's VAT identifier (BT-31), tax registration identifier (BT-32), or tax representative's VAT identifier (BT-63) is set.",
+    why: "Charging this tax means the seller is accounting for it under a specific registration; the buyer needs to see which one.",
+    fix: "Set at least one of BT-31, BT-32, or BT-63.",
+  },
+  "BR-IP-03": {
+    summary: "A \"IPSI\" document-level allowance is present, but none of the seller's VAT identifier (BT-31), tax registration identifier (BT-32), or tax representative's VAT identifier (BT-63) is set.",
+    why: "Same reasoning as BR-IP-02, applied to a document-level discount.",
+    fix: "Set at least one of BT-31, BT-32, or BT-63.",
+  },
+  "BR-IP-04": {
+    summary: "A \"IPSI\" document-level charge is present, but none of the seller's VAT identifier (BT-31), tax registration identifier (BT-32), or tax representative's VAT identifier (BT-63) is set.",
+    why: "Same reasoning as BR-IP-02, applied to a document-level charge.",
+    fix: "Set at least one of BT-31, BT-32, or BT-63.",
+  },
+  "BR-IP-05": {
+    summary: "A \"IPSI\" line's VAT rate (BT-152) is negative.",
+    why: "The rate for this category can be 0 or a real positive rate, but a negative rate has no meaning.",
+    fix: "Set the line's rate to 0 or greater.",
+  },
+  "BR-IP-06": {
+    summary: "A \"IPSI\" document-level allowance's VAT rate (BT-96) is negative.",
+    why: "Same reasoning as BR-IP-05, for a document-level allowance.",
+    fix: "Set the allowance's rate to 0 or greater.",
+  },
+  "BR-IP-07": {
+    summary: "A \"IPSI\" document-level charge's VAT rate (BT-103) is negative.",
+    why: "Same reasoning as BR-IP-05, for a document-level charge.",
+    fix: "Set the charge's rate to 0 or greater.",
+  },
+  "BR-IP-08": {
+    summary: "For a \"IPSI\" rate, the VAT breakdown's taxable amount (BT-116) doesn't equal the matching lines and charges minus the matching allowances at that same rate.",
+    why: "Same per-category reconciliation the mainland families check, applied to this category.",
+    fix: "Recompute the breakdown's taxable amount from exactly the lines, charges and allowances in category \"IPSI\" at that same rate.",
+  },
+  "BR-IP-09": {
+    summary: "A \"IPSI\" VAT breakdown's tax amount (BT-117) doesn't equal its taxable amount (BT-116) multiplied by its rate (BT-119).",
+    why: "This is the basic arithmetic identity every VAT breakdown has to satisfy, checked here for this category specifically.",
+    fix: "Recompute BT-117 as BT-116 × BT-119 for this breakdown.",
+  },
+  "BR-IP-10": {
+    summary: "A \"IPSI\" VAT breakdown carries a VAT exemption reason code (BT-121) or text (BT-120), which it shouldn't.",
+    why: "This category is a charged tax, not an exemption, so giving it an exemption reason contradicts the category.",
+    fix: "Remove BT-120 and BT-121 from this breakdown group.",
+  },
 };

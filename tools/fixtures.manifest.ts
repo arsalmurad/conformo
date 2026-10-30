@@ -25,6 +25,7 @@ export const FIXTURES: FixtureSpec[] = [
   { file: 'multi-rate-allowances.json', targets: ['cii-en16931', 'ubl-en16931'] },
   { file: 'fiscal-representative.json', targets: ['cii-en16931', 'ubl-en16931'] },
   { file: 'tax-currency.json', targets: ['cii-en16931', 'ubl-en16931'] },
+  { file: 'full-model.json', targets: ['cii-en16931', 'ubl-en16931'] },
   { file: 'credit-note.json', targets: ['cii-en16931', 'ubl-en16931', 'cii-xrechnung', 'ubl-xrechnung'] },
   { file: 'xrechnung-public-sector.json', targets: ['cii-en16931', 'ubl-en16931', 'cii-xrechnung', 'ubl-xrechnung'] },
   { file: 'peppol-belgium-full.json', targets: ['ubl-en16931', 'ubl-peppol'] },

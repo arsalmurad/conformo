@@ -1,9 +1,16 @@
 import { mulRound } from './money.js';
 import type { AllowanceCharge, Invoice, Line, TaxCategory, TaxGroup, Totals } from './model.js';
 
-/** BT-131 line net amount: quantity x unit price, rounded half up, exactly. */
-export const lineNet = (line: Pick<Line, 'quantity' | 'unitPriceMinor'>): number =>
-  mulRound(line.quantity, line.unitPriceMinor);
+/**
+ * BT-131 line net amount: quantity x net price / price base quantity, rounded half up, exactly,
+ * plus line charges (BT-141) minus line allowances (BT-136).
+ */
+export const lineNet = (line: Pick<Line, 'quantity' | 'unitPriceMinor' | 'priceBaseQuantity' | 'allowances' | 'charges'>): number => {
+  const gross = mulRound(line.quantity, line.unitPriceMinor, 1, line.priceBaseQuantity ?? 1);
+  const charges = (line.charges ?? []).reduce((s, c) => s + c.amountMinor, 0);
+  const allowances = (line.allowances ?? []).reduce((s, a) => s + a.amountMinor, 0);
+  return gross + charges - allowances;
+};
 
 /** Category O carries no rate (BR-O-05), so its groups are keyed and computed at 0. */
 const effectiveRate = (category: TaxCategory, rate: number): number => (category === 'O' ? 0 : rate);

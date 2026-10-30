@@ -3,7 +3,7 @@
  * calls exactly one of these per business term so a format change on the write
  * side has one obvious place to update on the read side too.
  */
-import { fromMajor } from '@conformo/core';
+import { fromMajor, priceFromMajor } from '@conformo/core';
 import type { Minor } from '@conformo/core';
 
 /** xs:decimal text -> Minor. Inverse of packages/formats/src/xml.ts's money(). */
@@ -57,4 +57,15 @@ export function pickLineExemption(
 ): { code?: string; reason?: string } {
   const hits = groups.filter((g) => g.category === category && g.rate === rate);
   return hits.length === 1 ? { code: hits[0]!.code, reason: hits[0]!.reason } : {};
+}
+
+/** xs:decimal text of a unit price -> (possibly fractional) minor units. Inverse of price(). */
+export function parsePrice(text: string): number {
+  return priceFromMajor(text.trim());
+}
+
+/** A line id equal to its 1-based position is the writer's default, so reading it back leaves `id` unset. */
+export function dropDefaultLineIds<T extends { id?: string }>(lines: T[]): T[] {
+  lines.forEach((l, i) => { if (l.id === String(i + 1)) delete l.id; });
+  return lines;
 }
