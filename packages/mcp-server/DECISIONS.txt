@@ -1,0 +1,22 @@
+create_invoice takes { invoice: <object>, format } rather than the invoice fields flattened next to format: no key collisions, and the schema is reusable as-is.
+The invoice input uses the strict zod schema from @conformo/schema, so an unknown key is an error instead of being silently dropped.
+Semantic problems (checkInvoice errors) come back as isError with the issues in text and in _meta.issues, not structuredContent: MCP clients validate structuredContent against outputSchema even for errors.
+parse_invoice outputSchema keeps `invoice` as an open object (not the strict schema): a real-world document must never fail output validation because of a field the schema does not know.
+get_country_requirements outputSchema is passthrough: the dataset record is returned whole, only country and conformoSupport are pinned.
+validate_invoice and convert_invoice/parse_invoice take `xml` OR `pdfBase64` (exactly one) instead of one polymorphic string: no guessing, and the PDF case is explicit.
+create_invoice_pdf is annotated destructiveHint:true, readOnlyHint:false: with outputPath+overwrite it can replace a file. Without outputPath it touches nothing.
+outputPath must end in .pdf, resolve inside the working directory (symlinks resolved) unless CONFORMO_MCP_ALLOW_ANY_PATH=1, and is written with the 'wx' flag so an existing file is never replaced without overwrite:true (no check-then-write race).
+A refused outputPath is rejected before the PDF is rendered.
+Warnings for the PDF come from core checkInvoice (warning severity), the same source createXml uses; the toolkit createPdf itself returns none.
+HTTP mode is stateless (new McpServer + transport per request, sessionIdGenerator undefined, enableJsonResponse true); GET/DELETE /mcp answer 405 with Allow: POST.
+Body limit is enforced on Content-Length and while streaming; over the limit gives 413 and the connection is closed. Default 8 MiB, --max-body-bytes or CONFORMO_MCP_MAX_BODY_BYTES.
+When bound to a loopback host the server rejects requests whose Host header is not a loopback name (403), as DNS-rebinding protection. Non-loopback binds do no Host check (the proxy owns that).
+The listening URL is printed to stderr (stdout stays clean for stdio protocol use); the tests parse it to learn the port when --port 0 is used.
+Tests spawn the server with process.execPath + node_modules/tsx/dist/cli.mjs, no npx or shell, so Windows and Linux behave the same; TSX_TSCONFIG_PATH supplies the @conformo/* aliases because the child runs in a scratch cwd.
+Server version is read from ../package.json relative to the module (works in src/ and in dist/).
+package.json "exports" points at createServer.ts (createMcpServer) so the server can be embedded; the bin is src/server.ts as before. tsconfig.build.json paths now name toolkit and schema only.
+Old tools directory and format.ts were removed: their logic lives in @conformo/toolkit now, and the old test cases map to: list tools, create+validate, structural error, CII->UBL conversion.
+@conformo/schema depends on zod ^3.25.76 (the version in the repo) and zod-to-json-schema pinned to 3.25.2; JSON Schema target is draft-07, fully inlined (no $ref) so each field description sits next to its use.
+Schema: dates, country and currency fields carry regexes; every *Minor money field is .int() except unitPriceMinor, priceDiscountMinor, grossPriceMinor, which may be fractional per BT-146.
+Schema drift is caught at compile time by test/schema-types.ts (two-way assignability plus key equality, checked by tsc) and at runtime by .strict() plus the committed invoice.schema.json freshness test.
+node_modules/@conformo/schema is not symlinked yet (needs `npm install`); until then tsconfig paths / vitest aliases resolve it. package-lock.json was not touched.

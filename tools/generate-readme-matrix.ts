@@ -12,35 +12,36 @@ import type { CountryCompliance, Mandate, Scope } from '@conformo/compliance-dat
 const START = '<!-- COMPLIANCE-MATRIX:START -->';
 const END = '<!-- COMPLIANCE-MATRIX:END -->';
 
-function summarize(mandates: Mandate[], scope: Scope): string {
-  const relevant = mandates.filter((m) => m.scope === scope);
-  if (relevant.length === 0) return '—';
-  // Prefer the clearest single line: a 'send' or 'both' direction mandate
-  // over a 'receive'-only one, since "must send" is the stronger claim.
-  const primary = relevant.find((m) => m.direction !== 'receive') ?? relevant[0]!;
-  switch (primary.status) {
-    case 'mandatory':
-      return `Mandatory${primary.effectiveDate ? ` (since ${primary.effectiveDate})` : ''}`;
-    case 'planned':
-      return `Planned${primary.effectiveDate ? ` (from ${primary.effectiveDate})` : ''}`;
-    case 'delayed':
-      return `Delayed${primary.effectiveDate ? ` (now ${primary.effectiveDate})` : ''}`;
-    case 'voluntary':
-      return 'No mandate';
-    case 'unverified':
-      return 'Unverified';
-  }
+const label = (m: Mandate): string => {
+  const word = { mandatory: 'Mandatory', planned: 'Planned', delayed: 'Delayed', voluntary: 'Voluntary', unverified: 'Unverified' }[m.status];
+  return `${word}${m.effectiveDate ? ` ${m.status === 'planned' || m.status === 'unverified' ? 'from' : 'since'} ${m.effectiveDate}` : ''}`;
+};
+
+/** One cell per scope and direction. Issuing and receiving are different obligations with different dates, so they are never merged. */
+function cell(mandates: Mandate[], scope: Scope, dir: 'send' | 'receive'): string {
+  const rel = mandates.filter((m) => m.scope === scope && (m.direction === dir || m.direction === 'both' || (m.direction === undefined && dir === 'send')));
+  if (rel.length === 0) return '—';
+  return rel.map(label).join('<br>');
+}
+
+/** Thresholds and phasing, first sentence of each window's note, so "mandatory" never hides who it applies to. */
+function phasing(mandates: Mandate[]): string {
+  const rows = mandates.filter((m) => m.thresholdNote && m.scope !== 'B2C').map((m) => {
+    const first = m.thresholdNote!.split(/(?<=\.)\s/)[0]!;
+    return `${m.scope} ${m.direction ?? ''} ${m.effectiveDate ?? ''}: ${first}`.replace(/\s+/g, ' ');
+  });
+  return rows.length ? rows.join('<br>') : '—';
 }
 
 function row(c: CountryCompliance): string {
   const formats = [...new Set(c.mandates.flatMap((m) => m.requiredFormats))].join(', ');
-  const sourceNote = c.status === 'verified' ? `[source](${c.sourceUrl})` : 'unverified';
-  return `| ${c.name} | ${summarize(c.mandates, 'B2G')} | ${summarize(c.mandates, 'B2B')} | ${formats} | ${c.lastVerified}, ${sourceNote} |`;
+  const sourceNote = c.status === 'verified' ? `[source](${c.sourceUrl})` : `[source](${c.sourceUrl}), some windows unverified`;
+  return `| ${c.name} | ${cell(c.mandates, 'B2G', 'send')} | ${cell(c.mandates, 'B2B', 'send')} | ${cell(c.mandates, 'B2B', 'receive')} | ${phasing(c.mandates)} | ${formats} | ${c.lastVerified}, ${sourceNote} |`;
 }
 
 const table = [
-  '| Country | B2G | B2B | Required format(s) | Last verified |',
-  '|---|---|---|---|---|',
+  '| Country | B2G issuing | B2B issuing | B2B receiving | Thresholds and phasing | Format(s) | Last verified |',
+  '|---|---|---|---|---|---|---|',
   ...[...countries].sort((a, b) => a.name.localeCompare(b.name)).map(row),
 ].join('\n');
 

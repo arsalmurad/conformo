@@ -7,7 +7,11 @@
       "status": "mandatory",
       "direction": "send",
       "effectiveDate": "2019-11-01",
-      "requiredFormats": ["cii", "ubl-2.1", "factur-x"],
+      "requiredFormats": [
+        "cii",
+        "ubl-2.1",
+        "factur-x"
+      ],
       "platform": "Chorus Pro",
       "notes": "Legal basis: Article 193 of Law n°2019-486 (22 May 2019), codified in the Public Procurement Code."
     },
@@ -17,9 +21,13 @@
       "direction": "send",
       "effectiveDate": "2026-09-01",
       "thresholdNote": "Large and medium-sized enterprises must issue e-invoices from this date.",
-      "requiredFormats": ["cii", "ubl-2.1", "factur-x"],
-      "platform": "PDP (Plateforme de Dématérialisation Partenaire) network, reporting to the PPF/DGFiP",
-      "notes": "Legal basis: Article 26 of amending finance law n°2022-1157 for 2022. A secondary (non-EU-official) source reports the original plan for a free public transmission portal was abandoned around October 2024 in favor of this private-PDP model — not independently confirmed on the primary EU source page, flagged here rather than stated as fact."
+      "requiredFormats": [
+        "cii",
+        "ubl-2.1",
+        "factur-x"
+      ],
+      "platform": "Plateforme agréée (PA, formerly called PDP) network (reporting to the PPF/DGFiP, as in the earlier text)",
+      "notes": "Legal basis: Article 26 of amending finance law n°2022-1157 for 2022. A secondary (non-EU-official) source reports the original plan for a free public transmission portal was abandoned around October 2024 in favor of this private-platform (PA) model — not independently confirmed on the primary EU source page, flagged here rather than stated as fact. Naming: the project owner states 'plateforme agréée (PA)' is now the official term for what earlier texts call a PDP (not re-read from a primary source in this build environment)."
     },
     {
       "scope": "B2B",
@@ -27,8 +35,12 @@
       "direction": "send",
       "effectiveDate": "2027-09-01",
       "thresholdNote": "Small and micro-enterprises must issue e-invoices from this date.",
-      "requiredFormats": ["cii", "ubl-2.1", "factur-x"],
-      "platform": "PDP (Plateforme de Dématérialisation Partenaire) network, reporting to the PPF/DGFiP"
+      "requiredFormats": [
+        "cii",
+        "ubl-2.1",
+        "factur-x"
+      ],
+      "platform": "Plateforme agréée (PA, formerly called PDP) network (reporting to the PPF/DGFiP, as in the earlier text)"
     },
     {
       "scope": "B2B",
@@ -36,7 +48,12 @@
       "direction": "receive",
       "effectiveDate": "2026-09-01",
       "thresholdNote": "All VAT-registered businesses must be able to receive structured e-invoices from this date.",
-      "requiredFormats": ["cii", "ubl-2.1", "factur-x"]
+      "requiredFormats": [
+        "cii",
+        "ubl-2.1",
+        "factur-x"
+      ],
+      "platform": "Plateforme agréée (PA)"
     }
   ],
   "extraFieldsBeyondEN16931": [

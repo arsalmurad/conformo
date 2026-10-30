@@ -29,12 +29,12 @@ Our runtime validator (the code `validate()` runs in Node and, minus XSD, in a b
 
 | Corpus | Files | Not CII/UBL | Reference agreement | Rule expectation | KoSIT agreement | Round trip: revalidates | fixed point | totals |
 |---|---|---|---|---|---|---|---|---|
-| KoSIT XRechnung test suite | 86 | 0 | 86/86 (100.0%) | n/a | 86/86 (100.0%) | 71/76 | 76/76 | 73/76 |
+| KoSIT XRechnung test suite | 86 | 0 | 86/86 (100.0%) | n/a | 86/86 (100.0%) | 83/86 | 86/86 | 85/86 |
 | Peppol BIS Billing 3.0 examples | 10 | 0 | 10/10 (100.0%) | n/a | 0/0 (n/a) | 10/10 | 10/10 | 10/10 |
-| CEN EN 16931 example files | 63 | 0 | 63/63 (100.0%) | n/a | 28/28 (100.0%) | 32/33 | 31/33 | 32/33 |
-| CEN EN 16931 rule unit tests (one failing document per rule) | 907 | 0 | 899/907 (99.1%) | 907/907 | 0/0 (n/a) | 0/0 | 0/0 | 0/0 |
+| CEN EN 16931 example files | 63 | 0 | 63/63 (100.0%) | n/a | 28/28 (100.0%) | 35/35 | 34/35 | 34/35 |
+| CEN EN 16931 rule unit tests (one failing document per rule) | 907 | 0 | 907/907 (100.0%) | 907/907 | 0/0 (n/a) | 0/0 | 0/0 | 0/0 |
 
-Overall reference agreement: **1058/1066 (99.2%)**.
+Overall reference agreement: **1066/1066 (100.0%)**.
 
 Sources:
 - KoSIT XRechnung test suite: itplr-kosit/xrechnung-testsuite v2026-08-31
@@ -46,87 +46,19 @@ Not covered, and why: the official FeRD/ZUGFeRD sample set and the Factur-X samp
 
 ## Mismatches and failures
 
-32 finding(s); 32 unexplained.
+6 finding(s); 6 unexplained.
 
 - `kosit-testsuite/src/test/business-cases/extension/05.01a-INVOICE_ubl.xml` — **roundtrip-totals**: due: document 36686 vs computed 33690
   - **UNEXPLAINED**
-- `kosit-testsuite/src/test/business-cases/standard/02.01a-INVOICE_uncefact.xml` — **roundtrip-revalidate**: re-serialized document is no longer valid
+- `kosit-testsuite/src/test/technical-cases/cius/01.02_comprehensive_test_uncefact.xml` — **roundtrip-revalidate**: re-serialized document is no longer valid
   - **UNEXPLAINED**
-- `kosit-testsuite/src/test/business-cases/standard/02.03a-INVOICE_uncefact.xml` — **roundtrip-revalidate**: re-serialized document is no longer valid
+- `kosit-testsuite/src/test/technical-cases/cius/01.03_comprehensive_test_uncefact.xml` — **roundtrip-revalidate**: re-serialized document is no longer valid
   - **UNEXPLAINED**
-- `kosit-testsuite/src/test/business-cases/standard/02.04a-INVOICE_uncefact.xml` — **roundtrip-revalidate**: re-serialized document is no longer valid
-  - **UNEXPLAINED**
-- `kosit-testsuite/src/test/business-cases/standard/03.07a-INVOICE_ubl.xml` — **roundtrip-error**: Invalid invoice input (2 problems):
-  - attachments[0].url [BT-124]: give either content (BT-125) or url (BT-124), not both
-  - attachments[1].url [BT-124]: give either content (BT-125) or url (BT-124
-  - **UNEXPLAINED**
-- `kosit-testsuite/src/test/business-cases/standard/03.07a-INVOICE_uncefact.xml` — **roundtrip-error**: Invalid invoice input (2 problems):
-  - attachments[0].url [BT-124]: give either content (BT-125) or url (BT-124), not both
-  - attachments[1].url [BT-124]: give either content (BT-125) or url (BT-124
-  - **UNEXPLAINED**
-- `kosit-testsuite/src/test/technical-cases/cius/01.01_comprehensive_test_ubl.xml` — **roundtrip-error**: Invalid invoice input (2 problems):
-  - attachments[0].url [BT-124]: give either content (BT-125) or url (BT-124), not both
-  - attachments[1].url [BT-124]: give either content (BT-125) or url (BT-124
-  - **UNEXPLAINED**
-- `kosit-testsuite/src/test/technical-cases/cius/01.01_comprehensive_test_uncefact.xml` — **roundtrip-error**: Invalid invoice input (2 problems):
-  - attachments[0].url [BT-124]: give either content (BT-125) or url (BT-124), not both
-  - attachments[1].url [BT-124]: give either content (BT-125) or url (BT-124
-  - **UNEXPLAINED**
-- `kosit-testsuite/src/test/technical-cases/cius/01.02_comprehensive_test_ubl.xml` — **roundtrip-error**: Invalid invoice input (1 problem):
-  - attachments[0].url [BT-124]: give either content (BT-125) or url (BT-124), not both
-  - **UNEXPLAINED**
-- `kosit-testsuite/src/test/technical-cases/cius/01.02_comprehensive_test_uncefact.xml` — **roundtrip-error**: Invalid invoice input (1 problem):
-  - attachments[0].url [BT-124]: give either content (BT-125) or url (BT-124), not both
-  - **UNEXPLAINED**
-- `kosit-testsuite/src/test/technical-cases/cius/01.03_comprehensive_test_ubl.xml` — **roundtrip-error**: Invalid invoice input (1 problem):
-  - attachments[0].url [BT-124]: give either content (BT-125) or url (BT-124), not both
-  - **UNEXPLAINED**
-- `kosit-testsuite/src/test/technical-cases/cius/01.03_comprehensive_test_uncefact.xml` — **roundtrip-error**: Invalid invoice input (1 problem):
-  - attachments[0].url [BT-124]: give either content (BT-125) or url (BT-124), not both
-  - **UNEXPLAINED**
-- `kosit-testsuite/src/test/technical-cases/cius/01.04_comprehensive_test_ubl.xml` — **roundtrip-error**: Invalid invoice input (1 problem):
-  - attachments[0].url [BT-124]: give either content (BT-125) or url (BT-124), not both
-  - **UNEXPLAINED**
-- `kosit-testsuite/src/test/technical-cases/cius/01.04_comprehensive_test_uncefact.xml` — **roundtrip-error**: Invalid invoice input (1 problem):
-  - attachments[0].url [BT-124]: give either content (BT-125) or url (BT-124), not both
-  - **UNEXPLAINED**
-- `kosit-testsuite/src/test/technical-cases/cius/01.06_minimal_test_ubl.xml` — **roundtrip-totals**: taxTotal: document 75741 vs computed 75740; grand: document 474375 vs computed 474374; due: document 474375 vs computed 474374
-  - **UNEXPLAINED**
-- `kosit-testsuite/src/test/technical-cases/cius/01.06_minimal_test_uncefact.xml` — **roundtrip-totals**: taxTotal: document 75741 vs computed 75740; grand: document 474375 vs computed 474374; due: document 474375 vs computed 474374
-  - **UNEXPLAINED**
-- `kosit-testsuite/src/test/technical-cases/cvd/02.01a-cvd_INVOICE_ubl.xml` — **roundtrip-revalidate**: re-serialized document is no longer valid
-  - **UNEXPLAINED**
-- `kosit-testsuite/src/test/technical-cases/cvd/02.01a-cvd_INVOICE_uncefact.xml` — **roundtrip-revalidate**: re-serialized document is no longer valid
-  - **UNEXPLAINED**
-- `cen-examples/cii/examples/CII_business_example_01.xml` — **roundtrip-error**: Invalid invoice input (1 problem):
-  - attachments[0].url [BT-124]: give either content (BT-125) or url (BT-124), not both
-  - **UNEXPLAINED**
-- `cen-examples/cii/examples/CII_example2.xml` — **roundtrip-error**: Invalid invoice input (1 problem):
-  - attachments[0].url [BT-124]: give either content (BT-125) or url (BT-124), not both
-  - **UNEXPLAINED**
-- `cen-examples/cii/examples/CII_example5.xml` — **roundtrip-revalidate**: re-serialized document is no longer valid
+- `kosit-testsuite/src/test/technical-cases/cius/01.04_comprehensive_test_uncefact.xml` — **roundtrip-revalidate**: re-serialized document is no longer valid
   - **UNEXPLAINED**
 - `cen-examples/cii/examples/XRechnung-O.xml` — **roundtrip-fixpoint**: buyer.electronicAddressScheme: EM -> (absent)
   - **UNEXPLAINED**
-- `cen-examples/cii/examples/huf_example_cii.xml` — **roundtrip-fixpoint**: lines[0].priceBaseUnitCode: (absent) -> LTR; lines[1].priceBaseUnitCode: (absent) -> LTR; lines[2].priceBaseUnitCode: (absent) -> LTR
-  - **UNEXPLAINED**
 - `cen-examples/cii/examples/huf_example_cii.xml` — **roundtrip-totals**: taxTotal: document 1867900 vs computed 1867860; grand: document 8785900 vs computed 8785860; due: document 8785900 vs computed 8785860
-  - **UNEXPLAINED**
-- `cen-unit-tests/test/Invoice-unit-UBL/BR-CO-15-2.xml#1` — **reference**: en16931-ubl: failed rules ours [BR-01,BR-02,BR-03,BR-04,BR-06,BR-07,BR-08,BR-10,BR-12,BR-16,BR-CO-10,BR-CO-13,BR-CO-18] vs Saxon []; en16931-ubl: rules fired 17 vs 5
-  - **UNEXPLAINED**
-- `cen-unit-tests/test/Invoice-unit-UBL/BR-CO-15-2.xml#2` — **reference**: en16931-ubl: failed rules ours [BR-01,BR-02,BR-03,BR-04,BR-06,BR-07,BR-08,BR-10,BR-12,BR-16,BR-CO-10,BR-CO-13,BR-CO-18] vs Saxon []; en16931-ubl: rules fired 17 vs 5
-  - **UNEXPLAINED**
-- `cen-unit-tests/test/Invoice-unit-UBL/BR-CO-15-2.xml#3` — **reference**: en16931-ubl: failed rules ours [BR-01,BR-02,BR-03,BR-04,BR-06,BR-07,BR-08,BR-10,BR-12,BR-16,BR-CO-10,BR-CO-13,BR-CO-15,BR-CO-18] vs Saxon []; en16931-ubl: rules fired 17 vs 4
-  - **UNEXPLAINED**
-- `cen-unit-tests/test/Invoice-unit-UBL/BR-S-09.xml#3` — **reference**: en16931-ubl: failed rules ours [BR-01,BR-02,BR-03,BR-04,BR-05,BR-06,BR-07,BR-08,BR-10,BR-16,BR-CL-03,BR-CO-14,BR-S-01,BR-S-08] vs Saxon [BR-01,BR-02,BR-03,BR-04,BR-05,BR-06,BR-07,BR-08,BR-10,BR-16,BR-CL-03,BR-CO-14,BR-S-01,BR-S-08]; en16931-ubl: rules fired 11 vs 19
-  - **UNEXPLAINED**
-- `cen-unit-tests/test/Invoice-unit-UBL/BR-S-09.xml#4` — **reference**: en16931-ubl: failed rules ours [BR-01,BR-02,BR-03,BR-04,BR-05,BR-06,BR-07,BR-08,BR-10,BR-16,BR-CL-03,BR-CO-14,BR-S-01,BR-S-08] vs Saxon [BR-01,BR-02,BR-03,BR-04,BR-05,BR-06,BR-07,BR-08,BR-10,BR-16,BR-CL-03,BR-CO-14,BR-CO-17,BR-S-01,BR-S-08,BR-S-09]
-  - **UNEXPLAINED**
-- `cen-unit-tests/test/CreditNote-unit-UBL/BR-CO-15-2.xml#1` — **reference**: en16931-ubl: failed rules ours [BR-01,BR-02,BR-03,BR-04,BR-06,BR-07,BR-08,BR-10,BR-12,BR-16,BR-CO-10,BR-CO-13,BR-CO-18] vs Saxon []; en16931-ubl: rules fired 17 vs 5
-  - **UNEXPLAINED**
-- `cen-unit-tests/test/CreditNote-unit-UBL/BR-CO-15-2.xml#2` — **reference**: en16931-ubl: failed rules ours [BR-01,BR-02,BR-03,BR-04,BR-06,BR-07,BR-08,BR-10,BR-12,BR-16,BR-CO-10,BR-CO-13,BR-CO-18] vs Saxon []; en16931-ubl: rules fired 17 vs 5
-  - **UNEXPLAINED**
-- `cen-unit-tests/test/CreditNote-unit-UBL/BR-CO-15-2.xml#3` — **reference**: en16931-ubl: failed rules ours [BR-01,BR-02,BR-03,BR-04,BR-06,BR-07,BR-08,BR-10,BR-12,BR-16,BR-CO-10,BR-CO-13,BR-CO-15,BR-CO-18] vs Saxon []; en16931-ubl: rules fired 17 vs 4
   - **UNEXPLAINED**
 
 ## Files not processed

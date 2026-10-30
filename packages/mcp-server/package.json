@@ -1,7 +1,7 @@
 {
   "name": "@conformo/mcp-server",
   "version": "0.1.1",
-  "description": "MCP server exposing create/validate/convert so agents can issue and check EN 16931 electronic invoices.",
+  "description": "MCP server for EN 16931 e-invoicing: create (XML and Factur-X/ZUGFeRD PDF), validate, convert, parse, explain rules, country requirements. Stdio and stateless Streamable HTTP.",
   "author": "Muhammad Arsal Murad",
   "license": "Apache-2.0",
   "repository": {
@@ -26,11 +26,13 @@
     "build": "tsc -p tsconfig.build.json && node ../../tools/write-dist-manifest.mjs ."
   },
   "dependencies": {
-    "@conformo/core": "^0.1.0",
-    "@conformo/formats": "^0.1.0",
-    "@conformo/parse": "^0.1.0",
-    "@conformo/validate": "^0.1.0",
+    "@conformo/schema": "^0.1.0",
+    "@conformo/toolkit": "^0.1.0",
     "@modelcontextprotocol/sdk": "^1.30.0",
-    "zod": "^3.24.0"
-  }
+    "zod": "^3.25.76"
+  },
+  "exports": {
+    ".": "./src/createServer.ts"
+  },
+  "main": "./src/createServer.ts"
 }
