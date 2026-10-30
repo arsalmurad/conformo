@@ -30,7 +30,10 @@ export function detectDocument(xml: string): DetectedDocument {
     throw new ValidationInputError(
       `Unsupported document <${local}>. Supported: UN/CEFACT CII (CrossIndustryInvoice) and UBL 2.1 (Invoice, CreditNote).`);
   }
-  return { syntax, customizationId, businessProcess, profile: profileFromCustomizationId(customizationId) };
+  const profile = profileFromCustomizationId(customizationId);
+  const lower = customizationId?.toLowerCase() ?? "";
+  const variant = profile !== "xrechnung" ? undefined : lower.includes(":extension:") ? "extension" : lower.includes(":cvd_") ? "cvd" : "standard";
+  return { syntax, customizationId, businessProcess, profile, ...(variant ? { variant } : {}) };
 }
 
 /** BT-24 -> the profile that decides which CIUS rule sets apply. */

@@ -219,6 +219,23 @@ def parse_manifest():
     return entries
 
 
+
+print("\n[4b] One hybrid PDF per Factur-X/ZUGFeRD profile: embedded XML vs the profile's XSD, plus Schematron where it applies")
+import json as _json
+_profiles_path = ROOT / "out" / "pdf-profiles.json"
+if not _profiles_path.exists():
+    ok = False
+    print("  FAIL  out/pdf-profiles.json missing: run npm run build:sample first")
+else:
+    for _profile, _meta in _json.loads(_profiles_path.read_text()).items():
+        _pdf = (ROOT / _meta["file"]).read_bytes()
+        _fn, _xml = get_facturx_xml_from_pdf(_pdf)
+        check(f"{_profile}: attachment is named {_meta['xml']}", lambda f=_fn, m=_meta: f"ok ({f})" if f == m["xml"] else (_ for _ in ()).throw(AssertionError(f"got {f}")))
+        _flavor_level = {"en16931": "en16931", "xrechnung": "en16931", "extended": "extended"}[_profile]
+        check(f"{_profile}: XSD ({_flavor_level})", lambda x=_xml, l=_flavor_level: (xml_check_xsd(x, flavor='factur-x', level=l), "valid")[1])
+        if _profile != "extended":
+            check(f"{_profile}: EN 16931 Schematron", lambda x=_xml: (xml_check_schematron(x, flavor='factur-x', level='en16931'), "valid")[1])
+
 print("\n[5] Fixture matrix: every fixture against every format it targets")
 # Regenerated on every run (not left stale from a previous one) so this gate,
 # run alone as `py tools/validate.py`, always checks what the serializers

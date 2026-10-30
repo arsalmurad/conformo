@@ -15,6 +15,8 @@ export default defineConfig({
       '@conformo/pdf': fileURLToPath(new URL('./packages/pdf/src/index.ts', import.meta.url)),
       '@conformo/parse': fileURLToPath(new URL('./packages/parse/src/index.ts', import.meta.url)),
       '@conformo/compliance-data': fileURLToPath(new URL('./packages/compliance-data/src/index.ts', import.meta.url)),
+      '@conformo/toolkit': fileURLToPath(new URL('./packages/toolkit/src/index.ts', import.meta.url)),
+      '@conformo/validate/page': fileURLToPath(new URL('./packages/validate/src/page.ts', import.meta.url)),
       '@conformo/validate/browser': fileURLToPath(new URL('./packages/validate/src/browser.ts', import.meta.url)),
       '@conformo/validate/coverage': fileURLToPath(new URL('./packages/validate/src/coverage.ts', import.meta.url)),
       '@conformo/validate': fileURLToPath(new URL('./packages/validate/src/index.ts', import.meta.url)),

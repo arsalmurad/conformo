@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { checkInvoice } from '@conformo/core';
 import { buildUBL } from '@conformo/formats';
 import type { Invoice } from '@conformo/core';
 import sample from '../fixtures/sample-invoice.json' with { type: 'json' };
@@ -49,8 +50,11 @@ describe('UBL serializer', () => {
     expect(xml).not.toContain('<Ltd>');
   });
 
-  it('rejects a legal id without its scheme instead of mislabelling it (regression for F6)', () => {
+  it('never mislabels a legal id that has no scheme (regression for F6): no default scheme is written, checkInvoice warns', () => {
     const bad: Invoice = { ...inv, seller: { ...inv.seller, legalId: '123456789', legalIdScheme: undefined } };
-    expect(() => buildUBL(bad)).toThrow(/legalIdScheme/);
+    const xml = buildUBL(bad);
+    expect(xml).toMatch(/<cbc:CompanyID>123456789<\/cbc:CompanyID>/); // present, with no schemeID attribute at all
+    expect(xml).not.toMatch(/CompanyID schemeID=/);
+    expect(checkInvoice(bad).find((i) => i.path === 'seller.legalIdScheme')).toMatchObject({ severity: 'warning', bt: 'BT-30' });
   });
 });

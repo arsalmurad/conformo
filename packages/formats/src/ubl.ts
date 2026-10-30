@@ -33,7 +33,9 @@ export const UBL_NS = {
 const NS = UBL_NS;
 
 export interface UBLOptions {
-  profile?: Profile;
+  profile?: Exclude<Profile, 'extended'>;
+  /** Writes this exact BT-24 instead of the profile's (see CIIOptions.customizationId). */
+  customizationId?: string;
 }
 
 interface AddressParts {
@@ -62,13 +64,13 @@ const locationAddress = (a: AddressParts): string => wrap('cac:Address', address
 const scheme = (id: string): string => wrap('cac:TaxScheme', req('cbc:ID', id));
 
 // A rate is never written for category O (BR-O-05); 0 is written for E, Z, AE, K, G.
-const percent = (category: TaxCategory, r: number): string =>
-  category === 'O' ? '' : tag('cbc:Percent', dec(r));
+const percent = (category: TaxCategory, r: number, forceZeroForO = false): string =>
+  category === 'O' && !forceZeroForO ? '' : tag('cbc:Percent', dec(category === 'O' ? 0 : r));
 
-const taxCategory = (name: string, category: TaxCategory, r: number, code?: string, reason?: string): string =>
+const taxCategory = (name: string, category: TaxCategory, r: number, code?: string, reason?: string, forceZeroForO = false): string =>
   wrap(name,
     req('cbc:ID', category) +
-    percent(category, r) +
+    percent(category, r, forceZeroForO) +
     tag('cbc:TaxExemptionReasonCode', code) +
     tag('cbc:TaxExemptionReason', reason) +
     scheme('VAT'));
@@ -161,7 +163,7 @@ export function buildUBL(invoice: Invoice, options: UBLOptions = {}): string {
         (hasGross ? wrap('cac:AllowanceCharge',                                               // BT-147 / BT-148
           req('cbc:ChargeIndicator', 'false') +
           priceAmount('Amount', l.priceDiscountMinor ?? 0) +
-          priceAmount('BaseAmount', l.grossPriceMinor ?? (l.unitPriceMinor + (l.priceDiscountMinor ?? 0)))) : '')));
+          (l.grossPriceMinor !== undefined ? priceAmount('BaseAmount', l.grossPriceMinor) : '')) : '')));
   }).join('');
 
   const notes = (invoice.notes ?? []).map((n) =>
@@ -191,7 +193,7 @@ export function buildUBL(invoice: Invoice, options: UBLOptions = {}): string {
     t.groups.map((g) => wrap('cac:TaxSubtotal',
       amount('TaxableAmount', g.basis) +
       amount('TaxAmount', g.amount) +
-      taxCategory('cac:TaxCategory', g.category, g.rate, g.exemptionCode, g.exemptionReason))).join('')) +
+      taxCategory('cac:TaxCategory', g.category, g.rate, g.exemptionCode, g.exemptionReason, profile === 'xrechnung'))).join('')) +   // BR-DE-14
     (hasTaxCurrency ? wrap('cac:TaxTotal', amount('TaxAmount', invoice.taxTotalInTaxCurrencyMinor ?? 0, invoice.taxCurrency)) : '');
 
   const monetary = wrap('cac:LegalMonetaryTotal',
@@ -242,7 +244,7 @@ export function buildUBL(invoice: Invoice, options: UBLOptions = {}): string {
 
   return `<?xml version="1.0" encoding="UTF-8"?>\n` +
     `<${root} xmlns="${ns}" xmlns:cac="${NS.cac}" xmlns:cbc="${NS.cbc}">` +
-      req('cbc:CustomizationID', CUSTOMIZATION_ID[profile]) +                               // BT-24
+      req('cbc:CustomizationID', options.customizationId ?? CUSTOMIZATION_ID[profile]) +                               // BT-24
       tag('cbc:ProfileID', process) +                                                       // BT-23
       req('cbc:ID', invoice.number) +
       req('cbc:IssueDate', invoice.issueDate) +
@@ -251,7 +253,7 @@ export function buildUBL(invoice: Invoice, options: UBLOptions = {}): string {
       notes +
       tag('cbc:TaxPointDate', invoice.taxPointDate) +                                       // BT-7
       req('cbc:DocumentCurrencyCode', cur) +
-      tag('cbc:TaxCurrencyCode', hasTaxCurrency ? invoice.taxCurrency : undefined) +        // BT-6
+      tag('cbc:TaxCurrencyCode', invoice.taxCurrency) +                                     // BT-6
       tag('cbc:AccountingCost', invoice.buyerAccountingReference) +                         // BT-19
       tag('cbc:BuyerReference', invoice.buyerReference) +                                  // BT-10
       periodHeader +

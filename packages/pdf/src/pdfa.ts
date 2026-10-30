@@ -10,9 +10,13 @@
 import { PDFName, PDFString, PDFHexString, AFRelationship } from 'pdf-lib';
 import type { PDFDocument } from 'pdf-lib';
 import { buildXMP } from './xmp.js';
+import { FACTURX_PROFILES } from './profiles.js';
+import type { FacturXProfile } from './profiles.js';
 
 export interface FinalizeOptions {
   xml: string | Uint8Array;
+  /** Picks the right attachment name and fx:ConformanceLevel for a Factur-X/ZUGFeRD profile. Explicit xmlFilename/conformanceLevel win. */
+  profile?: FacturXProfile;
   xmlFilename?: string;
   conformanceLevel?: string;
   title: string;
@@ -48,7 +52,8 @@ function frame(parts: Uint8Array[]): Uint8Array<ArrayBuffer> {
 }
 
 export async function finalizePDFA(pdfDoc: PDFDocument, {
-  xml, xmlFilename = 'factur-x.xml', conformanceLevel = 'EN 16931',
+  xml, profile = 'en16931', xmlFilename = FACTURX_PROFILES[profile].xmlFilename,
+  conformanceLevel = FACTURX_PROFILES[profile].conformanceLevel,
   title, author, producer, creatorTool, iccProfile, createDate,
 }: FinalizeOptions): Promise<PDFDocument> {
   const ctx = pdfDoc.context;

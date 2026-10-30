@@ -16,12 +16,14 @@
     "readme:coverage": "tsx tools/update-readme-coverage.ts",
     "docs:build": "npm run build --workspace=packages/docs-site",
     "validator-page:build": "npm run build --workspace=packages/validator-page",
-    "validate": "node tools/py.mjs tools/validate.py && node tools/py.mjs tools/pdfa_audit.py",
+    "validate": "node tools/py.mjs tools/validate.py && node tools/py.mjs tools/pdfa_audit.py && node tools/pdfa-audit-profiles.mjs",
     "schematron:compile": "node tools/build-rulesets.mjs",
     "saxonjs:fetch": "node tools/fetch-saxonjs.mjs",
     "cli": "tsx packages/cli/src/cli.ts",
     "e2e": "playwright test",
-    "artefacts:fetch": "node tools/fetch-artefacts.mjs"
+    "artefacts:fetch": "node tools/fetch-artefacts.mjs",
+    "conformance": "tsx tools/conformance/run.ts",
+    "coverage:generate": "tsx tools/generate-coverage.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",

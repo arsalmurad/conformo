@@ -8,6 +8,7 @@
  */
 import type { Invoice } from './model.js';
 import { CREDIT_NOTE_TYPE_CODES } from './model.js';
+import { computedLineNet } from './totals.js';
 
 export interface InvoiceIssue {
   /** Where, as a JS path into the input: "seller.country", "lines[2].quantity". */
@@ -76,6 +77,11 @@ export function checkInvoice(input: unknown): InvoiceIssue[] {
     if (typeof v !== 'number' || !Number.isSafeInteger(v)) err(path, bt, `${label} must be an integer in minor units (e.g. 1999 for 19.99), got ${JSON.stringify(v)}`);
   };
 
+  const category = (v: unknown, path: string, bt: string) => {
+    if (typeof v !== 'string' || !/^[A-Z]{1,2}$/.test(v)) err(path, bt, `VAT category must be a UNCL5305 code such as ${CATEGORIES.join(', ')}, got ${JSON.stringify(v)}`);
+    else if (!CATEGORIES.includes(v)) add('warning', path, bt, `VAT category ${v} is not an EN 16931 category (${CATEGORIES.join(', ')}); only a national CIUS may use it`);
+  };
+
   needText(inv.number, 'number', 'BT-1', 'invoice number');
   needText(inv.issueDate, 'issueDate', 'BT-2', 'issue date');
   if (typeof inv.issueDate === 'string' && inv.issueDate && !validDate(inv.issueDate)) err('issueDate', 'BT-2', `issue date must be a real date as yyyy-mm-dd, got ${JSON.stringify(inv.issueDate)}`);
@@ -107,7 +113,7 @@ export function checkInvoice(input: unknown): InvoiceIssue[] {
     const q = p as unknown as Invoice['seller'];
     needText(q.name, `${path}.name`, s ? 'BT-27' : 'BT-44', `${who} name`);
     if (typeof q.country !== 'string' || !COUNTRY.test(q.country)) err(`${path}.country`, s ? 'BT-40' : 'BT-55', `${who} country must be a 2-letter ISO 3166-1 code such as DE, got ${JSON.stringify(q.country)}`);
-    if (q.legalId && !q.legalIdScheme) err(`${path}.legalIdScheme`, s ? 'BT-30' : 'BT-47', 'is required when legalId is set (an ISO 6523 ICD code such as 0002)');
+    if (q.legalId && !q.legalIdScheme) add('warning', `${path}.legalIdScheme`, s ? 'BT-30' : 'BT-47', 'legalId has no scheme: EN 16931 allows that, but Peppol, XRechnung and the French rules expect an ISO 6523 ICD code such as 0002. Conformo never invents one.');
     if (q.electronicAddress && !q.electronicAddressScheme && !q.electronicAddress.includes('@')) {
       err(`${path}.electronicAddressScheme`, s ? 'BT-34' : 'BT-49', 'is required unless electronicAddress is an e-mail address (an EAS code such as 0204 for a Leitweg-ID)');
     }
@@ -132,7 +138,7 @@ export function checkInvoice(input: unknown): InvoiceIssue[] {
     if (!isObj(inv.payee)) err('payee', 'BG-10', 'must be an object');
     else {
       needText(inv.payee.name, 'payee.name', 'BT-59', 'payee name');
-      if (inv.payee.legalId && !inv.payee.legalIdScheme) err('payee.legalIdScheme', 'BT-61', 'is required when legalId is set');
+      if (inv.payee.legalId && !inv.payee.legalIdScheme) add('warning', 'payee.legalIdScheme', 'BT-61', 'legalId has no scheme (an ISO 6523 ICD code is expected by most CIUS)');
     }
   }
   if (inv.delivery?.country !== undefined && !COUNTRY.test(inv.delivery.country)) err('delivery.country', 'BT-80', 'must be a 2-letter ISO 3166-1 code');
@@ -168,8 +174,8 @@ export function checkInvoice(input: unknown): InvoiceIssue[] {
     if (!Array.isArray(list)) { err(path, doc === 'allowance' ? 'BG-20' : 'BG-21', 'must be an array'); return; }
     list.forEach((a: Invoice['allowances'] extends (infer T)[] | undefined ? T : never, i: number) => {
       minor(a?.amountMinor, `${path}[${i}].amountMinor`, doc === 'allowance' ? 'BT-92' : 'BT-99', `${doc} amount`, true);
-      if (typeof a?.amountMinor === 'number' && a.amountMinor < 0) err(`${path}[${i}].amountMinor`, doc === 'allowance' ? 'BT-92' : 'BT-99', `${doc} amount must be positive`);
-      if (!CATEGORIES.includes(a?.taxCategory)) err(`${path}[${i}].taxCategory`, doc === 'allowance' ? 'BT-95' : 'BT-102', `VAT category must be one of ${CATEGORIES.join(', ')}`);
+      if (typeof a?.amountMinor === 'number' && a.amountMinor < 0) add('warning', `${path}[${i}].amountMinor`, doc === 'allowance' ? 'BT-92' : 'BT-99', `${doc} amount is negative; EN 16931 expects a positive amount (a negative allowance is a charge)`);
+      category(a?.taxCategory, `${path}[${i}].taxCategory`, doc === 'allowance' ? 'BT-95' : 'BT-102');
       needNumber(a?.taxRate, `${path}[${i}].taxRate`, doc === 'allowance' ? 'BT-96' : 'BT-103', 'VAT rate');
       if (blank(a?.reason) && blank(a?.reasonCode)) err(`${path}[${i}].reason`, doc === 'allowance' ? 'BT-97' : 'BT-104', `${doc} needs a reason text or reason code (BR-33/BR-38)`);
     });
@@ -185,15 +191,17 @@ export function checkInvoice(input: unknown): InvoiceIssue[] {
       needText(l.name, `${p}.name`, 'BT-153', 'item name');
       needNumber(l.quantity, `${p}.quantity`, 'BT-129', 'quantity');
       if (typeof l.unitPriceMinor !== 'number' || !Number.isFinite(l.unitPriceMinor)) err(`${p}.unitPriceMinor`, 'BT-146', 'net unit price is required (minor units; may be fractional for sub-cent prices)');
-      if (!CATEGORIES.includes(l.taxCategory)) err(`${p}.taxCategory`, 'BT-151', `VAT category must be one of ${CATEGORIES.join(', ')}, got ${JSON.stringify(l.taxCategory)}`);
+      category(l.taxCategory, `${p}.taxCategory`, 'BT-151');
       if (l.taxCategory !== 'O') needNumber(l.taxRate, `${p}.taxRate`, 'BT-152', 'VAT rate');
       if (l.standardItemId && !l.standardItemIdScheme) err(`${p}.standardItemIdScheme`, 'BT-157', 'is required when standardItemId is set (e.g. 0160 for a GTIN)');
       if (l.originCountry !== undefined && !COUNTRY.test(l.originCountry)) err(`${p}.originCountry`, 'BT-159', 'must be a 2-letter ISO 3166-1 code');
       if (l.priceBaseQuantity !== undefined && !(typeof l.priceBaseQuantity === 'number' && l.priceBaseQuantity > 0)) err(`${p}.priceBaseQuantity`, 'BT-149', 'must be a number greater than 0');
       if (l.grossPriceMinor !== undefined && l.priceDiscountMinor !== undefined && typeof l.unitPriceMinor === 'number' &&
         Math.abs(l.grossPriceMinor - l.priceDiscountMinor - l.unitPriceMinor) > 1e-9) {
-        err(`${p}.unitPriceMinor`, 'BT-146', 'net price must equal gross price (BT-148) minus price discount (BT-147)');
+        add('warning', `${p}.unitPriceMinor`, 'BT-146', 'net price differs from gross price (BT-148) minus price discount (BT-147)');
       }
+      if (typeof l.netAmountMinor === 'number' && Number.isFinite(l.unitPriceMinor) && Number.isFinite(l.quantity) &&
+        l.netAmountMinor !== computedLineNet(l)) add('warning', `${p}.netAmountMinor`, 'BT-131', 'stated line net amount differs from quantity x price (+charges -allowances); the stated value is used');
       optDate(l.periodStart, `${p}.periodStart`, 'BT-134', 'line period start');
       optDate(l.periodEnd, `${p}.periodEnd`, 'BT-135', 'line period end');
       for (const [list, doc] of [[l.allowances, 'allowance'], [l.charges, 'charge']] as const) {

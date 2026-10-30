@@ -12,7 +12,8 @@ export type { ValidateOptions, ValidationResult, RuleResult } from "./types.js";
 export function createPageValidator(baseUrl: string, prefetch: string[] = []): (xml: string, o?: ValidateOptions) => Promise<ValidationResult> {
   let saxon: Promise<SaxonJSLike> | undefined;
   const sefs = new Map<string, Promise<string>>();
-  let info: Promise<Record<string, { label: string; source: string }>> | undefined;
+  type Meta = { rulesets: Record<string, { label: string; source: string }>; levelOverrides?: Record<string, Record<string, string>> };
+  let info: Promise<Meta> | undefined;
 
   const loadSaxon = (): Promise<SaxonJSLike> =>
     (saxon ??= new Promise((resolve, reject) => {
@@ -39,8 +40,7 @@ export function createPageValidator(baseUrl: string, prefetch: string[] = []): (
   const loadInfo = () =>
     (info ??= fetch(`${baseUrl}validator/rulesets.json`)
       .then((r) => (r.ok ? r.json() : { rulesets: {} }))
-      .then((j: { rulesets: Record<string, { label: string; source: string }> }) => j.rulesets)
-      .catch(() => ({})));
+      .catch(() => ({ rulesets: {} })) as Promise<Meta>);
 
   void loadSaxon().catch(() => undefined);
   for (const id of prefetch) void loadSef(id).catch(() => undefined);
@@ -48,7 +48,7 @@ export function createPageValidator(baseUrl: string, prefetch: string[] = []): (
   let validator: Promise<(xml: string, o?: ValidateOptions) => Promise<ValidationResult>> | undefined;
   return async (xml, options) => {
     validator ??= Promise.all([loadSaxon(), loadInfo()]).then(([saxonJs, i]) =>
-      createBrowserValidator({ saxonJs, loadRuleset: loadSef, info: i }));
+      createBrowserValidator({ saxonJs, loadRuleset: loadSef, info: i.rulesets, levelOverrides: i.levelOverrides }));
     return (await validator)(xml, options);
   };
 }

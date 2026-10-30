@@ -121,6 +121,13 @@ export interface Line {
   attributes?: ItemAttribute[];    // BG-32
   quantity: number;                // BT-129. Decimal: read exactly, never as a binary float.
   /**
+   * BT-131 as stated in a document. Normally leave it unset: the net amount is computed from quantity, price and the
+   * line allowances/charges. EN 16931 has no rule tying BT-131 to those, so a real document can state another value
+   * (the official UBL example 1 does, with a negative line); the reader sets this only when the stated value differs
+   * from the computed one, so that converting such a document reproduces its totals.
+   */
+  netAmountMinor?: Minor;
+  /**
    * BT-146 item NET price in minor units. May be fractional (1.25 = 0.0125 in a two-decimal currency)
    * because EN 16931 allows unit prices with more decimals than the currency; arithmetic stays exact.
    */

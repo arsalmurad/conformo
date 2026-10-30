@@ -11,6 +11,7 @@ import type {
   AllowanceCharge, Attachment, Contact, Delivery, DocumentTypeCode, Invoice, Line, LineAllowanceCharge, Note, Party,
   Payee, Payment, PrecedingInvoice, TaxCategory, TaxRepresentative,
 } from '@conformo/core';
+import { computedLineNet } from '@conformo/core';
 import { UBL_NS } from '@conformo/formats';
 import { attr, child, children, descend, text } from '../xml/query.js';
 import type { XmlElement } from '../xml/types.js';
@@ -142,7 +143,8 @@ function readLine(el: XmlElement, credit: boolean, exemptionGroups: ExemptionGro
   const discount = text(child(priceAc, 'Amount', CBC));
   const gross = text(child(priceAc, 'BaseAmount', CBC));
 
-  return {
+  const stated = text(child(el, 'LineExtensionAmount', CBC));
+  const line: Line = {
     id: text(child(el, 'ID', CBC)),
     note: text(child(el, 'Note', CBC)),
     objectId: text(objectIdEl),
@@ -179,6 +181,8 @@ function readLine(el: XmlElement, credit: boolean, exemptionGroups: ExemptionGro
     exemptionCode: exemption.code,
     exemptionReason: exemption.reason,
   };
+  if (stated !== undefined && parseMoney(stated) !== computedLineNet(line)) line.netAmountMinor = parseMoney(stated);
+  return line;
 }
 
 function readPrecedingInvoice(el: XmlElement): PrecedingInvoice {

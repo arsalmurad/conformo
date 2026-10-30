@@ -12,6 +12,10 @@ export interface RuleResult {
   xpath: string;
   /** The official Schematron message text, verbatim (machine prefix stripped). */
   message: string;
+  /** Set when the publisher's validator configuration re-levels this rule for the document's profile
+   * (e.g. KoSIT downgrades BR-CL-21 for XRechnung). `severity` is then the effective level and this is
+   * what the Schematron itself says. */
+  originalSeverity?: "error" | "fatal" | "warning" | "info";
   /** Which rule set produced this result, a key of RULESETS, e.g. "en16931-ubl" or "xrechnung-cii". */
   ruleSet: string;
   /** Present only for rules with a hand-written plain-language translation (see src/messages). */
@@ -48,6 +52,8 @@ export interface DetectedDocument {
   /** BT-23, verbatim, when present. */
   businessProcess?: string;
   profile: Profile;
+  /** For XRechnung: the flavour named in BT-24, which selects KoSIT's severity table. */
+  variant?: "standard" | "extension" | "cvd";
 }
 
 /** What `validate()` was asked for. All optional: the default is "work it out from the document". */

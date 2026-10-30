@@ -31,6 +31,8 @@ export interface EngineDeps {
   /** Why `xsd` is absent, for the report. */
   xsdUnavailableReason?: string;
   info?: Record<string, RulesetInfo>;
+  /** Publisher severity re-levelling per "<syntax>:<variant>" (KoSIT scenarios.xml customLevel), from rulesets.json. */
+  levelOverrides?: Record<string, Record<string, string>>;
 }
 
 const FALLBACK_INFO: Record<string, RulesetInfo> = {
@@ -118,6 +120,20 @@ export function createEngine(deps: EngineDeps) {
     else {
       const x = await deps.xsd.validate(detected.syntax, profile, xml);
       xsd = { ran: true, schema: x.schema, valid: x.valid, errors: x.errors };
+    }
+
+    const table = deps.levelOverrides?.[`${detected.syntax}:${detected.variant ?? "en16931"}`];
+    if (table && (profile === "xrechnung" || profile === "en16931")) {
+      for (const r of results) {
+        const level = table[r.ruleId];
+        const next = level === "information" ? "info" : level === "warning" || level === "error" ? level : undefined;
+        if (next && next !== r.severity) { r.originalSeverity = r.severity; r.severity = next; }
+      }
+      for (const run of runs) {
+        const own = results.filter((r) => r.ruleSet === run.id);
+        run.failed = own.filter((r) => r.severity === "error" || r.severity === "fatal").length;
+        run.advisory = own.length - run.failed;
+      }
     }
 
     const failures = results.filter((r) => r.severity === "error" || r.severity === "fatal");

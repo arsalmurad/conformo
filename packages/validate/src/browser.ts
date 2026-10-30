@@ -19,6 +19,7 @@ export interface BrowserValidatorOptions {
   xsd?: XsdRunner;
   xsdUnavailableReason?: string;
   info?: Record<string, { label: string; source: string }>;
+  levelOverrides?: Record<string, Record<string, string>>;
 }
 
 /**
@@ -33,6 +34,7 @@ export function createBrowserValidator(options: BrowserValidatorOptions): (xml: 
     xsd: options.xsd,
     xsdUnavailableReason: options.xsdUnavailableReason ?? "XSD validation is not available in the browser build",
     info: options.info,
+    levelOverrides: options.levelOverrides,
   });
   return (xml, o) => engine.validate(xml, o);
 }

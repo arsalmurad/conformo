@@ -24,11 +24,16 @@ function readArtefact(name: string): string {
   }
 }
 
-function rulesetInfo(): Record<string, { label: string; source: string }> {
+interface RulesetsFile {
+  rulesets: Record<string, { label: string; source: string }>;
+  levelOverrides?: Record<string, Record<string, string>>;
+}
+
+function rulesetsFile(): RulesetsFile {
   try {
-    return (JSON.parse(readArtefact("rulesets.json")) as { rulesets: Record<string, { label: string; source: string }> }).rulesets;
+    return JSON.parse(readArtefact("rulesets.json")) as RulesetsFile;
   } catch {
-    return {};
+    return { rulesets: {} };
   }
 }
 
@@ -41,11 +46,13 @@ let engine: ReturnType<typeof createEngine> | undefined;
  * runs too (disable with `xsd: false`). Runs locally, with no server.
  */
 export async function validate(xml: string, options: ValidateOptions = {}): Promise<ValidationResult> {
+  const meta = rulesetsFile();
   engine ??= createEngine({
     saxon: SaxonJS,
     loadRuleset: async (id): Promise<CompiledSchematron | string> => readArtefact(`${id}.sef.json`),
     xsd: nodeXsdRunner,
-    info: rulesetInfo(),
+    info: meta.rulesets,
+    levelOverrides: meta.levelOverrides,
   });
   return engine.validate(xml, options);
 }

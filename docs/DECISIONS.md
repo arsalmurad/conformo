@@ -12,3 +12,4 @@ One line of reasoning each, newest last.
 - EN 16931 base rules now come from CEN's own release (validation-1.3.17), not the factur-x pip package's adaptation, per the brief; the pip package is kept pinned only for the French CTC rules and the Factur-X profile XSDs.
 - BT-29/BT-46 with a scheme are written as CII `ram:GlobalID` (the EN 16931 binding), without a scheme as `ram:ID`.
 - BT-90 (SEPA creditor id) is stored under `payment.directDebit.creditorId` and written as CII `CreditorReferenceID` / UBL seller `PartyIdentification` with schemeID `SEPA`, per the syntax bindings.
+- A legal registration id without a scheme (BT-30-1/47-1/61-1) is a warning, not an error: EN 16931 makes the scheme optional, and the conformance run showed that refusing it blocked re-serializing most official sample documents. The invariant that matters is kept: Conformo never writes a default scheme.

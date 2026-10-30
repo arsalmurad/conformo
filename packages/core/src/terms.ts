@@ -192,7 +192,7 @@ export const EN16931_TERMS: readonly En16931Term[] = [
   { id: "BT-128-1", name: "Invoice line object identifier scheme", path: "lines[].objectIdScheme", kind: "input", fixture: "full-model.json" },
   { id: "BT-129", name: "Invoiced quantity", path: "lines[].quantity", kind: "input", fixture: "full-model.json" },
   { id: "BT-130", name: "Invoiced quantity unit of measure code", path: "lines[].unitCode", kind: "input", fixture: "full-model.json" },
-  { id: "BT-131", name: "Invoice line net amount", path: "lineNet(line)", kind: "computed", fixture: "" },
+  { id: "BT-131", name: "Invoice line net amount", path: "lineNet(line) (lines[].netAmountMinor if a document states a different value)", kind: "computed", fixture: "" },
   { id: "BT-132", name: "Referenced purchase order line reference", path: "lines[].orderLineReference", kind: "input", fixture: "full-model.json" },
   { id: "BT-133", name: "Invoice line Buyer accounting reference", path: "lines[].buyerAccountingReference", kind: "input", fixture: "full-model.json" },
   { id: "BT-134", name: "Invoice line period start date", path: "lines[].periodStart", kind: "input", fixture: "full-model.json" },

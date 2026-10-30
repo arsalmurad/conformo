@@ -17,6 +17,7 @@ import type {
   AllowanceCharge, Attachment, Contact, Delivery, DocumentTypeCode, Invoice, Line, LineAllowanceCharge, Note, Party,
   Payee, Payment, PrecedingInvoice, TaxCategory, TaxRepresentative,
 } from '@conformo/core';
+import { computedLineNet } from '@conformo/core';
 import { CII_NS, TAX_POINT_CODE_2475_TO_2005 } from '@conformo/formats';
 import { attr, child, children, descend, text } from '../xml/query.js';
 import type { XmlElement } from '../xml/types.js';
@@ -160,7 +161,8 @@ function readLine(el: XmlElement, exemptionGroups: ExemptionGroup[]): Line {
   }
   const objectDoc = children(settlement, 'AdditionalReferencedDocument', RAM).find((d) => text(child(d, 'TypeCode', RAM)) === '130');
 
-  return {
+  const stated = text(descend(settlement, 'SpecifiedTradeSettlementLineMonetarySummation', 'LineTotalAmount'));
+  const line: Line = {
     id: text(descend(el, 'AssociatedDocumentLineDocument', 'LineID')),
     note: text(descend(el, 'AssociatedDocumentLineDocument', 'IncludedNote', 'Content')),
     objectId: text(child(objectDoc, 'IssuerAssignedID', RAM)),
@@ -197,6 +199,8 @@ function readLine(el: XmlElement, exemptionGroups: ExemptionGroup[]): Line {
     exemptionCode: exemption.code,
     exemptionReason: exemption.reason,
   };
+  if (stated !== undefined && parseMoney(stated) !== computedLineNet(line)) line.netAmountMinor = parseMoney(stated);
+  return line;
 }
 
 function readNote(el: XmlElement): Note {

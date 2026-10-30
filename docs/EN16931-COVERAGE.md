@@ -193,7 +193,7 @@ kept in `payment.additionalAccounts`); BT-81 values that differ between repeated
 | BT-128-1 | Invoice line object identifier scheme | `lines[].objectIdScheme` | input | [full-model.json](../fixtures/full-model.json) |
 | BT-129 | Invoiced quantity | `lines[].quantity` | input | [full-model.json](../fixtures/full-model.json) |
 | BT-130 | Invoiced quantity unit of measure code | `lines[].unitCode` | input | [full-model.json](../fixtures/full-model.json) |
-| BT-131 | Invoice line net amount | `lineNet(line)` | computed | (computed/derived) |
+| BT-131 | Invoice line net amount | `lineNet(line) (lines[].netAmountMinor if a document states a different value)` | computed | (computed/derived) |
 | BT-132 | Referenced purchase order line reference | `lines[].orderLineReference` | input | [full-model.json](../fixtures/full-model.json) |
 | BT-133 | Invoice line Buyer accounting reference | `lines[].buyerAccountingReference` | input | [full-model.json](../fixtures/full-model.json) |
 | BT-134 | Invoice line period start date | `lines[].periodStart` | input | [full-model.json](../fixtures/full-model.json) |

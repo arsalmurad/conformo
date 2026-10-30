@@ -36,7 +36,10 @@ const NS = CII_NS;
 
 export interface CIIOptions {
   /** BT-24 / BT-23 profile. Peppol BIS Billing 3.0 is UBL only. */
-  profile?: Extract<Profile, 'en16931' | 'xrechnung'>;
+  profile?: Extract<Profile, 'en16931' | 'xrechnung' | 'extended'>;
+  /** Writes this exact BT-24 instead of the profile's. For preserving a CIUS extension identifier when converting
+   * an existing document (e.g. the XRechnung extension URN); the profile still decides which rules the writer follows. */
+  customizationId?: string;
 }
 
 interface AddressParts {
@@ -55,8 +58,8 @@ const address = (a: AddressParts): string => wrap('ram:PostalTradeAddress',
   tag('ram:CountrySubDivisionName', a.subdivision));
 
 // A rate is never written for category O (BR-O-05); 0 is written for E, Z, AE, K, G.
-const rate = (category: TaxCategory, r: number): string =>
-  category === 'O' ? '' : tag('ram:RateApplicablePercent', dec(r));
+const rate = (category: TaxCategory, r: number, forceZeroForO = false): string =>
+  category === 'O' && !forceZeroForO ? '' : tag('ram:RateApplicablePercent', dec(category === 'O' ? 0 : r));
 
 const date = (name: string, iso: string): string =>
   wrap(name, tag('udt:DateTimeString', date102(iso), { format: '102' }));
@@ -177,7 +180,7 @@ export function buildCII(invoice: Invoice, options: CIIOptions = {}): string {
     tag('ram:ExemptionReasonCode', g.exemptionCode) +
     (invoice.taxPointDate ? wrap('ram:TaxPointDate', tag('udt:DateString', date102(invoice.taxPointDate), { format: '102' })) : '') + // BT-7
     tag('ram:DueDateTypeCode', invoice.taxPointDateCode === undefined ? undefined : (TAX_POINT_CODE_2005_TO_2475[invoice.taxPointDateCode] ?? invoice.taxPointDateCode)) +                                                                           // BT-8
-    rate(g.category, g.rate))).join('');
+    rate(g.category, g.rate, profile === 'xrechnung'))).join('');   // BR-DE-14: XRechnung wants BT-119 on every breakdown, even for O
 
   const p = invoice.payment;
   const dd = p?.directDebit;
@@ -223,10 +226,11 @@ export function buildCII(invoice: Invoice, options: CIIOptions = {}): string {
 
   // Must be emitted even when empty: the XSD requires the element.
   const d = invoice.delivery;
+  const hasAddress = !!d && !!(d.street || d.street2 || d.street3 || d.city || d.postcode || d.subdivision || d.country);
   const deliveryInner =
     (d ? wrap('ram:ShipToTradeParty',
       tag('ram:ID', d.locationId, { schemeID: d.locationIdScheme }) +                      // BT-71
-      tag('ram:Name', d.partyName) + address(d)) +
+      tag('ram:Name', d.partyName) + (hasAddress ? address(d) : '')) +
       wrap('ram:ActualDeliverySupplyChainEvent', d.date ? date('ram:OccurrenceDateTime', d.date) : '') : '') +
     wrap('ram:DespatchAdviceReferencedDocument', tag('ram:IssuerAssignedID', invoice.despatchAdviceReference)) +   // BT-16
     wrap('ram:ReceivingAdviceReferencedDocument', tag('ram:IssuerAssignedID', invoice.receivingAdviceReference));  // BT-15
@@ -245,7 +249,7 @@ export function buildCII(invoice: Invoice, options: CIIOptions = {}): string {
   const settlement = wrap('ram:ApplicableHeaderTradeSettlement',
     tag('ram:CreditorReferenceID', dd?.creditorId) +                                  // BT-90
     tag('ram:PaymentReference', p?.reference) +                                        // BT-83
-    tag('ram:TaxCurrencyCode', hasTaxCurrency ? invoice.taxCurrency : undefined) +    // BT-6
+    tag('ram:TaxCurrencyCode', invoice.taxCurrency) +                                 // BT-6
     req('ram:InvoiceCurrencyCode', invoice.currency) +
     (payee ? wrap('ram:PayeeTradeParty',                                              // BG-10
       tag('ram:ID', payee.idScheme ? undefined : payee.id) +
@@ -285,7 +289,7 @@ export function buildCII(invoice: Invoice, options: CIIOptions = {}): string {
     `<rsm:CrossIndustryInvoice xmlns:rsm="${NS.rsm}" xmlns:qdt="${NS.qdt}" xmlns:ram="${NS.ram}" xmlns:udt="${NS.udt}">` +
       wrap('rsm:ExchangedDocumentContext',
         wrap('ram:BusinessProcessSpecifiedDocumentContextParameter', tag('ram:ID', process)) +
-        wrap('ram:GuidelineSpecifiedDocumentContextParameter', req('ram:ID', CUSTOMIZATION_ID[profile]))) +
+        wrap('ram:GuidelineSpecifiedDocumentContextParameter', req('ram:ID', options.customizationId ?? CUSTOMIZATION_ID[profile]))) +
       wrap('rsm:ExchangedDocument',
         req('ram:ID', invoice.number) +
         req('ram:TypeCode', invoice.typeCode ?? '380') +
