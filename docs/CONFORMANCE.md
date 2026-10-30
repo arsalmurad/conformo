@@ -16,6 +16,7 @@ Our runtime validator (the code `validate()` runs in Node and, minus XSD, in a b
 | factur-x-wheel | 6.8 | `02b57dd57f59` |
 | xrechnung-testsuite | v2026-08-31 | `44c3905c69ca` |
 | saxonjs-runtime | 2.7 | `13cbd2e6eb0a` |
+| ksef-docs | main@ce3670e (FA(3) schema v1-0E) | `ce3670ea042d` |
 
 ## How to read this
 
@@ -29,7 +30,7 @@ Our runtime validator (the code `validate()` runs in Node and, minus XSD, in a b
 
 | Corpus | Files | Not CII/UBL | Reference agreement | Rule expectation | KoSIT agreement | Round trip: revalidates | fixed point | totals |
 |---|---|---|---|---|---|---|---|---|
-| KoSIT XRechnung test suite | 86 | 0 | 86/86 (100.0%) | n/a | 86/86 (100.0%) | 83/86 | 86/86 | 85/86 |
+| KoSIT XRechnung test suite | 86 | 0 | 86/86 (100.0%) | n/a | 86/86 (100.0%) | 86/86 | 86/86 | 85/86 |
 | Peppol BIS Billing 3.0 examples | 10 | 0 | 10/10 (100.0%) | n/a | 0/0 (n/a) | 10/10 | 10/10 | 10/10 |
 | CEN EN 16931 example files | 63 | 0 | 63/63 (100.0%) | n/a | 28/28 (100.0%) | 35/35 | 34/35 | 34/35 |
 | CEN EN 16931 rule unit tests (one failing document per rule) | 907 | 0 | 907/907 (100.0%) | 907/907 | 0/0 (n/a) | 0/0 | 0/0 | 0/0 |
@@ -46,20 +47,14 @@ Not covered, and why: the official FeRD/ZUGFeRD sample set and the Factur-X samp
 
 ## Mismatches and failures
 
-6 finding(s); 6 unexplained.
+3 finding(s); 0 unexplained.
 
 - `kosit-testsuite/src/test/business-cases/extension/05.01a-INVOICE_ubl.xml` — **roundtrip-totals**: due: document 36686 vs computed 33690
-  - **UNEXPLAINED**
-- `kosit-testsuite/src/test/technical-cases/cius/01.02_comprehensive_test_uncefact.xml` — **roundtrip-revalidate**: re-serialized document is no longer valid
-  - **UNEXPLAINED**
-- `kosit-testsuite/src/test/technical-cases/cius/01.03_comprehensive_test_uncefact.xml` — **roundtrip-revalidate**: re-serialized document is no longer valid
-  - **UNEXPLAINED**
-- `kosit-testsuite/src/test/technical-cases/cius/01.04_comprehensive_test_uncefact.xml` — **roundtrip-revalidate**: re-serialized document is no longer valid
-  - **UNEXPLAINED**
+  - Explanation: XRechnung extension scenario with third-party payment (BG-DEX-09, cac:PrepaidPayment, two prepaid amounts). The model has no BG-DEX-09, so on re-reading the amount due is computed without them; the conversion reports this in parse().totalsCheck instead of hiding it. Extension-only terms are out of scope.
 - `cen-examples/cii/examples/XRechnung-O.xml` — **roundtrip-fixpoint**: buyer.electronicAddressScheme: EM -> (absent)
-  - **UNEXPLAINED**
+  - Explanation: The document has an empty buyer electronic address element that carries only schemeID="EM". There is no address to preserve, so the writer emits nothing and the scheme is gone on the second read. No business value is lost.
 - `cen-examples/cii/examples/huf_example_cii.xml` — **roundtrip-totals**: taxTotal: document 1867900 vs computed 1867860; grand: document 8785900 vs computed 8785860; due: document 8785900 vs computed 8785860
-  - **UNEXPLAINED**
+  - Explanation: Hungarian invoice in HUF that states VAT rounded to the nearest 100 forint (1,867,900 where 27% of the taxable amount is 1,867,860). The CEN rules accept it; Conformo recomputes totals from the lines to the minor unit and reports the difference (parse().totalsCheck, and a warning on convert). Hungarian national rounding is not implemented.
 
 ## Files not processed
 

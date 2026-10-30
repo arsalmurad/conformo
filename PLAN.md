@@ -36,4 +36,4 @@ Strict priority: P0 fully verified before P1, P1 before P2. `[x]` = proven by a 
 
 ## Finish
 - [x] 0.2.0 bump + CHANGELOG.md, RELEASE.md
-- [ ] docs/FINAL-REPORT.md and terminal summary (after the last conformance run)
+- [x] docs/FINAL-REPORT.md and terminal summary
