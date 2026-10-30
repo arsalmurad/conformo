@@ -50,7 +50,8 @@ XSD validation runs in Node only ([KNOWN-GAPS](docs/KNOWN-GAPS.md)).
 | Peppol BIS Billing 3.0 (UBL), documents only | [yes](test/toolkit.test.ts) | [yes](test/parse-roundtrip.test.ts) | [yes](test/validate.test.ts) | [rules](test/validate-browser.test.ts) | [yes](test/cli-commands.test.ts) | [yes](test/mcp-server.test.ts) |
 | Factur-X / ZUGFeRD PDF: EN 16931, XRECHNUNG, EXTENDED\* | [yes](test/toolkit.test.ts) | [yes](test/parse-pdf.test.ts) | [embedded XML](test/toolkit.test.ts) | [validator page](packages/validator-page) | [yes](test/cli-commands.test.ts) | [yes](test/mcp-server.test.ts) |
 | French CTC rules (BR-FR Flux 2, CII) | partly ([fixture](test/profile-validators.test.ts)) | yes | [yes](test/validate.test.ts) | [rules](test/validate-browser.test.ts) | [yes](test/cli-commands.test.ts) | [yes](test/mcp-server.test.ts) |
-| FatturaPA, KSeF FA(3), Facturae | no | no | no | no | no | no |
+| Polish KSeF FA(3), domestic PLN invoices only | [yes](test/ksef.test.ts) | no | [XSD only](test/ksef.test.ts) | no | [yes](test/toolkit.test.ts) | [yes](test/toolkit.test.ts) |
+| FatturaPA, Facturae | no | no | no | no | no | no |
 
 \* EXTENDED is written with EN 16931 content only (no EXTENDED-only fields) and only its XSD is checked. MINIMUM and BASIC WL are not offered: they are not
 EN 16931 invoices and are not accepted for German B2B from 2027.
@@ -62,7 +63,7 @@ How well it agrees with the official validators, on the official sample files, i
 
 - **No transmission.** It makes and checks documents. It does not send them over the Peppol network, to a French *plateforme agréée* (PA, formerly PDP),
   to Poland's KSeF, or to Italy's SdI.
-- **No FatturaPA, KSeF FA(3) or Facturae** serializer, reader or validator. The dataset below lists those requirements; the toolkit says they are unsupported.
+- **No FatturaPA or Facturae** serializer, reader or validator (the Agenzia delle Entrate schema could not be fetched when v0.2 was built). **KSeF FA(3)** is limited to domestic PLN invoices at 23/8/5 %, 0 % and exempt, is checked against the Ministry of Finance XSD only, and cannot be read back. The dataset below lists all these requirements; the toolkit says what is supported.
 - **No legal advice and no archiving.** It does not decide whether you are obliged to issue an e-invoice, and it does not do retention.
 - **XSD validation in the browser** is not available; Node has it.
 - **Official ZUGFeRD / Factur-X sample PDFs** were not part of the conformance run (their sites were unreachable when v0.2 was built).

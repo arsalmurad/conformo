@@ -1,0 +1,42 @@
+{
+  "name": "@conformo/server",
+  "version": "0.1.1",
+  "description": "Optional stateless HTTP API for EN 16931 e-invoicing: create (XML, Factur-X/ZUGFeRD PDF), validate, convert, parse, explain rules, country requirements. No accounts, no storage; OpenAPI 3.1 generated from the schemas.",
+  "author": "Muhammad Arsal Murad",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arsalmurad/conformo.git",
+    "directory": "packages/server"
+  },
+  "homepage": "https://github.com/arsalmurad/conformo/tree/main/packages/server#readme",
+  "keywords": [
+    "invoice",
+    "en16931",
+    "e-invoicing",
+    "xrechnung",
+    "zugferd",
+    "factur-x",
+    "http",
+    "openapi"
+  ],
+  "type": "module",
+  "bin": {
+    "conformo-server": "./src/server.ts"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "main": "./src/index.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node ../../tools/write-dist-manifest.mjs ."
+  },
+  "dependencies": {
+    "@conformo/schema": "^0.1.0",
+    "@conformo/toolkit": "^0.1.0",
+    "@hono/node-server": "2.1.1",
+    "hono": "4.13.8",
+    "zod": "^3.25.76",
+    "zod-to-json-schema": "3.25.2"
+  }
+}

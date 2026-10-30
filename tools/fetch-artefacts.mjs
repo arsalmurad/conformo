@@ -72,13 +72,19 @@ function git(args, cwd) {
 }
 
 function fetchGit(id, a, dest) {
-  console.log(`  cloning ${a.repo} @ ${a.tag}`);
+  console.log(`  cloning ${a.repo} @ ${a.tag ?? a.ref}`);
   rmSync(dest, { recursive: true, force: true });
   mkdirSync(path.dirname(dest), { recursive: true });
   // Fetch the tag ref explicitly: some repos also have a branch with the same name.
   git(["init", "--quiet", dest]);
-  git(["fetch", "--quiet", "--depth", "1", a.repo, `refs/tags/${a.tag}:refs/tags/${a.tag}`], dest);
-  git(["-c", "advice.detachedHead=false", "checkout", "--quiet", `refs/tags/${a.tag}`], dest);
+  if (a.tag) {
+    git(["fetch", "--quiet", "--depth", "1", a.repo, `refs/tags/${a.tag}:refs/tags/${a.tag}`], dest);
+    git(["-c", "advice.detachedHead=false", "checkout", "--quiet", `refs/tags/${a.tag}`], dest);
+  } else {
+    // Repos without release tags are pinned by commit SHA.
+    git(["fetch", "--quiet", "--depth", "1", a.repo, a.ref], dest);
+    git(["-c", "advice.detachedHead=false", "checkout", "--quiet", "FETCH_HEAD"], dest);
+  }
   const head = git(["rev-parse", "HEAD^{commit}"], dest);
   if (head !== a.commit) {
     rmSync(dest, { recursive: true, force: true });

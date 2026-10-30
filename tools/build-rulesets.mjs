@@ -64,6 +64,13 @@ const ublSrc = `${kosit}/ubl/2.1/xsd`;
 cpSync(`${ublSrc}/common`, path.join(xsdOut, "ubl-2.1/common"), { recursive: true });
 for (const f of ["UBL-Invoice-2.1.xsd", "UBL-CreditNote-2.1.xsd"]) cpSync(`${ublSrc}/maindoc/${f}`, path.join(xsdOut, "ubl-2.1/maindoc", f));
 cpSync(`${kosit}/cii/16b/xsd`, path.join(xsdOut, "cii-d16b"), { recursive: true });
+// KSeF FA(3): the Ministry of Finance's schema (github.com/CIRFMF/ksef-docs). The only change is that the main schema's
+// import of the base types points at the local copy instead of http://crd.gov.pl/...; the schema content is untouched.
+const ksefSrc = path.join(artefactDir("ksef-docs"), "faktury/schemy/FA");
+const ksefOut = path.join(xsdOut, "ksef-fa3");
+cpSync(path.join(ksefSrc, "bazowe"), ksefOut, { recursive: true });
+writeFileSync(path.join(ksefOut, "schemat_FA3.xsd"), readFileSync(path.join(ksefSrc, "schemat_FA(3)_v1-0E.xsd"), "utf-8")
+  .replace(/schemaLocation="http:\/\/crd\.gov\.pl\/[^"]*\/([^\/"]+\.xsd)"/g, 'schemaLocation="$1"'));
 const fx = path.join(artefactDir("factur-x-wheel"), "facturx/xsd_and_schematron");
 for (const p of ["extended", "minimum", "basicwl"]) cpSync(`${fx}/facturx-${p}`, path.join(xsdOut, `facturx-${p}`), { recursive: true, filter: (f) => !f.endsWith(".xsl") && !f.endsWith(".xml") });
 

@@ -1,0 +1,45 @@
+# conformo-server: the stateless HTTP API (packages/server). Build and run:
+#
+#   docker build -f Dockerfile.server -t conformo-server .
+#   docker run --rm -p 127.0.0.1:8788:8788 conformo-server
+#
+# The container holds no data: no volume, no database, no accounts, nothing written to disk. It has NO authentication;
+# put a TLS reverse proxy with auth in front of it before exposing the port beyond localhost (see docs/server.md).
+#
+# Multi-stage, nothing exotic: stage 1 installs dependencies (and compiles the Schematron rule sets if the checkout does
+# not already carry them), stage 2 is the same base image with only production dependencies plus tsx, which runs the
+# TypeScript sources directly (the workspace packages are published as .ts, as in the rest of the repo).
+
+FROM node:22-slim AS builder
+WORKDIR /repo
+COPY package.json package-lock.json ./
+COPY packages/core/package.json packages/core/package.json
+COPY packages/formats/package.json packages/formats/package.json
+COPY packages/pdf/package.json packages/pdf/package.json
+COPY packages/validate/package.json packages/validate/package.json
+COPY packages/parse/package.json packages/parse/package.json
+COPY packages/compliance-data/package.json packages/compliance-data/package.json
+COPY packages/schema/package.json packages/schema/package.json
+COPY packages/toolkit/package.json packages/toolkit/package.json
+COPY packages/server/package.json packages/server/package.json
+RUN npm ci --workspace=packages/server --include-workspace-root --no-audit --no-fund
+COPY tools tools
+COPY packages packages
+COPY assets assets
+RUN test -f packages/validate/artefacts/rulesets.json || npm run schematron:compile
+RUN npm install --no-save --no-package-lock --no-audit --no-fund tsx@4.23.13
+
+FROM node:22-slim AS runtime
+ENV NODE_ENV=production
+WORKDIR /repo
+COPY --from=builder /repo/node_modules node_modules
+COPY --from=builder /repo/package.json package.json
+COPY --from=builder /repo/tsconfig.json tsconfig.json
+COPY --from=builder /repo/assets assets
+COPY --from=builder /repo/packages packages
+USER node
+EXPOSE 8788
+# Inside a container the server must listen on all interfaces; publish it on 127.0.0.1 only (docker run -p 127.0.0.1:...).
+ENV CONFORMO_SERVER_HOST=0.0.0.0 CONFORMO_SERVER_PORT=8788 TSX_TSCONFIG_PATH=/repo/tsconfig.json
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD node -e "fetch('http://127.0.0.1:8788/healthz').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"
+CMD ["node", "node_modules/tsx/dist/cli.mjs", "packages/server/src/server.ts"]

@@ -12,6 +12,7 @@ export interface RulesetInfo { label: string; source: string }
 
 /** Which rule sets apply to a document. Exactly this list is run, and reported back, in order. */
 export function planRulesets(syntax: Syntax, profile: Profile, country?: "FR" | "DE"): string[] {
+  if (syntax === "ksef-fa3") return [];   // no business-rule set is published for FA(3); KSeF applies its own on submission
   const ubl = syntax !== "cii";
   const base = ubl ? "en16931-ubl" : "en16931-cii";
   const plan: string[] = [];
@@ -79,7 +80,12 @@ export function createEngine(deps: EngineDeps) {
     const profile: Profile = options.profile ?? detected.profile;
     const notices: Notice[] = [];
 
-    if (detected.profile === "unknown") {
+    if (detected.syntax === "ksef-fa3") {
+      notices.push({
+        severity: "info", code: "KSEF-SCHEMA-ONLY",
+        message: "Polish KSeF FA(3): only the Ministry of Finance XSD was checked. KSeF applies further business rules when an invoice is submitted; Conformo does not submit and cannot predict them.",
+      });
+    } else if (detected.profile === "unknown") {
       notices.push({
         severity: "warning", code: "PROFILE-UNKNOWN",
         message: detected.customizationId

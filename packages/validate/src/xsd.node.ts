@@ -8,6 +8,7 @@ const xsdDir = fileURLToPath(new URL("../artefacts/xsd/", import.meta.url));
 interface SchemaSet { label: string; main: string; dir: string }
 
 function schemaFor(syntax: Syntax, profile: Profile): SchemaSet {
+  if (syntax === "ksef-fa3") return { label: "KSeF FA(3) v1-0E (Ministry of Finance)", dir: "ksef-fa3", main: "schemat_FA3.xsd" };
   if (syntax === "ubl-invoice") return { label: "UBL 2.1 Invoice", dir: "ubl-2.1", main: "maindoc/UBL-Invoice-2.1.xsd" };
   if (syntax === "ubl-creditnote") return { label: "UBL 2.1 CreditNote", dir: "ubl-2.1", main: "maindoc/UBL-CreditNote-2.1.xsd" };
   if (profile === "extended") return { label: "Factur-X EXTENDED", dir: "facturx-extended", main: "Factur-X_EXTENDED.xsd" };

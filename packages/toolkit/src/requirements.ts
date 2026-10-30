@@ -11,7 +11,7 @@ export const FORMAT_SUPPORT: Record<DatasetFormat, { generate: boolean; read: bo
   'ubl-2.1': { generate: true, read: true, validate: true, note: 'UBL 2.1 Invoice and CreditNote' },
   'peppol-bis-3.0': { generate: true, read: true, validate: true, note: 'Documents only; Conformo does not transmit over the Peppol network' },
   fatturapa: { generate: false, read: false, validate: false, note: 'Not supported: no FatturaPA serializer, reader or validator, and no SdI transmission' },
-  'ksef-fa': { generate: false, read: false, validate: false, note: 'Not supported: no KSeF FA(3) serializer, reader or validator, and no KSeF submission' },
+  'ksef-fa': { generate: true, read: false, validate: true, note: 'FA(3) for domestic PLN invoices (standard rates, 0%, exempt); XSD check only; cannot read FA(3); no KSeF submission' },
   facturae: { generate: false, read: false, validate: false, note: 'Not supported: no Facturae serializer, reader or validator' },
   other: { generate: false, read: false, validate: false, note: 'Not supported' },
 };

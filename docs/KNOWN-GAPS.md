@@ -6,8 +6,10 @@ What is not done or not verified, and why. Nothing here is hidden elsewhere.
 
 - **No transmission.** Conformo creates and checks documents. It does not send over the Peppol network, to a French *plateforme agréée* (PA, formerly PDP),
   to Poland's KSeF or to Italy's SdI.
-- **No FatturaPA, KSeF FA(3) or Facturae** serializer, reader or validator. The compliance dataset lists those requirements and every surface says they are
-  unsupported (`getRequirements().conformoSupport`, `conformo requirements IT`).
+- **No FatturaPA or Facturae** serializer, reader or validator. The Agenzia delle Entrate schema is not on a host the build environment could reach, and
+  no other source qualifies as primary. Every surface says so (`getRequirements().conformoSupport`, `conformo requirements IT`).
+- **KSeF FA(3) is partial**: generation for domestic PLN invoices (S at 23/8/5, Z, E) and validation against the Ministry of Finance XSD only. No reader,
+  no credit notes, no foreign currency, no reverse charge/OSS, no KSeF business rules (KSeF applies them on submission), and no submission.
 - **XSD validation runs in Node only.** The browser build runs the Schematron rule sets. XSD in the browser would need libxml2-WASM plus roughly 1 MB of
   schemas fetched on demand; that is possible (the Node path already uses libxml2-WASM) but is not built or tested.
 - **ZUGFeRD / Factur-X EXTENDED** is written with EN 16931 content only; EXTENDED-only fields are not modelled. Only the EXTENDED XSD is checked for it,

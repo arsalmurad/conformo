@@ -62,7 +62,7 @@ To run the standalone validator page or the docs site on their own:
     packages/ui                The web app.
     packages/validator-page    Standalone client-side validator, separately deployable.
     packages/docs-site         Static docs site generated from the compliance dataset.
-    packages/cli               validate / parse.
+    packages/cli               create / convert / validate / parse / explain / requirements.
     packages/mcp-server        7 tools over MCP stdio and Streamable HTTP.
     tools/                     Build and validation harnesses.
     fixtures/                  Test invoices. Synthetic data only.

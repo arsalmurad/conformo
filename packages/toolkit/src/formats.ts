@@ -1,9 +1,9 @@
 import { assertInvoice, checkInvoice } from '@conformo/core';
 import type { Invoice, InvoiceIssue } from '@conformo/core';
-import { buildCII, buildUBL, buildXRechnungCII, buildXRechnungUBL, checkXRechnung } from '@conformo/formats';
+import { buildCII, buildKsefFa3, buildUBL, buildXRechnungCII, buildXRechnungUBL, checkXRechnung } from '@conformo/formats';
 
 /** Every XML flavour Conformo can write. */
-export const FORMAT_IDS = ['cii', 'cii-extended', 'ubl', 'xrechnung-cii', 'xrechnung-ubl', 'peppol-ubl'] as const;
+export const FORMAT_IDS = ['cii', 'cii-extended', 'ubl', 'xrechnung-cii', 'xrechnung-ubl', 'peppol-ubl', 'ksef-fa3'] as const;
 export type FormatId = (typeof FORMAT_IDS)[number];
 
 export const FORMAT_DESCRIPTIONS: Record<FormatId, string> = {
@@ -13,6 +13,7 @@ export const FORMAT_DESCRIPTIONS: Record<FormatId, string> = {
   'xrechnung-cii': 'XRechnung 3.x in CII syntax (German CIUS)',
   'xrechnung-ubl': 'XRechnung 3.x in UBL syntax (German CIUS)',
   'peppol-ubl': 'Peppol BIS Billing 3.0 (UBL)',
+  'ksef-fa3': 'Polish KSeF FA(3), PLN domestic invoices only; written and schema-checked, never submitted',
 };
 
 export interface CreatedXml {
@@ -40,6 +41,7 @@ export function serialize(invoice: Invoice, format: FormatId): string {
     case 'xrechnung-cii': return buildXRechnungCII(invoice);
     case 'xrechnung-ubl': return buildXRechnungUBL(invoice);
     case 'peppol-ubl': return buildUBL(invoice, { profile: 'peppol' });
+    case 'ksef-fa3': return buildKsefFa3(invoice);
   }
 }
 

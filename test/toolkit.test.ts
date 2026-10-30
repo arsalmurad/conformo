@@ -9,7 +9,7 @@ const german = fx('xrechnung-public-sector.json');
 describe('toolkit: create -> validate for every format', () => {
   for (const format of FORMAT_IDS) {
     it(`${format} output validates clean`, async () => {
-      const inv = format === 'peppol-ubl' ? fx('peppol-belgium-full.json') : german;
+      const inv = format === 'peppol-ubl' ? fx('peppol-belgium-full.json') : format === 'ksef-fa3' ? fx('ksef-pl-domestic.json') : german;
       const { xml } = createXml(inv, format);
       const r = await validate(xml);
       expect(r.results.filter((x) => x.severity === 'error' || x.severity === 'fatal').map((x) => x.ruleId)).toEqual([]);

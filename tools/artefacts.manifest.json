@@ -81,6 +81,17 @@
       "sha256": "13cbd2e6eb0a80dcf64067e88cb5eab54a52c3a29e01fe0b156346895585845d",
       "extract": "zip",
       "note": "Browser runtime (SaxonJS2.rt.js). Free to bundle, not to redistribute standalone, so it is fetched, never committed. Override with CONFORMO_SAXONJS_ZIP=<local zip> on networks that block downloads.saxonica.com."
+    },
+    "ksef-docs": {
+      "kind": "git",
+      "group": "build",
+      "version": "main@ce3670e (FA(3) schema v1-0E)",
+      "source": "https://github.com/CIRFMF/ksef-docs",
+      "repo": "https://github.com/CIRFMF/ksef-docs",
+      "ref": "ce3670ea042de380039de4c5849fd6455811b292",
+      "commit": "ce3670ea042de380039de4c5849fd6455811b292",
+      "licence": "MIT, Copyright (c) 2025 Ministerstwo Finansow (CIRFMF is the Ministry of Finance's IT centre); not redistributed, fetched at build time",
+      "note": "Official KSeF documentation repository; faktury/schemy/FA/schemat_FA(3)_v1-0E.xsd is the FA(3) schema."
     }
   }
 }

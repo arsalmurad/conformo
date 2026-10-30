@@ -32,7 +32,7 @@ export interface PlainLanguageMessage {
 }
 
 /** XML syntax of the document, decided from its root element. */
-export type Syntax = "cii" | "ubl-invoice" | "ubl-creditnote";
+export type Syntax = "cii" | "ubl-invoice" | "ubl-creditnote" | "ksef-fa3";
 
 /** The specification a document declares in BT-24, reduced to what decides the rule sets. */
 export type Profile =

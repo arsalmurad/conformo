@@ -26,9 +26,12 @@ export function detectDocument(xml: string): DetectedDocument {
     syntax = local === "Invoice" ? "ubl-invoice" : "ubl-creditnote";
     customizationId = first(xml, /<(?:\w+:)?CustomizationID\b[^>]*>([^<]*)</);
     businessProcess = first(xml, /<(?:\w+:)?ProfileID\b[^>]*>([^<]*)</);
+  } else if (local === "Faktura" && /http:\/\/crd\.gov\.pl\/wzor\/2025\/06\/25\/13775\//.test(stripped.slice(0, 3000))) {
+    // Polish KSeF FA(3). There is no CEN-style Schematron for it; the schema is the check Conformo can run.
+    return { syntax: "ksef-fa3", profile: "unknown" };
   } else {
     throw new ValidationInputError(
-      `Unsupported document <${local}>. Supported: UN/CEFACT CII (CrossIndustryInvoice) and UBL 2.1 (Invoice, CreditNote).`);
+      `Unsupported document <${local}>. Supported: UN/CEFACT CII (CrossIndustryInvoice), UBL 2.1 (Invoice, CreditNote) and Polish KSeF FA(3) (Faktura, schema only).`);
   }
   const profile = profileFromCustomizationId(customizationId);
   const lower = customizationId?.toLowerCase() ?? "";

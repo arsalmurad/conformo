@@ -982,7 +982,8 @@
           "ubl",
           "xrechnung-cii",
           "xrechnung-ubl",
-          "peppol-ubl"
+          "peppol-ubl",
+          "ksef-fa3"
         ],
         "description": "Output XML syntax."
       },
