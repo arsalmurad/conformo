@@ -15,7 +15,7 @@ import { computedLineNet } from '@conformo/core';
 import { UBL_NS } from '@conformo/formats';
 import { attr, child, children, descend, text } from '../xml/query.js';
 import type { XmlElement } from '../xml/types.js';
-import { arrOrUndefined, dropDefaultLineIds, parseDec, parseMoney, parsePrice, pickLineExemption } from '../values.js';
+import { arrOrUndefined, attachStatedVat, dropDefaultLineIds, parseDec, parseMoney, parsePrice, pickLineExemption } from '../values.js';
 import type { ExemptionGroup } from '../values.js';
 
 const CAC = UBL_NS.cac;
@@ -280,7 +280,7 @@ export function readUBL(root: XmlElement): Invoice {
 
   // BG-23 breakdown: the only place a line's or allowance/charge's own
   // exemptionCode/exemptionReason survive on the wire. See pickLineExemption().
-  const exemptionGroups: ExemptionGroup[] = children(taxTotalEls[0], 'TaxSubtotal', CAC).map((sub) => {
+  const exemptionGroups: (ExemptionGroup & { amountMinor: number })[] = children(taxTotalEls[0], 'TaxSubtotal', CAC).map((sub) => {
     const catEl = child(sub, 'TaxCategory', CAC);
     const gCategory = text(child(catEl, 'ID', CBC))!;
     return {
@@ -288,6 +288,7 @@ export function readUBL(root: XmlElement): Invoice {
       rate: rateOf(gCategory, catEl),
       code: text(child(catEl, 'TaxExemptionReasonCode', CBC)),
       reason: text(child(catEl, 'TaxExemptionReason', CBC)),
+      amountMinor: parseMoney(text(child(sub, 'TaxAmount', CBC)) ?? '0'),
     };
   });
 
@@ -301,7 +302,7 @@ export function readUBL(root: XmlElement): Invoice {
   const prepaidText = text(child(monetary, 'PrepaidAmount', CBC));
   const roundingText = text(child(monetary, 'PayableRoundingAmount', CBC));
 
-  return {
+  return attachStatedVat({
     number: text(child(root, 'ID', CBC))!,
     typeCode: text(child(root, credit ? 'CreditNoteTypeCode' : 'InvoiceTypeCode', CBC)) as DocumentTypeCode,
     issueDate: text(child(root, 'IssueDate', CBC))!,
@@ -342,5 +343,5 @@ export function readUBL(root: XmlElement): Invoice {
     charges: arrOrUndefined(charges),
     prepaidMinor: prepaidText === undefined ? undefined : parseMoney(prepaidText),
     roundingMinor: roundingText === undefined ? undefined : parseMoney(roundingText),
-  };
+  }, exemptionGroups);
 }

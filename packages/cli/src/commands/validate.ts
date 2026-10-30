@@ -1,73 +1,121 @@
-import { readFile } from "node:fs/promises";
-import { validate } from "@conformo/validate";
-import type { RuleResult } from "@conformo/validate";
+import { validate } from "@conformo/toolkit";
+import type { ValidatedDocument } from "@conformo/toolkit";
+import { bool, parseArgs, str, UsageError } from "../args.js";
+import { line, readInput } from "../io.js";
+import type { Io } from "../io.js";
 
-const SEVERITY_LABEL: Record<RuleResult["severity"], string> = {
-  fatal: "FATAL",
-  error: "ERROR",
-  warning: "warning",
-  info: "info",
-};
+type Severity = ValidatedDocument["results"][number]["severity"];
+const SEVERITY_LABEL: Record<Severity, string> = { fatal: "FATAL", error: "ERROR", warning: "warning", info: "info" };
 
-export async function runValidate(args: string[]): Promise<void> {
-  const { file, country } = parseArgs(args);
-  if (!file) {
-    console.error("Usage: conformo validate <file.xml> [--country FR]");
-    process.exitCode = 1;
-    return;
+export const VALIDATE_HELP = `conformo validate: check an e-invoice against the rules that apply to it
+
+Usage:
+  conformo validate <file.xml|file.pdf|-> [--country FR|DE] [--profile en16931|xrechnung|peppol] [--no-xsd] [--json]
+
+The syntax (CII or UBL) and the profile (BT-24) are detected from the document. A Factur-X/ZUGFeRD PDF has
+its embedded XML validated. The output lists exactly which rule sets ran.
+
+Options:
+  --country <FR|DE>    Add a country layer (FR: French CTC rules, CII only; DE: German B2B profile check)
+  --profile <name>     Force the profile instead of reading it from BT-24: en16931 | xrechnung | peppol
+  --no-xsd             Skip XSD validation
+  --json               Print the complete result as one JSON document on stdout, and nothing else
+  -h, --help           Show this help
+
+Exit codes:
+  0  valid
+  1  invalid (a rule or the XSD failed)
+  2  usage or input error (unreadable file, unsupported document, bad flag)
+
+Examples:
+  conformo validate invoice.xml
+  conformo validate hybrid.pdf --country DE --json
+  cat invoice.xml | conformo validate - --profile xrechnung
+`;
+
+export async function validateCommand(argv: string[], io: Io): Promise<number> {
+  const a = parseArgs(argv, {
+    country: { type: "string" }, profile: { type: "string" }, "no-xsd": { type: "boolean" }, json: { type: "boolean" },
+  }, 1);
+  if (a.help) { io.out(VALIDATE_HELP); return 0; }
+  const file = a.positionals[0];
+  if (!file) throw new UsageError("Missing <file.xml|file.pdf> (use - for stdin).");
+
+  const countryRaw = str(a, "country")?.toUpperCase();
+  if (countryRaw !== undefined && countryRaw !== "FR" && countryRaw !== "DE") {
+    throw new UsageError(`Unsupported --country "${str(a, "country")}". Use FR or DE.`);
+  }
+  const profile = str(a, "profile");
+  if (profile !== undefined && profile !== "en16931" && profile !== "xrechnung" && profile !== "peppol") {
+    throw new UsageError(`Unsupported --profile "${profile}". Use en16931, xrechnung or peppol.`);
   }
 
-  let xml: string;
+  const bytes = await readInput(file, io);
+  let result: ValidatedDocument;
   try {
-    xml = await readFile(file, "utf-8");
+    result = await validate(new Uint8Array(bytes), {
+      ...(countryRaw ? { country: countryRaw } : {}),
+      ...(profile ? { profile } : {}),
+      ...(bool(a, "no-xsd") ? { xsd: false } : {}),
+    });
   } catch (err) {
-    console.error(`Could not read ${file}: ${(err as Error).message}`);
-    process.exitCode = 1;
-    return;
+    // Not an invoice / not XML / a PDF without embedded XML: a clean one-line message, not a stack trace.
+    throw new UsageError((err as Error).message);
   }
 
-  let result: Awaited<ReturnType<typeof validate>>;
-  try {
-    result = await validate(xml, country ? { country } : {});
-  } catch (err) {
-    // e.g. the file isn't CII XML at all — a clear one-line message, not a
-    // raw stack trace (this is what "parse" already does for the same class
-    // of error; "validate" should behave the same way).
-    console.error((err as Error).message);
-    process.exitCode = 1;
-    return;
+  if (bool(a, "json")) {
+    io.out(`${JSON.stringify(result, null, 2)}\n`);
+    return result.valid ? 0 : 1;
   }
+
   const failures = result.results.filter((r) => r.severity === "error" || r.severity === "fatal");
   const advisory = result.results.filter((r) => r.severity === "warning" || r.severity === "info");
+  const d = result.detected;
+  const src = result.origin === "pdf" ? ` (XML embedded in PDF${result.embeddedFilename ? `: ${result.embeddedFilename}` : ""})` : "";
+  io.out(line(`Document: ${d.syntax}, profile ${d.profile}${d.customizationId ? `, ${d.customizationId}` : ""}${src}`));
+  io.out(line("Rule sets run:"));
+  if (result.ruleSets.length === 0) io.out(line("  (none)"));
+  for (const rs of result.ruleSets) {
+    io.out(line(`  ${rs.id}: ${rs.label} [${rs.source}] — ${rs.fired} rules checked, ${rs.failed} failed, ${rs.advisory} advisory`));
+  }
+  if (!result.xsd.ran) io.out(line(`XSD: not run${result.xsd.skippedReason ? ` (${result.xsd.skippedReason})` : ""}`));
+  else if (result.xsd.valid) io.out(line(`XSD: passed (${result.xsd.schema ?? "schema"})`));
+  else {
+    io.out(line(`XSD: FAILED (${result.xsd.schema ?? "schema"})`));
+    for (const e of result.xsd.errors) io.out(line(`  ${e}`));
+  }
+  for (const n of result.notices) io.out(line(`Notice [${n.severity}] ${n.code}: ${n.message}`));
 
   for (const r of [...failures, ...advisory]) {
-    console.log(`\n[${SEVERITY_LABEL[r.severity]}] ${r.ruleId}${r.fields.length ? ` (${r.fields.join(", ")})` : ""}`);
-    console.log(`  ${r.message}`);
+    io.out(`\n[${SEVERITY_LABEL[r.severity]}] ${r.ruleId}${r.fields.length ? ` (${r.fields.join(", ")})` : ""}\n`);
+    io.out(line(`  ${r.message}`));
     if (r.plainLanguage) {
-      console.log(`  What it means: ${r.plainLanguage.summary}`);
-      console.log(`  Why:           ${r.plainLanguage.why}`);
-      console.log(`  How to fix:    ${r.plainLanguage.fix}`);
+      io.out(line(`  What it means: ${r.plainLanguage.summary}`));
+      io.out(line(`  Why:           ${r.plainLanguage.why}`));
+      io.out(line(`  How to fix:    ${r.plainLanguage.fix}`));
     }
-    if (r.xpath) console.log(`  Location: ${r.xpath}`);
+    if (r.xpath) io.out(line(`  Location: ${r.xpath}`));
   }
 
-  console.log(
-    `\n${result.valid ? "VALID" : "INVALID"} — ${result.firedCount} rules checked, ${failures.length} failed, ${advisory.length} advisory.`,
-  );
-  process.exitCode = result.valid ? 0 : 1;
+  io.out(`\n${result.valid ? "VALID" : "INVALID"} — ${result.firedCount} rules checked, ${failures.length} failed, ${advisory.length} advisory.\n`);
+  return result.valid ? 0 : 1;
 }
 
-function parseArgs(args: string[]): { file?: string; country?: "FR" } {
-  let file: string | undefined;
-  let country: "FR" | undefined;
-  for (let i = 0; i < args.length; i++) {
-    if (args[i] === "--country") {
-      const value = args[++i];
-      if (value === "FR") country = value;
-      else throw new Error(`Unsupported --country "${value}" (only "FR" is compiled today)`);
-    } else if (!file) {
-      file = args[i];
-    }
+/**
+ * Legacy console entry point kept for test/cli-validate.test.ts, which pins the older contract (a non-invoice
+ * file exits 1 with exactly one console.error line). The real CLI goes through validateCommand and exits 2 there.
+ */
+export async function runValidate(args: string[]): Promise<void> {
+  const io: Io = {
+    out: (t) => { console.log(t.replace(/\n$/, "")); },
+    err: (t) => { console.error(t.replace(/\n$/, "")); },
+    readStdin: async () => Buffer.alloc(0),
+  };
+  try {
+    process.exitCode = await validateCommand(args, io);
+  } catch (err) {
+    if (!(err instanceof UsageError)) throw err;
+    io.err(err.message);
+    process.exitCode = 1;
   }
-  return { file, country };
 }

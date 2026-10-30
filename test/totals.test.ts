@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
+import { existsSync, readFileSync } from 'node:fs';
 import { totals } from '@conformo/core';
+import { detectXmlFormat } from '@conformo/parse';
 import type { AllowanceCharge, Invoice, TaxCategory } from '@conformo/core';
 
 const base = (lines: Invoice['lines'], extra: Partial<Invoice> = {}): Invoice => ({
@@ -151,5 +153,26 @@ describe('EN 16931 total reconciliation (BR-CO-* invariants)', () => {
       expect(t.due).toBe(t.grand - t.prepaid + t.rounding); // BR-CO-16
       expect(t.taxTotal).toBe(t.groups.reduce((s, g) => s + g.amount, 0)); // BR-CO-14
     }
+  });
+});
+
+describe('a stated BT-117 within one minor unit is honoured, anything else is not', () => {
+  const base = { ...(JSON.parse(readFileSync(new URL('../fixtures/sample-invoice.json', import.meta.url), 'utf-8')) as Invoice) };
+  const computed = totals(base).groups[0]!;
+
+  it('uses the stated amount when it is off by one minor unit', () => {
+    const inv: Invoice = { ...base, statedVatAmounts: [{ category: computed.category, rate: computed.rate, amountMinor: computed.amount + 1 }] };
+    expect(totals(inv).taxTotal).toBe(totals(base).taxTotal + 1);
+  });
+  it('ignores a stated amount that is further away (it cannot be used to fake a total)', () => {
+    const inv: Invoice = { ...base, statedVatAmounts: [{ category: computed.category, rate: computed.rate, amountMinor: computed.amount + 2 }] };
+    expect(totals(inv).taxTotal).toBe(totals(base).taxTotal);
+  });
+  const kositFile = new URL('../tools/artefacts/xrechnung-testsuite/src/test/technical-cases/cius/01.06_minimal_test_ubl.xml', import.meta.url);
+  it.skipIf(!existsSync(kositFile))('is picked up from the official KoSIT test that states 757.41 for 3986.34 at 19%', () => {
+    const xml = readFileSync(kositFile, 'utf-8');
+    const { invoice } = detectXmlFormat(xml);
+    expect(invoice.statedVatAmounts?.[0]?.amountMinor).toBe(75741);
+    expect(totals(invoice).taxTotal).toBe(75741);
   });
 });

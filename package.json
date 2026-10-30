@@ -19,11 +19,13 @@
     "validate": "node tools/py.mjs tools/validate.py && node tools/py.mjs tools/pdfa_audit.py && node tools/pdfa-audit-profiles.mjs",
     "schematron:compile": "node tools/build-rulesets.mjs",
     "saxonjs:fetch": "node tools/fetch-saxonjs.mjs",
+    "schema:generate": "tsx tools/generate-schema.ts",
     "cli": "tsx packages/cli/src/cli.ts",
     "e2e": "playwright test",
     "artefacts:fetch": "node tools/fetch-artefacts.mjs",
     "conformance": "tsx tools/conformance/run.ts",
-    "coverage:generate": "tsx tools/generate-coverage.ts"
+    "coverage:generate": "tsx tools/generate-coverage.ts",
+    "pack:smoke": "node tools/pack-smoke.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",

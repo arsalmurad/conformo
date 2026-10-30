@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { createPdf, createXml, convert, explainRule, FORMAT_IDS, getRequirements, InvoiceInputError, parse, validate } from '@conformo/toolkit';
 import type { Invoice } from '@conformo/toolkit';
 
@@ -75,5 +75,21 @@ describe('toolkit: parse, convert, explain, requirements', () => {
     expect(de.conformoSupport['xrechnung']!.generate).toBe(true);
     expect(getRequirements('IT')!.conformoSupport['fatturapa']).toMatchObject({ generate: false, validate: false });
     expect(getRequirements('ZZ')).toBeUndefined();
+  });
+});
+
+describe('toolkit: totals are never silently changed by a conversion', () => {
+  it('reports matching totals for a document Conformo wrote', async () => {
+    const p = await parse(createXml(german, 'xrechnung-ubl').xml);
+    expect(p.totalsCheck).toEqual({ matches: true, differences: [] });
+  });
+  const huf = new URL('../tools/artefacts/cen-en16931/cii/examples/huf_example_cii.xml', import.meta.url);
+  it.skipIf(!existsSync(huf))('says so when an official document states totals that differ from its lines (Hungarian rounding)', async () => {
+    const xml = readFileSync(huf, 'utf-8');
+    const p = await parse(xml);
+    expect(p.totalsCheck.matches).toBe(false);
+    expect(p.totalsCheck.differences.join(' ')).toMatch(/BT-110/);
+    const c = await convert(xml, 'ubl');
+    expect(c.warnings.join(' ')).toMatch(/totals differ from the source document/);
   });
 });

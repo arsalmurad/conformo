@@ -156,6 +156,9 @@ export function checkInvoice(input: unknown): InvoiceIssue[] {
     if ((inv.payment.meansCode === '58' || inv.payment.meansCode === '30') && !inv.payment.iban) {
       add('warning', 'payment.iban', 'BT-84', `payment means ${inv.payment.meansCode} is a credit transfer but no IBAN (BT-84) is given (BR-50)`);
     }
+    if (inv.payment.meansCode === '59' && inv.payment.iban) {
+      add('warning', 'payment.iban', 'BT-84', 'payment means 59 is a direct debit: XRechnung (BR-DE-25-b) forbids a credit-transfer account (BG-17) with it; put the debited account in directDebit.debitedAccountIban (BT-91)');
+    }
     if (inv.payment.meansCode === '59' && !inv.payment.directDebit?.mandateId) {
       add('warning', 'payment.directDebit.mandateId', 'BT-89', 'payment means 59 (SEPA direct debit) normally needs the mandate reference (BT-89) and creditor id (BT-90)');
     }
@@ -166,7 +169,10 @@ export function checkInvoice(input: unknown): InvoiceIssue[] {
   (inv.attachments ?? []).forEach((a, i) => {
     needText(a?.id, `attachments[${i}].id`, 'BT-122', 'supporting document reference');
     if (a?.content && (blank(a.mimeCode) || blank(a.filename))) err(`attachments[${i}].mimeCode`, 'BT-125', 'an embedded attachment needs mimeCode (BT-125-1) and filename (BT-125-2)');
-    if (a?.content && a.url) err(`attachments[${i}].url`, 'BT-124', 'give either content (BT-125) or url (BT-124), not both');
+  });
+
+  (inv.statedVatAmounts ?? []).forEach((x, i) => {
+    if (!Number.isSafeInteger(x?.amountMinor)) err(`statedVatAmounts[${i}].amountMinor`, 'BT-117', 'must be an integer in minor units');
   });
 
   const ac = (list: unknown, path: string, doc: 'allowance' | 'charge') => {

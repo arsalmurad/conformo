@@ -159,7 +159,7 @@ export function buildUBL(invoice: Invoice, options: UBLOptions = {}): string {
       wrap('cac:Price',
         priceAmount('PriceAmount', l.unitPriceMinor) +
         (l.priceBaseQuantity !== undefined
-          ? tag('cbc:BaseQuantity', dec(l.priceBaseQuantity), { unitCode: l.priceBaseUnitCode ?? unit }) : '') +
+          ? tag('cbc:BaseQuantity', dec(l.priceBaseQuantity), { unitCode: l.priceBaseUnitCode }) : '') +
         (hasGross ? wrap('cac:AllowanceCharge',                                               // BT-147 / BT-148
           req('cbc:ChargeIndicator', 'false') +
           priceAmount('Amount', l.priceDiscountMinor ?? 0) +
@@ -186,7 +186,7 @@ export function buildUBL(invoice: Invoice, options: UBLOptions = {}): string {
       tag('cbc:ID', dd.mandateId) +                                                         // BT-89
       wrap('cac:PayerFinancialAccount', tag('cbc:ID', dd.debitedAccountIban))) : '')) +     // BT-91
     (p.additionalAccounts ?? []).map((a) => wrap('cac:PaymentMeans',
-      req('cbc:PaymentMeansCode', p.meansCode, { name: p.meansText }) + account(a.iban, a.accountName, a.bic))).join('');
+      req('cbc:PaymentMeansCode', p.meansCode) + account(a.iban, a.accountName, a.bic))).join('');   // UBL-SR-46: the text only once
 
   const taxTotal = wrap('cac:TaxTotal',
     amount('TaxAmount', t.taxTotal) +

@@ -21,7 +21,7 @@ import { computedLineNet } from '@conformo/core';
 import { CII_NS, TAX_POINT_CODE_2475_TO_2005 } from '@conformo/formats';
 import { attr, child, children, descend, text } from '../xml/query.js';
 import type { XmlElement } from '../xml/types.js';
-import { arrOrUndefined, dropDefaultLineIds, parseDate102, parseDec, parseMoney, parsePrice, pickLineExemption } from '../values.js';
+import { arrOrUndefined, attachStatedVat, dropDefaultLineIds, parseDate102, parseDec, parseMoney, parsePrice, pickLineExemption } from '../values.js';
 import type { ExemptionGroup } from '../values.js';
 
 const RSM = CII_NS.rsm;
@@ -235,13 +235,14 @@ export function readCII(root: XmlElement): Invoice {
 
   // BG-23 breakdown: the only place a line's or allowance/charge's own
   // exemptionCode/exemptionReason survive on the wire. See pickLineExemption().
-  const exemptionGroups: ExemptionGroup[] = children(settlement, 'ApplicableTradeTax', RAM).map((g) => {
+  const exemptionGroups: (ExemptionGroup & { amountMinor: number })[] = children(settlement, 'ApplicableTradeTax', RAM).map((g) => {
     const gCategory = text(child(g, 'CategoryCode', RAM))!;
     return {
       category: gCategory,
       rate: rateOf(gCategory, g),
       code: text(child(g, 'ExemptionReasonCode', RAM)),
       reason: text(child(g, 'ExemptionReason', RAM)),
+      amountMinor: parseMoney(text(child(g, 'CalculatedAmount', RAM)) ?? '0'),
     };
   });
 
@@ -327,7 +328,7 @@ export function readCII(root: XmlElement): Invoice {
   const prepaidMinor = prepaidText === undefined ? undefined : parseMoney(prepaidText);
   const roundingText = text(child(monetary, 'RoundingAmount', RAM));
 
-  return {
+  return attachStatedVat({
     number: text(child(doc, 'ID', RAM))!,
     typeCode: text(child(doc, 'TypeCode', RAM)) as DocumentTypeCode,
     issueDate: dateTime(child(doc, 'IssueDateTime', RAM))!,
@@ -366,5 +367,5 @@ export function readCII(root: XmlElement): Invoice {
     charges: charges.length ? charges : undefined,
     prepaidMinor: prepaidMinor ? prepaidMinor : undefined,
     roundingMinor: roundingText === undefined ? undefined : parseMoney(roundingText),
-  };
+  }, exemptionGroups);
 }

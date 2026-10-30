@@ -175,7 +175,7 @@ export const EN16931_TERMS: readonly En16931Term[] = [
   { id: "BT-114", name: "Rounding amount", path: "roundingMinor", kind: "input", fixture: "full-model-b.json" },
   { id: "BT-115", name: "Amount due for payment", path: "totals().due", kind: "computed", fixture: "" },
   { id: "BT-116", name: "VAT category taxable amount", path: "totals().groups[].basis", kind: "computed", fixture: "" },
-  { id: "BT-117", name: "VAT category tax amount", path: "totals().groups[].amount", kind: "computed", fixture: "" },
+  { id: "BT-117", name: "VAT category tax amount", path: "totals().groups[].amount (invoice.statedVatAmounts[] if a document states it within 1 minor unit of the computed value)", kind: "computed", fixture: "" },
   { id: "BT-118", name: "VAT category code", path: "totals().groups[].category", kind: "computed", fixture: "" },
   { id: "BT-119", name: "VAT category rate", path: "totals().groups[].rate", kind: "computed", fixture: "" },
   { id: "BT-120", name: "VAT exemption reason text", path: "lines[].exemptionReason", kind: "input", fixture: "exempt-e-vatex.json" },

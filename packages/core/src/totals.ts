@@ -79,6 +79,10 @@ export function aggregateTax(invoice: Invoice): {
   const list = [...groups.values()];
   for (const g of list) {
     g.amount = mulRound(g.basis, g.rate, 100);
+    // A stated BT-117 within one minor unit of the computed amount wins (see Invoice.statedVatAmounts).
+    const stated = invoice.statedVatAmounts?.find((x) => x.category === g.category && effectiveRate(x.category, x.rate) === g.rate &&
+      (x.exemptionCode ?? '') === (g.exemptionCode ?? '') && (x.exemptionReason ?? '') === (g.exemptionReason ?? ''));
+    if (stated && Math.abs(stated.amountMinor - g.amount) <= 1) g.amount = stated.amountMinor;
     taxTotal += g.amount;
   }
   return { groups: list, lineTotal, allowance, charge, taxTotal };

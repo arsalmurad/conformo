@@ -1,0 +1,10 @@
+runValidate(args) in commands/validate.ts is kept as a legacy console wrapper because test/cli-validate.test.ts pins "non-invoice file => exit 1, one console.error"; the real CLI (main) exits 2 there per spec.
+Core logic lives in main(argv, io): returns the exit code and never calls process.exit, so tests run in-process and cli.ts only sets process.exitCode.
+Anything non-usage that a command throws (corrupt PDF, unsupported document, ValidationInputError) is mapped to exit 2 (input error); invalid-but-readable documents are exit 1.
+parse: input/parse failures now exit 2 (was 1); PDF totals mismatch and failed validation stay exit 1. With --json the narrative goes to stderr so stdout is only the Invoice.
+create: human confirmations ("Wrote ...") and warnings go to stderr so XML on stdout stays clean for pipes.
+create: --pdf together with --format is a usage error (the PDF's embedded XML is chosen by --profile), as are --profile/--template without --pdf.
+validate --country is case-insensitive (fr -> FR); only FR and DE exist in ValidateOptions. parse keeps FR only (it uses @conformo/validate directly, unchanged).
+explain unknown id exits 1 (not found), usage errors exit 2; requirements unknown country exits 2 as specified.
+cii-extended validates with zero rule sets and an EXTENDED-NOT-CHECKED notice; the CLI shows that as is rather than claiming EN 16931 compliance.
+Version is read from package.json relative to the module (works from src/ and published dist/src/); tsconfig.build.json got a @conformo/toolkit path.

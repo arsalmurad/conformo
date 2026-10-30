@@ -28,6 +28,7 @@
   "dependencies": {
     "@conformo/core": "^0.1.0",
     "@conformo/parse": "^0.1.0",
+    "@conformo/toolkit": "^0.1.0",
     "@conformo/validate": "^0.1.0"
   }
 }

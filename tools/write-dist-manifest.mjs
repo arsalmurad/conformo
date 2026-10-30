@@ -67,8 +67,26 @@ if (pkg.bin) {
   }
 }
 
-if (pkg.dependencies) manifest.dependencies = pkg.dependencies;
+// Internal dependencies always point at the sibling's current version, so a release bumps one number per package.
+if (pkg.dependencies) {
+  manifest.dependencies = {};
+  for (const [name, range] of Object.entries(pkg.dependencies)) {
+    const sibling = name.startsWith('@conformo/') ? path.join(pkgDir, '..', name.slice('@conformo/'.length), 'package.json') : undefined;
+    manifest.dependencies[name] = sibling && fs.existsSync(sibling) ? `^${JSON.parse(fs.readFileSync(sibling, 'utf8')).version}` : range;
+  }
+}
+manifest.engines = { node: '>=20' };
+// Libraries are side-effect free; packages with a bin (cli, mcp-server) run code on import, so they are not marked.
+if (!pkg.bin) manifest.sideEffects = false;
 manifest.publishConfig = { access: 'public' };
+
+// README and LICENSE travel with every package.
+for (const f of ['README.md']) {
+  const src = path.join(pkgDir, f);
+  if (fs.existsSync(src)) fs.copyFileSync(src, path.join(pkgDir, 'dist', f));
+}
+fs.copyFileSync(path.join(pkgDir, '..', '..', 'LICENSE'), path.join(pkgDir, 'dist', 'LICENSE'));
+manifest.files = fs.readdirSync(path.join(pkgDir, 'dist')).filter((f) => f !== 'package.json').sort();
 
 fs.writeFileSync(path.join(pkgDir, 'dist', 'package.json'), `${JSON.stringify(manifest, null, 2)}\n`);
 console.log(`wrote ${path.join(pkgDir, 'dist', 'package.json')}`);

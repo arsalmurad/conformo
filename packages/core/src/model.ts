@@ -286,6 +286,13 @@ export interface Invoice {
   lines: Line[];
   allowances?: AllowanceCharge[];  // BG-20
   charges?: AllowanceCharge[];     // BG-21
+  /**
+   * BT-117 as stated in a document, per VAT breakdown. Normally unset: VAT amounts are computed. EN 16931 tolerates a
+   * one-minor-unit rounding difference, and real documents use it (the official KoSIT minimal test states 757.41 where
+   * 3986.34 x 19% rounds to 757.40). The reader records such a stated amount here so converting a document does not
+   * change its tax total; totals() honours it only when it is within one minor unit of the computed amount.
+   */
+  statedVatAmounts?: { category: TaxCategory; rate: number; amountMinor: Minor; exemptionCode?: string; exemptionReason?: string }[];
   prepaidMinor?: Minor;            // BT-113
   /** BT-114. Added to the amount due (BR-CO-16). */
   roundingMinor?: Minor;

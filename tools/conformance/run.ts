@@ -86,7 +86,7 @@ for (const c of corpora) {
         const fire = /<(?:error|warning)>\s*([^<\s]+)/.exec(assertion[1]!);
         const doc = body.replace(assertion[0], '').trim();
         if (!doc.startsWith('<') || !(kind || fire)) return;
-        const out = path.join(unitDir, `${path.basename(f, '.xml')}-${i + 1}.xml`);
+        const out = path.join(unitDir, `${path.basename(path.dirname(f))}__${path.basename(f, '.xml')}-${i + 1}.xml`);
         writeFileSync(out, `<?xml version="1.0" encoding="UTF-8"?>\n${doc}\n`);
         records.push({
           corpus: c.id, rel: `${path.relative(base, f).replaceAll('\\', '/')}#${i + 1}`, file: out, xml: readFileSync(out, 'utf-8'),

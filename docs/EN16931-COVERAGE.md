@@ -176,7 +176,7 @@ kept in `payment.additionalAccounts`); BT-81 values that differ between repeated
 | BT-114 | Rounding amount | `roundingMinor` | input | [full-model-b.json](../fixtures/full-model-b.json) |
 | BT-115 | Amount due for payment | `totals().due` | computed | (computed/derived) |
 | BT-116 | VAT category taxable amount | `totals().groups[].basis` | computed | (computed/derived) |
-| BT-117 | VAT category tax amount | `totals().groups[].amount` | computed | (computed/derived) |
+| BT-117 | VAT category tax amount | `totals().groups[].amount (invoice.statedVatAmounts[] if a document states it within 1 minor unit of the computed value)` | computed | (computed/derived) |
 | BT-118 | VAT category code | `totals().groups[].category` | computed | (computed/derived) |
 | BT-119 | VAT category rate | `totals().groups[].rate` | computed | (computed/derived) |
 | BT-120 | VAT exemption reason text | `lines[].exemptionReason` | input | [exempt-e-vatex.json](../fixtures/exempt-e-vatex.json) |

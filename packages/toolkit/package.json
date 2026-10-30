@@ -10,12 +10,22 @@
     "directory": "packages/toolkit"
   },
   "homepage": "https://github.com/arsalmurad/conformo/tree/main/packages/toolkit#readme",
-  "keywords": ["invoice", "en16931", "e-invoicing", "xrechnung", "zugferd", "factur-x", "peppol"],
+  "keywords": [
+    "invoice",
+    "en16931",
+    "e-invoicing",
+    "xrechnung",
+    "zugferd",
+    "factur-x",
+    "peppol"
+  ],
   "type": "module",
   "main": "./src/index.ts",
-  "exports": { ".": "./src/index.ts" },
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && node ../../tools/write-dist-manifest.mjs ."
+    "build": "tsc -p tsconfig.build.json && node -e \"require('fs').cpSync('../../assets','dist/assets',{recursive:true})\" && node ../../tools/write-dist-manifest.mjs ."
   },
   "dependencies": {
     "@conformo/compliance-data": "^0.1.0",

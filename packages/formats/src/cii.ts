@@ -122,7 +122,7 @@ export function buildCII(invoice: Invoice, options: CIIOptions = {}): string {
   const lines = invoice.lines.map((l, i) => {
     const hasGross = l.grossPriceMinor !== undefined || l.priceDiscountMinor !== undefined;
     const base = l.priceBaseQuantity !== undefined
-      ? tag('ram:BasisQuantity', dec(l.priceBaseQuantity), { unitCode: l.priceBaseUnitCode ?? l.unitCode ?? 'C62' }) : '';
+      ? tag('ram:BasisQuantity', dec(l.priceBaseQuantity), { unitCode: l.priceBaseUnitCode }) : '';
     const grossPrice = hasGross ? wrap('ram:GrossPriceProductTradePrice',
       req('ram:ChargeAmount', price(l.grossPriceMinor ?? (l.unitPriceMinor + (l.priceDiscountMinor ?? 0)))) +   // BT-148
       base +
@@ -171,15 +171,15 @@ export function buildCII(invoice: Invoice, options: CIIOptions = {}): string {
   // ApplicableTradeTax is a strict sequence:
   // CalculatedAmount, TypeCode, ExemptionReason, BasisAmount, CategoryCode,
   // ExemptionReasonCode, TaxPointDate, DueDateTypeCode, RateApplicablePercent.
-  const taxBreakdown = t.groups.map((g) => wrap('ram:ApplicableTradeTax',
+  const taxBreakdown = t.groups.map((g, gi) => wrap('ram:ApplicableTradeTax',
     req('ram:CalculatedAmount', money(g.amount)) +
     req('ram:TypeCode', 'VAT') +
     tag('ram:ExemptionReason', g.exemptionReason) +
     req('ram:BasisAmount', money(g.basis)) +
     req('ram:CategoryCode', g.category) +
     tag('ram:ExemptionReasonCode', g.exemptionCode) +
-    (invoice.taxPointDate ? wrap('ram:TaxPointDate', tag('udt:DateString', date102(invoice.taxPointDate), { format: '102' })) : '') + // BT-7
-    tag('ram:DueDateTypeCode', invoice.taxPointDateCode === undefined ? undefined : (TAX_POINT_CODE_2005_TO_2475[invoice.taxPointDateCode] ?? invoice.taxPointDateCode)) +                                                                           // BT-8
+    (invoice.taxPointDate && gi === 0 ? wrap('ram:TaxPointDate', tag('udt:DateString', date102(invoice.taxPointDate), { format: '102' })) : '') + // BT-7
+    tag('ram:DueDateTypeCode', gi > 0 || invoice.taxPointDateCode === undefined ? undefined : (TAX_POINT_CODE_2005_TO_2475[invoice.taxPointDateCode] ?? invoice.taxPointDateCode)) +                                                                           // BT-8
     rate(g.category, g.rate, profile === 'xrechnung'))).join('');   // BR-DE-14: XRechnung wants BT-119 on every breakdown, even for O
 
   const p = invoice.payment;

@@ -3,7 +3,8 @@
  * calls exactly one of these per business term so a format change on the write
  * side has one obvious place to update on the read side too.
  */
-import { fromMajor, priceFromMajor } from '@conformo/core';
+import { fromMajor, priceFromMajor, totals } from '@conformo/core';
+import type { Invoice } from '@conformo/core';
 import type { Minor } from '@conformo/core';
 
 /** xs:decimal text -> Minor. Inverse of packages/formats/src/xml.ts's money(). */
@@ -68,4 +69,20 @@ export function parsePrice(text: string): number {
 export function dropDefaultLineIds<T extends { id?: string }>(lines: T[]): T[] {
   lines.forEach((l, i) => { if (l.id === String(i + 1)) delete l.id; });
   return lines;
+}
+
+/**
+ * Records a document's stated VAT amount per breakdown (BT-117) on the invoice when it differs from the amount computed
+ * from the lines by exactly one minor unit (what EN 16931 tolerates). Bigger differences are not recorded: totals() would
+ * ignore them anyway, and parse results report them (see packages/toolkit).
+ */
+export function attachStatedVat(inv: Invoice, stated: (ExemptionGroup & { amountMinor: number })[]): Invoice {
+  let computed;
+  try { computed = totals(inv).groups; } catch { return inv; }
+  const diffs = stated.filter((s) => {
+    const g = computed.find((c) => c.category === s.category && c.rate === s.rate && (c.exemptionCode ?? '') === (s.code ?? '') && (c.exemptionReason ?? '') === (s.reason ?? ''));
+    return g !== undefined && g.amount !== s.amountMinor && Math.abs(g.amount - s.amountMinor) <= 1;
+  });
+  if (diffs.length) inv.statedVatAmounts = diffs.map((d) => ({ category: d.category as never, rate: d.rate, amountMinor: d.amountMinor, ...(d.code ? { exemptionCode: d.code } : {}), ...(d.reason ? { exemptionReason: d.reason } : {}) }));
+  return inv;
 }
