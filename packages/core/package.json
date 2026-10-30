@@ -1,6 +1,6 @@
 {
   "name": "@conformo/core",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "EN 16931 electronic invoice model: exact-decimal money, tax and totals. Zero runtime dependencies.",
   "author": "Muhammad Arsal Murad",
   "license": "Apache-2.0",
@@ -24,6 +24,6 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && node ../../tools/write-dist-manifest.mjs ."
+    "build": "node ../../tools/clean-dist.mjs && tsc -p tsconfig.build.json && node ../../tools/write-dist-manifest.mjs ."
   }
 }

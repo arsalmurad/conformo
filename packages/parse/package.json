@@ -1,6 +1,6 @@
 {
   "name": "@conformo/parse",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Reads a Factur-X/ZUGFeRD PDF or CII/UBL/XRechnung XML back into an EN 16931 Invoice, checking a PDF's visible totals against its embedded XML.",
   "author": "Muhammad Arsal Murad",
   "license": "Apache-2.0",
@@ -26,11 +26,11 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && node ../../tools/write-dist-manifest.mjs ."
+    "build": "node ../../tools/clean-dist.mjs && tsc -p tsconfig.build.json && node ../../tools/write-dist-manifest.mjs ."
   },
   "dependencies": {
-    "@conformo/core": "^0.1.0",
-    "@conformo/formats": "^0.1.0",
+    "@conformo/core": "^0.2.0",
+    "@conformo/formats": "^0.2.0",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^6.3.289"
   }

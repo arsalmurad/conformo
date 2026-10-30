@@ -1,6 +1,6 @@
 {
   "name": "@conformo/mcp-server",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "MCP server for EN 16931 e-invoicing: create (XML and Factur-X/ZUGFeRD PDF), validate, convert, parse, explain rules, country requirements. Stdio and stateless Streamable HTTP.",
   "author": "Muhammad Arsal Murad",
   "license": "Apache-2.0",
@@ -23,11 +23,11 @@
     "conformo-mcp": "./src/server.ts"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && node ../../tools/write-dist-manifest.mjs ."
+    "build": "node ../../tools/clean-dist.mjs && tsc -p tsconfig.build.json && node ../../tools/write-dist-manifest.mjs ."
   },
   "dependencies": {
-    "@conformo/schema": "^0.1.0",
-    "@conformo/toolkit": "^0.1.0",
+    "@conformo/schema": "^0.2.0",
+    "@conformo/toolkit": "^0.2.0",
     "@modelcontextprotocol/sdk": "^1.30.0",
     "zod": "^3.25.76"
   },

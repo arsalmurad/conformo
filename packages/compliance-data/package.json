@@ -1,6 +1,6 @@
 {
   "name": "@conformo/compliance-data",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "A versioned, sourced dataset of e-invoicing mandate requirements per country. Every row cites a tax authority, ministry, or official EU source, or is marked unverified.",
   "author": "Muhammad Arsal Murad",
   "license": "Apache-2.0",
@@ -26,6 +26,6 @@
     "factur-x"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && node -e \"require('fs').cpSync('src/data','dist/src/data',{recursive:true})\" && node ../../tools/write-dist-manifest.mjs ."
+    "build": "node ../../tools/clean-dist.mjs && tsc -p tsconfig.build.json && node -e \"require('fs').cpSync('src/data','dist/src/data',{recursive:true})\" && node ../../tools/write-dist-manifest.mjs ."
   }
 }

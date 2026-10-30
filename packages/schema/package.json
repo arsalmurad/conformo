@@ -1,6 +1,6 @@
 {
   "name": "@conformo/schema",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Zod schema and JSON Schema for the Conformo / EN 16931 Invoice model. Every field is described with its BT/BG identifier, so it doubles as agent-facing documentation.",
   "author": "Muhammad Arsal Murad",
   "license": "Apache-2.0",
@@ -10,7 +10,14 @@
     "directory": "packages/schema"
   },
   "homepage": "https://github.com/arsalmurad/conformo/tree/main/packages/schema#readme",
-  "keywords": ["invoice", "en16931", "e-invoicing", "json-schema", "zod", "mcp"],
+  "keywords": [
+    "invoice",
+    "en16931",
+    "e-invoicing",
+    "json-schema",
+    "zod",
+    "mcp"
+  ],
   "type": "module",
   "main": "./src/index.ts",
   "exports": {
@@ -18,7 +25,7 @@
     "./invoice.schema.json": "./invoice.schema.json"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && node ../../tools/write-dist-manifest.mjs ."
+    "build": "node ../../tools/clean-dist.mjs && tsc -p tsconfig.build.json && node ../../tools/write-dist-manifest.mjs ."
   },
   "dependencies": {
     "zod": "^3.25.76",
