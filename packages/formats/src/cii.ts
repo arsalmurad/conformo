@@ -20,7 +20,7 @@
 import { totals, lineNet } from '@conformo/core';
 import type { AllowanceCharge, Invoice, LineAllowanceCharge, Party, TaxCategory } from '@conformo/core';
 import { assertInvoice, date102, dec, electronicAddressScheme, money, price, req, tag, wrap } from './xml.js';
-import { CUSTOMIZATION_ID, businessProcess } from './profiles.js';
+import { CUSTOMIZATION_ID, TAX_POINT_CODE_2005_TO_2475, businessProcess } from './profiles.js';
 import type { Profile } from './profiles.js';
 
 /** Exported so packages/parse's CII reader resolves elements against the
@@ -176,7 +176,7 @@ export function buildCII(invoice: Invoice, options: CIIOptions = {}): string {
     req('ram:CategoryCode', g.category) +
     tag('ram:ExemptionReasonCode', g.exemptionCode) +
     (invoice.taxPointDate ? wrap('ram:TaxPointDate', tag('udt:DateString', date102(invoice.taxPointDate), { format: '102' })) : '') + // BT-7
-    tag('ram:DueDateTypeCode', invoice.taxPointDateCode) +                                                                           // BT-8
+    tag('ram:DueDateTypeCode', invoice.taxPointDateCode === undefined ? undefined : (TAX_POINT_CODE_2005_TO_2475[invoice.taxPointDateCode] ?? invoice.taxPointDateCode)) +                                                                           // BT-8
     rate(g.category, g.rate))).join('');
 
   const p = invoice.payment;

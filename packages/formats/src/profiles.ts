@@ -26,3 +26,10 @@ export const PEPPOL_BILLING_PROCESS = 'urn:fdc:peppol.eu:2017:poacc:billing:01:1
 export function businessProcess(profile: Profile, invoiceValue?: string): string | undefined {
   return profile === 'en16931' ? invoiceValue : PEPPOL_BILLING_PROCESS;
 }
+
+/**
+ * BT-8 is a UNTDID 2005 code in the model and in UBL (3 invoice date, 35 delivery date, 432 paid-to-date).
+ * The CII binding uses UNTDID 2475 for the same meaning (5, 29, 72), enforced by BR-CL-06.
+ */
+export const TAX_POINT_CODE_2005_TO_2475: Record<string, string> = { '3': '5', '35': '29', '432': '72' };
+export const TAX_POINT_CODE_2475_TO_2005: Record<string, string> = { '5': '3', '29': '35', '72': '432' };

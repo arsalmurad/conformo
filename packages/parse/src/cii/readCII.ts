@@ -17,7 +17,7 @@ import type {
   AllowanceCharge, Attachment, Contact, Delivery, DocumentTypeCode, Invoice, Line, LineAllowanceCharge, Note, Party,
   Payee, Payment, PrecedingInvoice, TaxCategory, TaxRepresentative,
 } from '@conformo/core';
-import { CII_NS } from '@conformo/formats';
+import { CII_NS, TAX_POINT_CODE_2475_TO_2005 } from '@conformo/formats';
 import { attr, child, children, descend, text } from '../xml/query.js';
 import type { XmlElement } from '../xml/types.js';
 import { arrOrUndefined, dropDefaultLineIds, parseDate102, parseDec, parseMoney, parsePrice, pickLineExemption } from '../values.js';
@@ -332,7 +332,7 @@ export function readCII(root: XmlElement): Invoice {
     taxCurrency,
     taxTotalInTaxCurrencyMinor: taxTotalInTaxCurrency ? parseMoney(text(taxTotalInTaxCurrency)!) : undefined,
     taxPointDate: taxPointText === undefined ? undefined : parseDate102(taxPointText),
-    taxPointDateCode: text(child(firstTax, 'DueDateTypeCode', RAM)),
+    taxPointDateCode: ((c) => (c === undefined ? undefined : (TAX_POINT_CODE_2475_TO_2005[c] ?? c)))(text(child(firstTax, 'DueDateTypeCode', RAM))),
     buyerReference: text(child(agreement, 'BuyerReference', RAM)),
     projectReference: text(descend(agreement, 'SpecifiedProcuringProject', 'ID')),
     salesOrderReference: text(descend(agreement, 'SellerOrderReferencedDocument', 'IssuerAssignedID')),

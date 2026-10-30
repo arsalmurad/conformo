@@ -2,3 +2,4 @@ export * from './money.js';
 export * from './model.js';
 export * from './totals.js';
 export * from './check.js';
+export * from './terms.js';

@@ -5,12 +5,13 @@ import { detectXmlFormat } from '@conformo/parse';
 import { validate } from '@conformo/validate';
 import type { Invoice } from '@conformo/core';
 
-const full = JSON.parse(readFileSync(new URL('../fixtures/full-model.json', import.meta.url), 'utf-8')) as Invoice;
+const load = (f: string) => JSON.parse(readFileSync(new URL(`../fixtures/${f}`, import.meta.url), 'utf-8')) as Invoice;
 
 /** Drops keys whose value is undefined so toEqual compares what is on the wire. */
 const clean = (v: unknown): unknown => JSON.parse(JSON.stringify(v));
 
-describe('every EN 16931 business term survives a write -> read round trip, in both syntaxes', () => {
+for (const fx of ['full-model.json', 'full-model-b.json']) describe(`every EN 16931 business term survives a write -> read round trip, in both syntaxes (${fx})`, () => {
+  const full = load(fx);
   for (const [name, build] of [['CII', (i: Invoice) => buildCII(i)], ['UBL', (i: Invoice) => buildUBL(i)]] as const) {
     it(`${name}: reading back what was written gives the same model`, () => {
       const back = clean(detectXmlFormat(build(full)).invoice) as Invoice;
