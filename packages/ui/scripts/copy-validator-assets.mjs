@@ -12,9 +12,11 @@ const repoRoot = fileURLToPath(new URL('../../..', import.meta.url));
 const destDir = fileURLToPath(new URL('../public/validator', import.meta.url));
 
 const files = [
-  [`${repoRoot}/packages/validate/artefacts/en16931.sef.json`, 'en16931.sef.json'],
+  [`${repoRoot}/packages/validate/artefacts/en16931-cii.sef.json`, 'en16931-cii.sef.json'],
+  [`${repoRoot}/packages/validate/artefacts/xrechnung-cii.sef.json`, 'xrechnung-cii.sef.json'],
   [`${repoRoot}/packages/validate/artefacts/fr-ctc.sef.json`, 'fr-ctc.sef.json'],
-  [`${repoRoot}/tools/artefacts/saxon-js/SaxonJS2.rt.js`, 'SaxonJS2.rt.js'],
+  [`${repoRoot}/packages/validate/artefacts/rulesets.json`, 'rulesets.json'],
+  [`${repoRoot}/tools/artefacts/saxonjs-runtime/saxon-js/SaxonJS2.rt.js`, 'SaxonJS2.rt.js'],
 ];
 
 mkdirSync(destDir, { recursive: true });

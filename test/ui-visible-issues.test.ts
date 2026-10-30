@@ -6,7 +6,7 @@ import type { TouchedFields } from '../packages/ui/src/validation/useTouchedFiel
 import type { RuleResult } from '@conformo/validate/browser';
 
 function rule(ruleId: string): RuleResult {
-  return { ruleId, severity: 'error', fields: [], xpath: '', message: `${ruleId} failed` };
+  return { ruleId, severity: 'error', fields: [], xpath: '', message: `${ruleId} failed`, ruleSet: 'en16931-cii' };
 }
 
 function touchedFieldsOf(visible: string[]): TouchedFields {

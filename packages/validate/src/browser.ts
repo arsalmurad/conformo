@@ -1,25 +1,38 @@
-import { assertCii, runSchematron, toValidationResult } from "./core.js";
-import type { CompiledSchematron, SaxonJSLike, ValidationResult } from "./types.js";
+import { createEngine } from "./engine.js";
+import type { CompiledSchematron, SaxonJSLike, ValidateOptions, ValidationResult, XsdRunner } from "./types.js";
 
-export type { RuleResult, PlainLanguageMessage, ValidationResult, SaxonJSLike } from "./types.js";
+export type {
+  RuleResult, PlainLanguageMessage, ValidateOptions, ValidationResult, SaxonJSLike, Syntax, Profile,
+  DetectedDocument, RuleSetRun, XsdRun, Notice,
+} from "./types.js";
+export { ValidationInputError } from "./types.js";
+export { detectDocument, profileFromCustomizationId } from "./detect.js";
+export { planRulesets } from "./engine.js";
 
-/** The browser entry point. Takes the `SaxonJS` global left by loading
- * `SaxonJS2.rt.js` (the free runtime-only build — no compiler, no Node
- * built-ins: see tools/fetch-saxonjs.mjs) and the already-fetched SEF
- * artefacts as parsed JSON, so this module never touches `fetch`, `fs`, or
- * any other environment-specific API itself. No server involved: the caller
- * fetched the SEF as a static file, same as any other page asset.
- *
- * Deliberately separate from src/index.ts, which imports the Node `saxon-js`
- * package directly — that import alone would break a browser bundle. */
-export async function validateInBrowser(
-  saxonJs: SaxonJSLike,
-  xml: string,
-  en16931: CompiledSchematron,
-  frCtc?: CompiledSchematron,
-): Promise<ValidationResult> {
-  assertCii(xml);
-  const runs = [await runSchematron(saxonJs, xml, en16931)];
-  if (frCtc) runs.push(await runSchematron(saxonJs, xml, frCtc));
-  return toValidationResult(runs);
+export interface BrowserValidatorOptions {
+  /** The `SaxonJS` global left by loading `SaxonJS2.rt.js` (runtime-only build: see tools/fetch-artefacts.mjs). */
+  saxonJs: SaxonJSLike;
+  /** Returns a compiled rule set by id ("en16931-cii", "xrechnung-ubl", ...). Normally a `fetch` of a static file.
+   * Called lazily and at most once per id, so a page only downloads the rule sets its documents need. */
+  loadRuleset: (id: string) => Promise<CompiledSchematron | string>;
+  /** Optional XSD runner. Without one, the result reports XSD as not run, with the reason. */
+  xsd?: XsdRunner;
+  xsdUnavailableReason?: string;
+  info?: Record<string, { label: string; source: string }>;
+}
+
+/**
+ * The browser entry point. Same engine as Node's `validate()`, so detection, rule-set selection and the
+ * result shape are identical; only the loading of SaxonJS and of the compiled rule sets differs. This
+ * module touches no `fs`, `fetch` or `document` itself.
+ */
+export function createBrowserValidator(options: BrowserValidatorOptions): (xml: string, o?: ValidateOptions) => Promise<ValidationResult> {
+  const engine = createEngine({
+    saxon: options.saxonJs,
+    loadRuleset: options.loadRuleset,
+    xsd: options.xsd,
+    xsdUnavailableReason: options.xsdUnavailableReason ?? "XSD validation is not available in the browser build",
+    info: options.info,
+  });
+  return (xml, o) => engine.validate(xml, o);
 }

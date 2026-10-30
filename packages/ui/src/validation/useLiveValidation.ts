@@ -48,7 +48,7 @@ export function useLiveValidation(invoice: Invoice, country: 'FR' | undefined): 
       let outcome: LiveValidation;
       try {
         const xml = buildCII(invoice);
-        const { results } = await validateInvoiceXml(xml, country);
+        const { results } = await validateInvoiceXml(xml, country ? { country } : {});
         const failures = results.filter((r) => r.severity === 'error' || r.severity === 'fatal');
         const byField: Record<string, RuleResult[]> = {};
         const bySection: LiveValidation['bySection'] = {};

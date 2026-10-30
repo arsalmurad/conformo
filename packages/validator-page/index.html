@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Conformo validator</title>
-<meta name="description" content="Validate a Factur-X/ZUGFeRD invoice against the official EN 16931 Schematron, entirely in your browser. No signup, no upload to a server.">
+<meta name="description" content="Validate an EN 16931 e-invoice (CII or UBL: Factur-X, ZUGFeRD, XRechnung, Peppol BIS) against the official Schematron, entirely in your browser. No signup, no upload to a server.">
 <style>
   :root { color-scheme: light dark; --ink:#15181d; --mute:#5b6470; --line:#e2e5e9; --accent:#1a56db; --bg:#ffffff; --bad:#991b1b; --good:#166534; }
   @media (prefers-color-scheme: dark) { :root { --ink:#e8eaed; --mute:#9aa4b2; --line:#2b2f36; --accent:#7aa2ff; --bg:#101215; --bad:#f87171; --good:#4ade80; } }
@@ -27,6 +27,8 @@
   #status { margin-top: 20px; font-weight: 600; }
   #status.ok { color: var(--good); }
   #status.bad { color: var(--bad); }
+  #rulesets h2 { font-size: 14px; margin: 16px 0 4px; }
+  #rulesets ul { padding-left: 18px; margin: 0; font-size: 13px; color: var(--mute); }
   ul#rules { list-style: none; padding: 0; margin: 16px 0 0; }
   ul#rules li { border-bottom: 1px solid var(--line); padding: 10px 0; font-size: 14px; }
   ul#rules li .rule-id { font-weight: 700; }
@@ -39,8 +41,9 @@
 <main>
   <h1>Conformo validator</h1>
   <p class="lede">
-    Checks a Factur-X/ZUGFeRD invoice against the official EN 16931 Schematron,
-    entirely in your browser. Nothing you drop here is ever uploaded anywhere.
+    Checks a CII or UBL e-invoice against the official rules for its profile (EN 16931, XRechnung,
+    Peppol BIS Billing 3.0), entirely in your browser. The profile is read from the file; the result
+    lists exactly which rule sets ran. Nothing you drop here is ever uploaded anywhere.
   </p>
 
   <div id="dropzone" class="dropzone">
@@ -56,13 +59,15 @@
   <div class="row">
     <label for="country">Country rules</label>
     <select id="country">
-      <option value="">EN 16931 only</option>
+      <option value="">Detect from the file</option>
+      <option value="DE">Germany (B2B 2027 acceptance)</option>
       <option value="FR">France (BR-FR Flux 2)</option>
     </select>
     <button id="validate-btn">Validate</button>
   </div>
 
   <div id="status"></div>
+  <div id="rulesets"></div>
   <ul id="rules"></ul>
 </main>
 <footer>

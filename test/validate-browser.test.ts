@@ -6,7 +6,7 @@
 // FREE SaxonJS2.rt.js RUNTIME build (no Node built-ins — see
 // tools/fetch-saxonjs.mjs; `grep -c "require(" SaxonJS2.rt.js` is 0, unlike
 // the Node `saxon-js` package src/index.ts imports) as a global the way a
-// <script> tag would, and calls the same runSchematron() core the Node
+// <script> tag would, and calls the same engine the Node
 // entry point uses — proving one core implementation genuinely works
 // unmodified in both places, not two parallel implementations that happen
 // to agree.
@@ -14,19 +14,21 @@ import { describe, it, expect, beforeAll } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import { buildCII } from "@conformo/formats";
-import { validateInBrowser } from "@conformo/validate/browser";
+import { buildCII, buildUBL } from "@conformo/formats";
+import { createBrowserValidator } from "@conformo/validate/browser";
 import type { SaxonJSLike } from "@conformo/validate";
 import type { Invoice } from "@conformo/core";
 import sample from "../fixtures/sample-invoice.json" with { type: "json" };
+import xrechnung from "../fixtures/xrechnung-public-sector.json" with { type: "json" };
 
 // happy-dom replaces the global `URL` with its own DOM implementation, which
 // doesn't resolve file paths the way `new URL(relative, import.meta.url)`
 // needs — so this resolves paths with node:path instead of the (now
 // environment-shadowed) URL constructor.
 const testDir = path.dirname(fileURLToPath(import.meta.url));
-const runtimePath = path.join(testDir, "../tools/artefacts/saxon-js/SaxonJS2.rt.js");
-const en16931Path = path.join(testDir, "../packages/validate/artefacts/en16931.sef.json");
+const runtimePath = path.join(testDir, "../tools/artefacts/saxonjs-runtime/saxon-js/SaxonJS2.rt.js");
+const artefacts = path.join(testDir, "../packages/validate/artefacts");
+const en16931Path = path.join(artefacts, "en16931-cii.sef.json");
 
 const skip = !existsSync(runtimePath) || !existsSync(en16931Path);
 if (skip) {
@@ -63,24 +65,34 @@ describe.skipIf(skip)("the validator inside a browser environment (happy-dom, no
     if (info?.platform) expect(info.platform.toLowerCase()).not.toContain("node");
   });
 
+  const browserValidate = () =>
+    createBrowserValidator({
+      saxonJs: SaxonJS,
+      // stands in for the browser's fetch of a static file
+      loadRuleset: async (id) => readFileSync(path.join(artefacts, `${id}.sef.json`), "utf-8"),
+    });
+
   it("validates the sample invoice against the pre-compiled EN 16931 SEF, client-side", async () => {
-    const en16931 = JSON.parse(readFileSync(en16931Path, "utf-8"));
     const xml = buildCII(sample as unknown as Invoice);
-    const result = await validateInBrowser(SaxonJS, xml, en16931);
+    const result = await browserValidate()(xml);
     expect(result.valid).toBe(true);
     expect(result.firedCount).toBeGreaterThan(0);
+    expect(result.ruleSets.map((r) => r.id)).toEqual(["en16931-cii"]);
   });
 
-  // Regression: validateInBrowser() used to skip the assertCii() guard the
-  // Node entry point has always had, so well-formed non-invoice XML fired
-  // zero rules and came back "valid" — the worst possible failure mode for
-  // the one artefact (the public validator page) whose entire job is being
-  // trustworthy. Found by an independent review that actually dropped a
-  // non-invoice file into the built validator page, not by reading the code.
+  it("picks the rule sets from the document, exactly like Node: XRechnung UBL runs EN 16931 + XRechnung", async () => {
+    const xml = buildUBL(xrechnung as unknown as Invoice, { profile: "xrechnung" });
+    const result = await browserValidate()(xml);
+    expect(result.detected.syntax).toBe("ubl-invoice");
+    expect(result.ruleSets.map((r) => r.id)).toEqual(["en16931-ubl", "xrechnung-ubl"]);
+    expect(result.xsd.ran).toBe(false); // documented limitation, reported rather than hidden
+    expect(result.xsd.skippedReason).toMatch(/browser/);
+  });
+
+  // Regression: the browser entry used to skip the guard the Node entry point has always had, so
+  // well-formed non-invoice XML fired zero rules and came back "valid" - the worst possible failure mode for
+  // the one artefact (the public validator page) whose entire job is being trustworthy.
   it("rejects well-formed non-invoice XML rather than reporting it valid", async () => {
-    const en16931 = JSON.parse(readFileSync(en16931Path, "utf-8"));
-    await expect(validateInBrowser(SaxonJS, "<hello><world/></hello>", en16931)).rejects.toThrow(
-      /CrossIndustryInvoice/,
-    );
+    await expect(browserValidate()("<hello><world/></hello>")).rejects.toThrow(/Unsupported document/);
   });
 });

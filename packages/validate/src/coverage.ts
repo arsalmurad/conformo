@@ -28,9 +28,11 @@ export class MissingSefError extends Error {
   }
 }
 
-export function computeCoverage(sefPath = fileURLToPath(new URL('../artefacts/en16931.sef.json', import.meta.url))): CoverageReport {
-  if (!fs.existsSync(sefPath)) throw new MissingSefError(sefPath);
-  const sef = fs.readFileSync(sefPath, 'utf-8');
+export function computeCoverage(sefPaths: string[] = ['en16931-cii', 'en16931-ubl'].map((id) => fileURLToPath(new URL(`../artefacts/${id}.sef.json`, import.meta.url)))): CoverageReport {
+  const sef = sefPaths.map((p) => {
+    if (!fs.existsSync(p)) throw new MissingSefError(p);
+    return fs.readFileSync(p, 'utf-8');
+  }).join('\n');
   const allRuleIds = new Set([...sef.matchAll(/\[(BR-[A-Z0-9-]+)\]-/g)].map((m) => m[1]!));
   const writtenRuleIds = new Set(Object.keys(en));
 

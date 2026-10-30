@@ -25,15 +25,16 @@ import facturx
 from lxml import etree
 from facturx import xml_check_xsd, xml_check_schematron, get_facturx_xml_from_pdf, get_level, get_flavor
 
-sys.path.insert(0, str(Path(__file__).parent))
-import fetch_artefacts
-
 logging.disable(logging.WARNING)
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT_FIXTURES = ROOT / "out" / "fixtures"
-UBL_XSD_DIR = Path(facturx.__file__).parent / "xsd_and_schematron" / "ubl-2.1"
-EN16931_UBL_XSLT = UBL_XSD_DIR / "EN16931-UBL-validation.xslt"
+ARTEFACTS = ROOT / "tools" / "artefacts"
+KOSIT = ARTEFACTS / "kosit-xrechnung-config" / "resources"
+UBL_XSD_DIR = KOSIT / "ubl" / "2.1" / "xsd"
+# CEN's own EN 16931 Schematron, compiled to XSLT by CEN (pinned in tools/artefacts.manifest.json).
+EN16931_UBL_XSLT = ARTEFACTS / "cen-en16931" / "ubl" / "xslt" / "EN16931-UBL-validation.xslt"
+EN16931_CII_XSLT = ARTEFACTS / "cen-en16931" / "cii" / "xslt" / "EN16931-CII-validation.xslt"
 
 ok = True
 
@@ -97,7 +98,15 @@ except Exception as e:
 # CIUS Schematron artefacts (they need XSLT 2.0/3.0; lxml's libxslt is 1.0 only).
 # ---------------------------------------------------------------------------
 
-fetch_artefacts.ensure()
+# Pinned third-party artefacts: tools/artefacts.manifest.json, fetched idempotently by tools/fetch-artefacts.mjs
+# and compiled by tools/build-rulesets.mjs (the Peppol XSLT is generated there).
+_node = "node"
+for _script, _args in (("fetch-artefacts.mjs", ["--group", "build"]), ("build-rulesets.mjs", [])):
+    if _script == "build-rulesets.mjs" and (ARTEFACTS / ".tmp" / "peppol-ubl.xsl").exists():
+        continue
+    _r = subprocess.run([_node, str(ROOT / "tools" / _script), *_args], cwd=ROOT)
+    if _r.returncode != 0:
+        raise SystemExit(f"{_script} failed")
 from saxonche import PySaxonProcessor  # noqa: E402 (deferred: only needed once artefacts exist)
 
 _xsd_cache: dict[str, etree.XMLSchema] = {}
@@ -152,15 +161,15 @@ def check_schematron_xslt(xslt_path: Path, xml_path: Path) -> str:
     return f"0 rules failed ({len(svrl.findall('.//svrl:fired-rule', SVRL_NS))} rules fired)"
 
 
-ARTEFACTS = ROOT / "tools" / "artefacts"
-XRECHNUNG_CII_XSLT = ARTEFACTS / "xrechnung" / "schematron" / "cii" / "XRechnung-CII-validation.xsl"
-XRECHNUNG_UBL_XSLT = ARTEFACTS / "xrechnung" / "schematron" / "ubl" / "XRechnung-UBL-validation.xsl"
-PEPPOL_UBL_XSLT = ARTEFACTS / "peppol" / "PEPPOL-EN16931-UBL.xsl"
+XRECHNUNG_CII_XSLT = KOSIT / "xrechnung" / "3.0.2" / "xsl" / "XRechnung-CII-validation.xsl"
+XRECHNUNG_UBL_XSLT = KOSIT / "xrechnung" / "3.0.2" / "xsl" / "XRechnung-UBL-validation.xsl"
+PEPPOL_UBL_XSLT = ARTEFACTS / ".tmp" / "peppol-ubl.xsl"
 
 CHECKS = {
     "cii-en16931": [
         ("Factur-X CII XSD", lambda p: (xml_check_xsd(p.read_bytes(), flavor='factur-x', level='en16931'), "valid")[1]),
-        ("EN 16931 Schematron (CII)", lambda p: (xml_check_schematron(p.read_bytes(), flavor='factur-x', level='en16931'), "valid")[1]),
+        ("EN 16931 Schematron (CII, Factur-X package)", lambda p: (xml_check_schematron(p.read_bytes(), flavor='factur-x', level='en16931'), "valid")[1]),
+        ("EN 16931 Schematron (CII, CEN)", lambda p: check_schematron_xslt(EN16931_CII_XSLT, p)),
     ],
     "ubl-en16931": [
         ("UBL 2.1 XSD", check_ubl_xsd),

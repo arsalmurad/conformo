@@ -1,5 +1,5 @@
 import { extractEmbeddedXml } from '@conformo/parse';
-import type { RuleResult } from '@conformo/validate/browser';
+import type { RuleResult, ValidationResult } from '@conformo/validate/page';
 import { validateInvoiceXml } from './browserValidator.js';
 
 const dropzone = document.getElementById('dropzone')!;
@@ -9,6 +9,7 @@ const countrySelect = document.getElementById('country') as HTMLSelectElement;
 const validateBtn = document.getElementById('validate-btn') as HTMLButtonElement;
 const statusEl = document.getElementById('status')!;
 const rulesEl = document.getElementById('rules')!;
+const rulesetsEl = document.getElementById('rulesets')!;
 const fileNameEl = document.getElementById('file-name')!;
 
 function isPdf(bytes: Uint8Array): boolean {
@@ -46,6 +47,15 @@ function renderRules(results: RuleResult[]): void {
   }
 }
 
+function renderRuleSets(result: ValidationResult): void {
+  const items = result.ruleSets.map((r) => `${r.label} [${r.source}]: ${r.fired} rules fired, ${r.failed} failed`);
+  items.push(result.xsd.ran
+    ? `XSD ${result.xsd.schema}: ${result.xsd.valid ? 'valid' : `${result.xsd.errors.length} error(s)`}`
+    : `XSD not run: ${result.xsd.skippedReason}`);
+  for (const n of result.notices) items.push(`${n.severity.toUpperCase()} ${n.code}: ${n.message}`);
+  rulesetsEl.innerHTML = `<h2>What ran</h2><ul>${items.map((i) => `<li>${escapeHtml(i)}</li>`).join('')}</ul>`;
+}
+
 function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
@@ -58,17 +68,20 @@ async function runValidation(): Promise<void> {
   }
   validateBtn.disabled = true;
   rulesEl.innerHTML = '';
+  rulesetsEl.innerHTML = '';
   setStatus('Validating…', undefined);
   try {
-    const country = countrySelect.value as 'FR' | '';
-    const result = await validateInvoiceXml(xml, country);
+    const country = countrySelect.value as 'FR' | 'DE' | '';
+    const result = await validateInvoiceXml(xml, country ? { country } : {});
     const failures = result.results.filter((r) => r.severity === 'error' || r.severity === 'fatal');
+    const xsdFailed = result.xsd.ran && result.xsd.valid === false;
     setStatus(
       result.valid
         ? `Valid — ${result.firedCount} rules checked, 0 failed.`
-        : `Invalid — ${result.firedCount} rules checked, ${failures.length} failed.`,
+        : `Invalid — ${result.firedCount} rules checked, ${failures.length} failed${xsdFailed ? ', XSD failed' : ''}.`,
       result.valid,
     );
+    renderRuleSets(result);
     renderRules([...failures, ...result.results.filter((r) => r.severity === 'warning' || r.severity === 'info')]);
   } catch (err) {
     setStatus((err as Error).message, false);
