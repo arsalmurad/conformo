@@ -3,19 +3,20 @@
 // is deliberately a separate, separately-deployable unit, so it copies its
 // own assets rather than depending on packages/ui's public/ directory at
 // build time.
-import { copyFileSync, existsSync, mkdirSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 
 const repoRoot = fileURLToPath(new URL('../../..', import.meta.url));
 const destDir = fileURLToPath(new URL('../public/validator', import.meta.url));
 
 const files = [
-  [`${repoRoot}/packages/validate/artefacts/en16931-cii.sef.json`, 'en16931-cii.sef.json'],
-  [`${repoRoot}/packages/validate/artefacts/en16931-ubl.sef.json`, 'en16931-ubl.sef.json'],
-  [`${repoRoot}/packages/validate/artefacts/xrechnung-cii.sef.json`, 'xrechnung-cii.sef.json'],
-  [`${repoRoot}/packages/validate/artefacts/xrechnung-ubl.sef.json`, 'xrechnung-ubl.sef.json'],
-  [`${repoRoot}/packages/validate/artefacts/peppol-ubl.sef.json`, 'peppol-ubl.sef.json'],
-  [`${repoRoot}/packages/validate/artefacts/fr-ctc.sef.json`, 'fr-ctc.sef.json'],
+  [`${repoRoot}/packages/validate/artefacts/en16931-cii.sef.json.gz`, 'en16931-cii.sef.json'],
+  [`${repoRoot}/packages/validate/artefacts/en16931-ubl.sef.json.gz`, 'en16931-ubl.sef.json'],
+  [`${repoRoot}/packages/validate/artefacts/xrechnung-cii.sef.json.gz`, 'xrechnung-cii.sef.json'],
+  [`${repoRoot}/packages/validate/artefacts/xrechnung-ubl.sef.json.gz`, 'xrechnung-ubl.sef.json'],
+  [`${repoRoot}/packages/validate/artefacts/peppol-ubl.sef.json.gz`, 'peppol-ubl.sef.json'],
+  [`${repoRoot}/packages/validate/artefacts/fr-ctc.sef.json.gz`, 'fr-ctc.sef.json'],
   [`${repoRoot}/packages/validate/artefacts/rulesets.json`, 'rulesets.json'],
   [`${repoRoot}/tools/artefacts/saxonjs-runtime/saxon-js/SaxonJS2.rt.js`, 'SaxonJS2.rt.js'],
 ];
@@ -29,5 +30,9 @@ if (missing.length > 0) {
   console.error('Missing:', missing.map(([src]) => src).join(', '));
   process.exit(1);
 }
-for (const [src, name] of files) copyFileSync(src, `${destDir}/${name}`);
+for (const [src, name] of files) {
+  // Rule sets ship gzipped in the npm package; pages get them as plain static JSON (hosts compress on the wire).
+  if (src.endsWith('.gz')) writeFileSync(`${destDir}/${name}`, gunzipSync(readFileSync(src)));
+  else copyFileSync(src, `${destDir}/${name}`);
+}
 console.log(`copied ${files.length} validator assets into public/validator/`);

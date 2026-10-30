@@ -2,7 +2,7 @@
 // Builds the runtime validation artefacts into packages/validate/artefacts/ from the pinned
 // sources in tools/artefacts.manifest.json (fetched by tools/fetch-artefacts.mjs):
 //
-//   <id>.sef.json   SaxonJS "stylesheet export" of each Schematron ruleset (runs in Node and in a browser)
+//   <id>.sef.json.gz  SaxonJS "stylesheet export" of each Schematron ruleset (runs in Node and in a browser)
 //   xsd/...         the official XSDs (UBL 2.1, UN/CEFACT CII D16B)
 //   rulesets.json   what each ruleset is, its source version, sizes and SHA-256
 //
@@ -46,10 +46,13 @@ const RULESETS = rulesetSources();
 const sha = (b) => createHash("sha256").update(b).digest("hex");
 const report = {};
 for (const [id, r] of Object.entries(RULESETS)) {
-  const sef = path.join(out, `${id}.sef.json`);
+  const sef = path.join(tmp, `${id}.sef.json`);
   console.log(`compiling ${id}`);
   run([`-xsl:${r.xslt}`, `-export:${sef}`, "-nogo"]);
   const buf = readFileSync(sef);
+  // Ship gzip only (about 7x smaller unpacked). Node gunzips on load; pages are served compressed by their host anyway.
+  writeFileSync(path.join(out, `${id}.sef.json.gz`), gzipSync(buf, { level: 9 }));
+  rmSync(path.join(out, `${id}.sef.json`), { force: true });
   report[id] = { label: r.label, source: r.source, bytes: buf.length, gzipBytes: gzipSync(buf, { level: 9 }).length, sha256: sha(buf) };
 }
 

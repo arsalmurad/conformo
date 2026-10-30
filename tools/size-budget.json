@@ -1,0 +1,6 @@
+{
+  "$comment": "Budgets in KB. Compiled rule sets are gzipped sizes (what a browser downloads); a page only downloads the rule sets its documents need. Raise a budget only with a reason in docs/DECISIONS.md.",
+  "rulesetGzipKB": { "en16931-cii": 150, "en16931-ubl": 170, "xrechnung-cii": 65, "xrechnung-ubl": 70, "peppol-ubl": 85, "fr-ctc": 80 },
+  "typicalBrowserDownloadGzipKB": { "note": "EN 16931 CII + XRechnung CII, the app's Germany profile", "ids": ["en16931-cii", "xrechnung-cii"], "max": 220 },
+  "validatePackageArtefactsMB": 6
+}

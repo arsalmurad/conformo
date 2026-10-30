@@ -68,7 +68,7 @@ function readParty(el: XmlElement): Party {
   const legalOrg = child(el, 'SpecifiedLegalOrganization', RAM);
   const legalIdEl = child(legalOrg, 'ID', RAM);
   const contactEl = child(el, 'DefinedTradeContact', RAM);
-  const contactName = text(child(contactEl, 'PersonName', RAM));
+  const contactName = text(child(contactEl, 'PersonName', RAM)) ?? text(child(contactEl, 'DepartmentName', RAM));   // BT-41 / BT-56 use either
   const contactPhone = text(descend(contactEl, 'TelephoneUniversalCommunication', 'CompleteNumber'));
   const contactEmail = text(descend(contactEl, 'EmailURIUniversalCommunication', 'URIID'));
   const contact: Contact | undefined = contactName || contactPhone || contactEmail
@@ -301,11 +301,11 @@ export function readCII(root: XmlElement): Invoice {
     meansCode: meansCode!,
     meansText: text(child(paymentMeansEl, 'Information', RAM)),
     reference: text(child(settlement, 'PaymentReference', RAM)),
-    iban: text(child(acctEl, 'IBANID', RAM)),
+    iban: text(child(acctEl, 'IBANID', RAM)) ?? text(child(acctEl, 'ProprietaryID', RAM)),
     accountName: text(child(acctEl, 'AccountName', RAM)),
     bic: text(child(instEl, 'BICID', RAM)),
     additionalAccounts: arrOrUndefined(sameMeans.map((m) => ({
-      iban: text(descend(m, 'PayeePartyCreditorFinancialAccount', 'IBANID'))!,
+      iban: (text(descend(m, 'PayeePartyCreditorFinancialAccount', 'IBANID')) ?? text(descend(m, 'PayeePartyCreditorFinancialAccount', 'ProprietaryID')))!,
       accountName: text(descend(m, 'PayeePartyCreditorFinancialAccount', 'AccountName')),
       bic: text(descend(m, 'PayeeSpecifiedCreditorFinancialInstitution', 'BICID')),
     }))),

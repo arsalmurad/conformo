@@ -1,5 +1,6 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { gunzipSync } from 'node:zlib';
 import { getPlainLanguageMessage } from '@conformo/validate';
 import type { PlainLanguageMessage } from '@conformo/validate';
 
@@ -20,10 +21,10 @@ const texts = new Map<string, string>();
 function load(set: string): string {
   let t = texts.get(set);
   if (t === undefined) {
-    const direct = `${artefacts}${set}.sef.json`;
-    const published = fileURLToPath(new URL(`../node_modules/@conformo/validate/artefacts/${set}.sef.json`, import.meta.url));
+    const direct = `${artefacts}${set}.sef.json.gz`;
+    const published = fileURLToPath(new URL(`../node_modules/@conformo/validate/artefacts/${set}.sef.json.gz`, import.meta.url));
     const p = existsSync(direct) ? direct : published;
-    t = existsSync(p) ? readFileSync(p, 'utf-8') : '';
+    t = existsSync(p) ? gunzipSync(readFileSync(p)).toString('utf-8') : '';
     texts.set(set, t);
   }
   return t;

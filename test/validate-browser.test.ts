@@ -12,6 +12,7 @@
 // to agree.
 import { describe, it, expect, beforeAll } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
+import { gunzipSync } from "node:zlib";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { buildCII, buildUBL } from "@conformo/formats";
@@ -28,7 +29,7 @@ import xrechnung from "../fixtures/xrechnung-public-sector.json" with { type: "j
 const testDir = path.dirname(fileURLToPath(import.meta.url));
 const runtimePath = path.join(testDir, "../tools/artefacts/saxonjs-runtime/saxon-js/SaxonJS2.rt.js");
 const artefacts = path.join(testDir, "../packages/validate/artefacts");
-const en16931Path = path.join(artefacts, "en16931-cii.sef.json");
+const en16931Path = path.join(artefacts, "en16931-cii.sef.json.gz");
 
 const skip = !existsSync(runtimePath) || !existsSync(en16931Path);
 if (skip) {
@@ -69,7 +70,7 @@ describe.skipIf(skip)("the validator inside a browser environment (happy-dom, no
     createBrowserValidator({
       saxonJs: SaxonJS,
       // stands in for the browser's fetch of a static file
-      loadRuleset: async (id) => readFileSync(path.join(artefacts, `${id}.sef.json`), "utf-8"),
+      loadRuleset: async (id) => gunzipSync(readFileSync(path.join(artefacts, `${id}.sef.json.gz`))).toString("utf-8"),
     });
 
   it("validates the sample invoice against the pre-compiled EN 16931 SEF, client-side", async () => {

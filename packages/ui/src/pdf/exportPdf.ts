@@ -3,7 +3,7 @@ import fontkit from '@pdf-lib/fontkit';
 import { totals } from '@conformo/core';
 import type { Invoice } from '@conformo/core';
 import { buildCII } from '@conformo/formats';
-import { finalizePDFA, renderInvoicePage, type TemplateId, type RenderOptions } from '@conformo/pdf';
+import { finalizePDFA, renderInvoicePage, type FacturXProfile, type TemplateId, type RenderOptions } from '@conformo/pdf';
 import { BASE_URL } from '../baseUrl.js';
 
 export type EmbeddableLogo = NonNullable<RenderOptions['logo']>;
@@ -44,15 +44,15 @@ export async function buildInvoicePdf(
   invoice: Invoice,
   templateId: TemplateId,
   options: RenderOptions = {},
+  profile: FacturXProfile = 'en16931',
 ): Promise<Uint8Array> {
-  const xml = buildCII(invoice);
+  const xml = buildCII(invoice, { profile });
   const { iccBytes } = await loadAssets();
   const pdf = await buildPage(invoice, templateId, options);
 
   await finalizePDFA(pdf, {
     xml,
-    xmlFilename: 'factur-x.xml',
-    conformanceLevel: 'EN 16931',
+    profile,
     title: `Invoice ${invoice.number || 'draft'}`,
     author: invoice.seller.name || 'Conformo',
     producer: 'Conformo',

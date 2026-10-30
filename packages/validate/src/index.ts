@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { gunzipSync } from "node:zlib";
 import { fileURLToPath } from "node:url";
 import SaxonJS from "saxon-js";
 import { createEngine } from "./engine.js";
@@ -18,7 +19,8 @@ const artefactsDir = fileURLToPath(new URL("../artefacts/", import.meta.url));
 
 function readArtefact(name: string): string {
   try {
-    return readFileSync(`${artefactsDir}${name}`, "utf-8");
+    const buf = readFileSync(`${artefactsDir}${name}`);
+    return (name.endsWith(".gz") ? gunzipSync(buf) : buf).toString("utf-8");
   } catch {
     throw new Error(`Missing compiled validation artefact "${name}". Run: npm run schematron:compile`);
   }
@@ -49,7 +51,7 @@ export async function validate(xml: string, options: ValidateOptions = {}): Prom
   const meta = rulesetsFile();
   engine ??= createEngine({
     saxon: SaxonJS,
-    loadRuleset: async (id): Promise<CompiledSchematron | string> => readArtefact(`${id}.sef.json`),
+    loadRuleset: async (id): Promise<CompiledSchematron | string> => readArtefact(`${id}.sef.json.gz`),
     xsd: nodeXsdRunner,
     info: meta.rulesets,
     levelOverrides: meta.levelOverrides,

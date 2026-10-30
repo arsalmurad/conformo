@@ -113,6 +113,9 @@ const lineAllowanceCharge = (a: LineAllowanceCharge, isCharge: boolean): string 
     tag('ram:ReasonCode', a.reasonCode) +
     tag('ram:Reason', a.reason));
 
+/** BT-84 is an IBAN or, failing that, a proprietary account number (CII-SR-470: one of the two). */
+const looksLikeIban = (v?: string): boolean => !v || /^[A-Z]{2}\d{2}[A-Z0-9]{8,30}$/.test(v.replace(/\s+/g, ''));
+
 export function buildCII(invoice: Invoice, options: CIIOptions = {}): string {
   const profile = options.profile ?? 'en16931';
   assertInvoice(invoice);
@@ -192,7 +195,7 @@ export function buildCII(invoice: Invoice, options: CIIOptions = {}): string {
         tag('ram:ID', p0.card.pan) + tag('ram:CardholderName', p0.card.holderName)) : '') +
       (withMeans ? wrap('ram:PayerPartyDebtorFinancialAccount', tag('ram:IBANID', dd?.debitedAccountIban)) : '') + // BT-91
       wrap('ram:PayeePartyCreditorFinancialAccount',
-        tag('ram:IBANID', iban) + tag('ram:AccountName', name)) +                                    // BT-84, BT-85
+        (looksLikeIban(iban) ? tag('ram:IBANID', iban) + tag('ram:AccountName', name) : tag('ram:AccountName', name) + tag('ram:ProprietaryID', iban))) +                                    // BT-84, BT-85
       wrap('ram:PayeeSpecifiedCreditorFinancialInstitution', tag('ram:BICID', bic)));              // BT-86
   const paymentMeans = p
     ? account(p, p.iban, p.accountName, p.bic) +

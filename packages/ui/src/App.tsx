@@ -13,13 +13,13 @@ import { buildInvoicePdf, downloadPdf, type EmbeddableLogo } from './pdf/exportP
 import { UnlockScreen } from './UnlockScreen.js';
 import './App.css';
 
-/** Only France's CIUS Schematron is actually compiled into this build (see
+/** Only France's and Germany's (XRechnung) CIUS rule sets are actually compiled into this build (see
  * CLAUDE.md invariant 6: "never claim compliance, show it"). The selector
  * still lists every country packages/compliance-data ships, so adding a
  * country to the dataset grows this list on its own, but every option
  * except France stays disabled until its own layer is compiled and proven —
  * an unimplemented option must never look choosable. */
-const COMPILED_COUNTRIES = new Set(['FR']);
+const COMPILED_COUNTRIES = new Set(['FR', 'DE']);
 
 /** Scrolls to and focuses the input an issue was attributed to (Part C:
  * "clicking an issue scrolls to and focuses the offending field"). Also
@@ -36,7 +36,7 @@ function goToField(key: string, markTouched: (key: string) => void) {
 export default function App() {
   const { invoice, setInvoice, profiles, saveProfile, deleteProfile, lock, protectedSince, protect, unlock, discardLockedDraft } =
     useInvoiceDraft();
-  const [country, setCountry] = useState<'FR' | undefined>(undefined);
+  const [country, setCountry] = useState<'FR' | 'DE' | undefined>(undefined);
   const [template, setTemplate] = useState<TemplateId>('classic');
   const [exporting, setExporting] = useState(false);
   const [paymentLink, setPaymentLink] = useState('');
@@ -62,7 +62,7 @@ export default function App() {
     touchedFields.revealAll(); // "validate the whole document on first export attempt"
     setExporting(true);
     try {
-      const bytes = await buildInvoicePdf(invoice, template, { logo, paymentLink: paymentLink || undefined });
+      const bytes = await buildInvoicePdf(invoice, template, { logo, paymentLink: paymentLink || undefined }, country === 'DE' ? 'xrechnung' : 'en16931');
       downloadPdf(bytes, `${invoice.number || 'invoice'}.pdf`);
     } finally {
       setExporting(false);
@@ -87,11 +87,11 @@ export default function App() {
         <div className="app-header-controls">
           <label>
             Country rules
-            <select value={country ?? ''} onChange={(e) => setCountry((e.target.value || undefined) as 'FR' | undefined)}>
-              <option value="">EN 16931 only</option>
+            <select value={country ?? ''} onChange={(e) => setCountry((e.target.value || undefined) as 'FR' | 'DE' | undefined)}>
+              <option value="">EN 16931 / ZUGFeRD (COMFORT)</option>
               {complianceCountries.map((c) => (
                 <option key={c.country} value={c.country} disabled={!COMPILED_COUNTRIES.has(c.country)}>
-                  {c.country === 'FR' ? 'France (BR-FR Flux 2)' : `${c.name} (coming soon)`}
+                  {c.country === 'FR' ? 'France (BR-FR Flux 2)' : c.country === 'DE' ? 'Germany 2027 (XRechnung profile, KoSIT rules)' : `${c.name} (coming soon)`}
                 </option>
               ))}
             </select>

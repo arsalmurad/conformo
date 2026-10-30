@@ -17,6 +17,7 @@ export default defineConfig({
       '@conformo/compliance-data': fileURLToPath(new URL('./packages/compliance-data/src/index.ts', import.meta.url)),
       '@conformo/toolkit': fileURLToPath(new URL('./packages/toolkit/src/index.ts', import.meta.url)),
       '@conformo/schema': fileURLToPath(new URL('./packages/schema/src/index.ts', import.meta.url)),
+      '@conformo/server': fileURLToPath(new URL('./packages/server/src/index.ts', import.meta.url)),
       '@conformo/validate/page': fileURLToPath(new URL('./packages/validate/src/page.ts', import.meta.url)),
       '@conformo/validate/browser': fileURLToPath(new URL('./packages/validate/src/browser.ts', import.meta.url)),
       '@conformo/validate/coverage': fileURLToPath(new URL('./packages/validate/src/coverage.ts', import.meta.url)),
