@@ -63,7 +63,9 @@ if (pkg.exports) {
 if (pkg.bin) {
   manifest.bin = {};
   for (const [cmd, target] of Object.entries(pkg.bin)) {
-    manifest.bin[cmd] = toDist(target);
+    // No leading "./": npm 11's publish-time normalization treats "./src/cli.js" as an invalid bin and silently drops it
+    // (`npm pack` keeps it, so only a real publish loses the command). "src/cli.js" is the form `npm pkg fix` writes.
+    manifest.bin[cmd] = toDist(target).replace(/^\.\//, '');
   }
 }
 

@@ -38,6 +38,17 @@ const tarballs = {};
 for (const p of pkgs) {
   console.log(`build + pack ${p.json.name}`);
   sh(npm, ['run', 'build', `--workspace=packages/${p.dir}`], { cwd: root });
+  // `npm publish` normalizes the manifest and silently drops what it considers invalid (a "./"-prefixed bin lost the
+  // `conformo` command this way); `npm pack` does not, so the install below would never notice. `npm pkg fix` applies
+  // the same normalization locally: the generated manifest must already be in its fixed form.
+  const manifest = readFileSync(path.join(root, 'packages', p.dir, 'dist', 'package.json'), 'utf-8');
+  const fixDir = mkdtempSync(path.join(work, 'pkgfix-'));
+  writeFileSync(path.join(fixDir, 'package.json'), manifest);
+  sh(npm, ['pkg', 'fix'], { cwd: fixDir });
+  const fixed = readFileSync(path.join(fixDir, 'package.json'), 'utf-8');
+  if (JSON.stringify(JSON.parse(fixed)) !== JSON.stringify(JSON.parse(manifest))) {
+    throw new Error(`${p.json.name}: npm would rewrite dist/package.json on publish (fix tools/write-dist-manifest.mjs)\n--- generated\n${manifest}\n--- npm pkg fix\n${fixed}`);
+  }
   const out = sh(npm, ['pack', '--pack-destination', work, '--json'], { cwd: path.join(root, 'packages', p.dir, 'dist') });
   tarballs[p.json.name] = path.join(work, JSON.parse(out)[0].filename);
 }
