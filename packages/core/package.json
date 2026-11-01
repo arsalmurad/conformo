@@ -1,6 +1,6 @@
 {
   "name": "@conformo/core",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "EN 16931 electronic invoice model: exact-decimal money, tax and totals. Zero runtime dependencies.",
   "author": "Muhammad Arsal Murad",
   "license": "Apache-2.0",

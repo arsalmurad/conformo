@@ -1,6 +1,12 @@
 # Changelog
 
-## 0.2.0 (unreleased; nothing has been published)
+## @conformo/core 0.2.1 (2026-11-01)
+
+- `checkInvoice()` type-checks every optional text field, contact field and list at runtime. A wrongly typed field from plain
+  JavaScript (for example `electronicAddress` as an object) is now an `InvoiceInputError` naming the field and its BT id, not a
+  raw `TypeError` from inside a serializer. Every serializer and the toolkit get this through `^0.2.0`; no other package changed.
+
+## 0.2.0 (2026-11-01)
 
 ### Validation
 - `validate()` now checks every format Conformo writes, from one code path in Node and in the browser: EN 16931 (CII and UBL, CEN release validation-1.3.17),
