@@ -25,15 +25,33 @@ async function loadAssets() {
   return fontCache;
 }
 
-async function buildPage(invoice: Invoice, templateId: TemplateId, options: RenderOptions): Promise<PDFDocument> {
-  return (await buildPageWithFonts(invoice, templateId, options)).pdf;
+async function buildPage(invoice: Invoice, templateId: TemplateId, options: RenderOptions, fonts: typeof fontkit = fontkit): Promise<PDFDocument> {
+  return (await buildPageWithFonts(invoice, templateId, options, fonts)).pdf;
 }
 
-async function buildPageWithFonts(invoice: Invoice, templateId: TemplateId, options: RenderOptions): Promise<{ pdf: PDFDocument; bold: PDFFont }> {
+/**
+ * fontkit with its parse step memoized per font file, for the live preview only. pdf-lib calls fontkit.create() on
+ * the raw TTF bytes on every embed, and parsing the two 185 KB Work Sans files was most of the preview's build time
+ * (~350 of ~470 ms per edit on a 4x-throttled CPU), which pushed edit-to-preview past its 500 ms budget on CI. The
+ * parsed font is read-only input to subsetting, so reusing it changes nothing on the page. The downloaded PDF still
+ * uses plain fontkit, so its bytes cannot be affected by this cache.
+ */
+const parsed = new Map<unknown, ReturnType<typeof fontkit.create>>();
+const cachingFontkit: typeof fontkit = {
+  ...fontkit,
+  create: ((buffer: Uint8Array, postscriptName?: string) => {
+    const key = buffer.byteLength + ':' + (postscriptName ?? '') + ':' + buffer[100] + buffer[1000] + buffer[10000];
+    let f = parsed.get(key);
+    if (!f) { f = fontkit.create(buffer, postscriptName); parsed.set(key, f); }
+    return f;
+  }) as typeof fontkit.create,
+};
+
+async function buildPageWithFonts(invoice: Invoice, templateId: TemplateId, options: RenderOptions, fonts: typeof fontkit = fontkit): Promise<{ pdf: PDFDocument; bold: PDFFont }> {
   const { regularBytes, boldBytes } = await loadAssets();
   const t = totals(invoice);
   const pdf = await PDFDocument.create();
-  pdf.registerFontkit(fontkit);
+  pdf.registerFontkit(fonts);
   const regular = await pdf.embedFont(regularBytes, { subset: true });
   const bold = await pdf.embedFont(boldBytes, { subset: true });
   await renderInvoicePage(pdf, { regular, bold }, invoice, t, templateId, options);
@@ -90,7 +108,7 @@ export async function buildPreviewPdf(
   templateId: TemplateId,
   options: RenderOptions = {},
 ): Promise<Uint8Array> {
-  const pdf = await buildPage(invoice, templateId, options);
+  const pdf = await buildPage(invoice, templateId, options, cachingFontkit);
   return pdf.save({ useObjectStreams: false });
 }
 
