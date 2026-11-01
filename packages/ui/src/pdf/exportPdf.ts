@@ -75,16 +75,17 @@ export async function buildInvoicePdf(
  * back to a pdf.js canvas preview (measured ~1100ms on getDocument() alone,
  * dwarfing font-embed/render's ~100ms): the PDF/A wrapper adds a multi-KB
  * embedded XML attachment, an ICC color profile, and the AF/Names machinery
- * pdf.js has to index even though none of it is drawn. buildCII(invoice) is
- * still called for its validation side effect (throws InvoiceInputError for
- * a structurally incomplete invoice), so "can't render a preview yet" still
- * fires the same way it does for the real export. */
+ * pdf.js has to index even though none of it is drawn. No buildCII() here:
+ * it runs checkInvoice(), which rejects every blank required term (BT-1,
+ * BT-27, BT-153...), and a draft has those until it is finished — gating
+ * the preview on it left the canvas empty from the first keystroke to the
+ * last. The validation summary already lists what is missing; the preview
+ * shows the page as it stands. */
 export async function buildPreviewPdf(
   invoice: Invoice,
   templateId: TemplateId,
   options: RenderOptions = {},
 ): Promise<Uint8Array> {
-  buildCII(invoice);
   const pdf = await buildPage(invoice, templateId, options);
   return pdf.save({ useObjectStreams: false });
 }

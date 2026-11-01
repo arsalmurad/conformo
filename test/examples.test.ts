@@ -92,7 +92,7 @@ describe('example: hono-endpoint', () => {
     expect(j.valid).toBe(true);
     expect(j.ruleSets.length).toBeGreaterThan(0);
     expect((await validate(j.xml)).valid).toBe(true);
-  });
+  }, 30_000); // two full Schematron validations: ~4s under the full parallel suite, close to vitest's 5s default
 
   it('rejects bad input without a stack trace', async () => {
     expect((await post({})).status).toBe(400);

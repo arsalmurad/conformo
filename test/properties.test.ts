@@ -104,6 +104,26 @@ describe('parsers on hostile input (fuzz)', () => {
       try { detectXmlFormat(broken); } catch (e) { expect(e).toBeInstanceOf(Error); expect((e as Error).name).not.toBe('TypeError'); }
     }), { numRuns: 300 });
   });
+  // Counterexamples the fuzz test above found (seed 581969183: a CII line price with its ChargeAmount cut out). A required
+  // value element that is absent reached .trim() on undefined. Pinned here so they run every time, not by chance.
+  describe('a missing required value element is a RangeError, not a TypeError', () => {
+    const inv: Invoice = { number: 'F-1', issueDate: '2027-01-01', currency: 'EUR', seller: { name: 'S', country: 'DE' }, buyer: { name: 'B', country: 'DE' },
+      lines: [{ name: 'x', quantity: 1, unitPriceMinor: 100, taxCategory: 'S', taxRate: 19 }],
+      allowances: [{ amountMinor: 10, taxCategory: 'S', taxRate: 19, reason: 'Discount' }] };
+    const cases: [string, string, RegExp][] = [
+      ['CII line net price (BT-146)', buildCII(inv), /<ram:ChargeAmount>1<\/ram:ChargeAmount>/],
+      ['CII document allowance amount (BT-92)', buildCII(inv), /<ram:ActualAmount>[^<]*<\/ram:ActualAmount>/],
+      ['UBL line net price (BT-146)', buildUBL(inv), /<cbc:PriceAmount currencyID="EUR">1<\/cbc:PriceAmount>/],
+      ['UBL document allowance amount (BT-92)', buildUBL(inv), /(<cac:AllowanceCharge>.*?)<cbc:Amount currencyID="EUR">[^<]*<\/cbc:Amount>/],
+    ];
+    for (const [label, xml, element] of cases) {
+      it(label, () => {
+        const broken = xml.replace(element, '$1');
+        expect(broken).not.toBe(xml);
+        expect(() => detectXmlFormat(broken)).toThrow(RangeError);
+      });
+    }
+  });
   it('enforces its depth and size limits', () => {
     expect(() => parseXml('<a>'.repeat(500) + '</a>'.repeat(500))).toThrow();
     expect(() => parseXml('<a>' + 'x'.repeat(2000) + '</a>', { maxBytes: 100 })).toThrow();

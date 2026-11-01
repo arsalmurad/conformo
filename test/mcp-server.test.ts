@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
 import type { ChildProcess } from 'node:child_process';
 import { describe, it, expect, afterAll, beforeAll } from 'vitest';
@@ -12,11 +13,13 @@ import { resolveOutputPath, PathPolicyError } from '../packages/mcp-server/src/p
 
 const root = process.cwd();
 const serverTs = path.join(root, 'packages', 'mcp-server', 'src', 'server.ts');
-const tsxCli = path.join(root, 'node_modules', 'tsx', 'dist', 'cli.mjs');
+// tsx as an --import loader, not its CLI: the CLI re-spawns the server as a grandchild, and on Windows kill() reaches
+// only the CLI, leaving the server alive and holding its cwd (rmSync then fails with EPERM).
+const tsxLoader = pathToFileURL(path.join(root, 'node_modules', 'tsx', 'dist', 'loader.mjs')).href;
 const version = (JSON.parse(fs.readFileSync(path.join(root, 'packages', 'mcp-server', 'package.json'), 'utf8')) as { version: string }).version;
 const fixture = (n: string): Invoice => JSON.parse(fs.readFileSync(path.join(root, 'fixtures', n), 'utf8')) as Invoice;
 
-// Spawned with node + the tsx CLI file directly: no `npx`, no shell, so it behaves the same on Windows and Linux.
+// Spawned with node + the tsx loader directly: no `npx`, no shell, so it behaves the same on Windows and Linux.
 // The child runs in a scratch directory (so outputPath tests write there), hence TSX_TSCONFIG_PATH for the path aliases.
 const childEnv = (extra: Record<string, string> = {}): Record<string, string> => ({
   ...(Object.fromEntries(Object.entries(process.env).filter(([, v]) => v !== undefined)) as Record<string, string>),
@@ -32,13 +35,13 @@ type Result = { content: { type: string; text: string }[]; structuredContent?: S
 async function connectStdio(extraEnv: Record<string, string> = {}): Promise<Harness> {
   const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'conformo-mcp-stdio-'));
   const client = new Client({ name: 'mcp-server-test', version: '0.0.0' });
-  await client.connect(new StdioClientTransport({ command: process.execPath, args: [tsxCli, serverTs], cwd, env: childEnv(extraEnv), stderr: 'pipe' }));
+  await client.connect(new StdioClientTransport({ command: process.execPath, args: ['--import', tsxLoader, serverTs], cwd, env: childEnv(extraEnv), stderr: 'pipe' }));
   return { client, cwd, stop: async () => { await client.close(); fs.rmSync(cwd, { recursive: true, force: true }); } };
 }
 
 async function connectHttp(): Promise<Harness> {
   const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'conformo-mcp-http-'));
-  const child: ChildProcess = spawn(process.execPath, [tsxCli, serverTs, '--http', '--port', '0', '--max-body-bytes', '200000'], { cwd, env: childEnv(), stdio: ['ignore', 'ignore', 'pipe'] });
+  const child: ChildProcess = spawn(process.execPath, ['--import', tsxLoader, serverTs, '--http', '--port', '0', '--max-body-bytes', '200000'], { cwd, env: childEnv(), stdio: ['ignore', 'ignore', 'pipe'] });
   const url = await new Promise<string>((resolve, reject) => {
     let buf = '';
     const timer = setTimeout(() => reject(new Error(`server did not start: ${buf}`)), 45_000);
@@ -53,7 +56,16 @@ async function connectHttp(): Promise<Harness> {
   await client.connect(new StreamableHTTPClientTransport(new URL(url)));
   return {
     client, cwd, baseUrl: url.replace(/\/mcp$/, ''),
-    stop: async () => { await client.close(); child.kill(); fs.rmSync(cwd, { recursive: true, force: true }); },
+    // kill() only sends the signal. Windows locks a live process's cwd, so removing it before 'exit' fails with EPERM.
+    stop: async () => {
+      await client.close();
+      if (child.exitCode === null && child.signalCode === null) {
+        const exited = new Promise<void>((resolve) => child.once('exit', () => resolve()));
+        child.kill();
+        await exited;
+      }
+      fs.rmSync(cwd, { recursive: true, force: true });
+    },
   };
 }
 

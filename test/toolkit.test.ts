@@ -53,14 +53,14 @@ describe('toolkit: parse, convert, explain, requirements', () => {
     expect(back.format).toBe('ubl-invoice');
     expect(back.invoice.number).toBe(german.number);
     expect((await validate(ubl.xml)).valid).toBe(true);
-  });
+  }, 30_000); // first Schematron run in this worker loads the XRechnung rule sets: ~4s under the full parallel suite
   it('parses a hybrid PDF and checks its visible totals', async () => {
     const { pdf } = await createPdf(german);
     const p = await parse(pdf);
     expect(p.origin).toBe('pdf');
     expect(p.invoice.number).toBe(german.number);
     expect(p.visibleTotals).toBeDefined();
-  });
+  }, 30_000); // builds and re-reads a full PDF/A-3: ~2s alone, past vitest's 5s default under the full parallel suite
   it('explains a rule with the publisher text and a plain-language note', () => {
     const e = explainRule('BR-CO-15');
     expect(e.found).toBe(true);

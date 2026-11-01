@@ -7,9 +7,16 @@ import { fromMajor, priceFromMajor, totals } from '@conformo/core';
 import type { Invoice } from '@conformo/core';
 import type { Minor } from '@conformo/core';
 
+/** Readers pass `text(el)!` for mandatory values. When the element is absent that is undefined, and the core
+ * decimal parser would fail on it with a TypeError; a missing value must be the same RangeError as a malformed one. */
+function present(text: string | undefined, what: string): string {
+  if (text === undefined) throw new RangeError(`missing ${what}: the element is absent`);
+  return text;
+}
+
 /** xs:decimal text -> Minor. Inverse of packages/formats/src/xml.ts's money(). */
-export function parseMoney(text: string): Minor {
-  return fromMajor(text);
+export function parseMoney(text: string | undefined): Minor {
+  return fromMajor(present(text, 'amount'));
 }
 
 /** xs:decimal text -> number. Inverse of dec()/decimalToString(). */
@@ -61,8 +68,8 @@ export function pickLineExemption(
 }
 
 /** xs:decimal text of a unit price -> (possibly fractional) minor units. Inverse of price(). */
-export function parsePrice(text: string): number {
-  return priceFromMajor(text.trim());
+export function parsePrice(text: string | undefined): number {
+  return priceFromMajor(present(text, 'price').trim());
 }
 
 /** A line id equal to its 1-based position is the writer's default, so reading it back leaves `id` unset. */
