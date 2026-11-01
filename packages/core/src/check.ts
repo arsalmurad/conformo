@@ -39,6 +39,7 @@ const CURRENCY = /^[A-Z]{3}$/;
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const blank = (v: unknown): boolean => v === undefined || v === null || (typeof v === 'string' && v.trim() === '');
+const str = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
 
 function validDate(s: string): boolean {
   if (!ISO_DATE.test(s)) return false;
@@ -77,6 +78,19 @@ export function checkInvoice(input: unknown): InvoiceIssue[] {
     if (typeof v !== 'number' || !Number.isSafeInteger(v)) err(path, bt, `${label} must be an integer in minor units (e.g. 1999 for 19.99), got ${JSON.stringify(v)}`);
   };
 
+  /** A plain-JS caller can pass anything: a list that is not an array is reported, never iterated into a TypeError. */
+  const list = <T,>(v: unknown, path: string, bt: string): T[] => {
+    if (v === undefined || v === null) return [];
+    if (!Array.isArray(v)) { err(path, bt, `must be an array, got ${typeof v}`); return []; }
+    return v as T[];
+  };
+  /** Every optional text field must be a string when present: a wrong type is the caller's input error (InvoiceInputError), not a crash
+   * deep inside a serializer ("q.electronicAddress.includes is not a function"). */
+  const optTexts = (o: unknown, path: string, fields: Record<string, string>) => {
+    if (!isObj(o)) return;
+    for (const [k, bt] of Object.entries(fields)) optText(o[k], `${path}.${k}`, bt, k);
+  };
+
   const category = (v: unknown, path: string, bt: string) => {
     if (typeof v !== 'string' || !/^[A-Z]{1,2}$/.test(v)) err(path, bt, `VAT category must be a UNCL5305 code such as ${CATEGORIES.join(', ')}, got ${JSON.stringify(v)}`);
     else if (!CATEGORIES.includes(v)) add('warning', path, bt, `VAT category ${v} is not an EN 16931 category (${CATEGORIES.join(', ')}); only a national CIUS may use it`);
@@ -112,19 +126,31 @@ export function checkInvoice(input: unknown): InvoiceIssue[] {
     if (!isObj(p)) { err(path, s ? 'BG-4' : 'BG-7', `${who} is required`); return; }
     const q = p as unknown as Invoice['seller'];
     needText(q.name, `${path}.name`, s ? 'BT-27' : 'BT-44', `${who} name`);
+    optTexts(q, path, s
+      ? { tradingName: 'BT-28', id: 'BT-29', idScheme: 'BT-29-1', legalId: 'BT-30', legalIdScheme: 'BT-30-1', vatId: 'BT-31', taxRegistrationId: 'BT-32',
+          additionalLegalInfo: 'BT-33', street: 'BT-35', street2: 'BT-36', street3: 'BT-162', city: 'BT-37', postcode: 'BT-38', subdivision: 'BT-39',
+          electronicAddress: 'BT-34', electronicAddressScheme: 'BT-34-1' }
+      : { tradingName: 'BT-45', id: 'BT-46', idScheme: 'BT-46-1', legalId: 'BT-47', legalIdScheme: 'BT-47-1', vatId: 'BT-48', street: 'BT-50',
+          street2: 'BT-51', street3: 'BT-163', city: 'BT-52', postcode: 'BT-53', subdivision: 'BT-54', electronicAddress: 'BT-49', electronicAddressScheme: 'BT-49-1' });
     if (typeof q.country !== 'string' || !COUNTRY.test(q.country)) err(`${path}.country`, s ? 'BT-40' : 'BT-55', `${who} country must be a 2-letter ISO 3166-1 code such as DE, got ${JSON.stringify(q.country)}`);
     if (q.legalId && !q.legalIdScheme) add('warning', `${path}.legalIdScheme`, s ? 'BT-30' : 'BT-47', 'legalId has no scheme: EN 16931 allows that, but Peppol, XRechnung and the French rules expect an ISO 6523 ICD code such as 0002. Conformo never invents one.');
-    if (q.electronicAddress && !q.electronicAddressScheme && !q.electronicAddress.includes('@')) {
+    const address = str(q.electronicAddress);
+    if (address && !q.electronicAddressScheme && !address.includes('@')) {
       err(`${path}.electronicAddressScheme`, s ? 'BT-34' : 'BT-49', 'is required unless electronicAddress is an e-mail address (an EAS code such as 0204 for a Leitweg-ID)');
     }
-    (q.additionalIds ?? []).forEach((a, i) => { if (blank(a?.id)) err(`${path}.additionalIds[${i}].id`, s ? 'BT-29' : 'BT-46', 'identifier is required'); });
+    list<{ id?: unknown }>(q.additionalIds, `${path}.additionalIds`, s ? 'BT-29' : 'BT-46').forEach((a, i) => {
+      if (blank(a?.id)) err(`${path}.additionalIds[${i}].id`, s ? 'BT-29' : 'BT-46', 'identifier is required');
+      else if (typeof a.id !== 'string') err(`${path}.additionalIds[${i}].id`, s ? 'BT-29' : 'BT-46', 'identifier must be a string');
+    });
     if (q.contact !== undefined && !isObj(q.contact)) err(`${path}.contact`, s ? 'BG-6' : 'BG-9', 'must be an object');
+    optTexts(q.contact, `${path}.contact`, s ? { name: 'BT-41', phone: 'BT-42', email: 'BT-43' } : { name: 'BT-56', phone: 'BT-57', email: 'BT-58' });
   };
   party(inv.seller, 'seller', 'seller');
   party(inv.buyer, 'buyer', 'buyer');
   if (isObj(inv.seller) && !inv.seller.vatId && !inv.seller.taxRegistrationId && !inv.taxRepresentative && inv.lines?.some?.((l) => l?.taxCategory === 'S')) {
     add('warning', 'seller.vatId', 'BT-31', 'a standard-rated invoice needs the seller VAT id (BT-31), tax registration id (BT-32) or a tax representative (BR-S-02)');
   }
+  optTexts(inv.taxRepresentative, 'taxRepresentative', { street: 'BT-64', street2: 'BT-65', street3: 'BT-164', city: 'BT-66', postcode: 'BT-67', subdivision: 'BT-68' });
   if (inv.taxRepresentative !== undefined) {
     const t = inv.taxRepresentative;
     if (!isObj(t)) err('taxRepresentative', 'BG-11', 'must be an object');
@@ -143,16 +169,24 @@ export function checkInvoice(input: unknown): InvoiceIssue[] {
   }
   if (inv.delivery?.country !== undefined && !COUNTRY.test(inv.delivery.country)) err('delivery.country', 'BT-80', 'must be a 2-letter ISO 3166-1 code');
   optDate(inv.delivery?.date, 'delivery.date', 'BT-72', 'delivery date');
-  (inv.precedingInvoices ?? []).forEach((r, i) => {
+  if (inv.delivery !== undefined && !isObj(inv.delivery)) err('delivery', 'BG-13', 'must be an object');
+  optTexts(inv.delivery, 'delivery', { partyName: 'BT-70', locationId: 'BT-71', street: 'BT-75', street2: 'BT-76', street3: 'BT-165', city: 'BT-77', postcode: 'BT-78', subdivision: 'BT-79' });
+  list<{ number?: unknown; issueDate?: unknown }>(inv.precedingInvoices, 'precedingInvoices', 'BG-3').forEach((r, i) => {
     needText(r?.number, `precedingInvoices[${i}].number`, 'BT-25', 'preceding invoice number');
     optDate(r?.issueDate, `precedingInvoices[${i}].issueDate`, 'BT-26', 'preceding invoice date');
   });
-  (inv.notes ?? []).forEach((n, i) => needText(n?.text, `notes[${i}].text`, 'BT-22', 'note text'));
+  list<{ text?: unknown; subjectCode?: unknown }>(inv.notes, 'notes', 'BG-1').forEach((n, i) => {
+    needText(n?.text, `notes[${i}].text`, 'BT-22', 'note text');
+    optText(n?.subjectCode, `notes[${i}].subjectCode`, 'BT-21', 'note subject code');
+  });
 
   if (inv.payment === undefined) add('warning', 'payment', 'BG-16', 'no payment instructions: XRechnung (BR-DE-1) and most buyers need payment.meansCode (BT-81), e.g. "58" for a SEPA credit transfer, and payment.iban (BT-84)');
   else if (!isObj(inv.payment)) err('payment', 'BG-16', 'must be an object with meansCode (BT-81), e.g. { meansCode: "58", iban: "DE89..." }');
   else {
     needText(inv.payment.meansCode, 'payment.meansCode', 'BT-81', 'payment means code (UNTDID 4461, e.g. "58")');
+    optTexts(inv.payment, 'payment', { meansText: 'BT-82', reference: 'BT-83', iban: 'BT-84', accountName: 'BT-85', bic: 'BT-86' });
+    if (inv.payment.directDebit !== undefined && !isObj(inv.payment.directDebit)) err('payment.directDebit', 'BG-19', 'must be an object');
+    optTexts(inv.payment.directDebit, 'payment.directDebit', { mandateId: 'BT-89', creditorId: 'BT-90', debitedAccountIban: 'BT-91' });
     if ((inv.payment.meansCode === '58' || inv.payment.meansCode === '30') && !inv.payment.iban) {
       add('warning', 'payment.iban', 'BT-84', `payment means ${inv.payment.meansCode} is a credit transfer but no IBAN (BT-84) is given (BR-50)`);
     }
@@ -162,16 +196,16 @@ export function checkInvoice(input: unknown): InvoiceIssue[] {
     if (inv.payment.meansCode === '59' && !inv.payment.directDebit?.mandateId) {
       add('warning', 'payment.directDebit.mandateId', 'BT-89', 'payment means 59 (SEPA direct debit) normally needs the mandate reference (BT-89) and creditor id (BT-90)');
     }
-    (inv.payment.additionalAccounts ?? []).forEach((a, i) => needText(a?.iban, `payment.additionalAccounts[${i}].iban`, 'BT-84', 'account identifier'));
+    list<{ iban?: unknown }>(inv.payment.additionalAccounts, 'payment.additionalAccounts', 'BG-17').forEach((a, i) => needText(a?.iban, `payment.additionalAccounts[${i}].iban`, 'BT-84', 'account identifier'));
     if (inv.payment.card && blank(inv.payment.card.pan)) err('payment.card.pan', 'BT-87', 'card number (last digits) is required');
   }
 
-  (inv.attachments ?? []).forEach((a, i) => {
+  list<NonNullable<Invoice['attachments']>[number]>(inv.attachments, 'attachments', 'BG-24').forEach((a, i) => {
     needText(a?.id, `attachments[${i}].id`, 'BT-122', 'supporting document reference');
     if (a?.content && (blank(a.mimeCode) || blank(a.filename))) err(`attachments[${i}].mimeCode`, 'BT-125', 'an embedded attachment needs mimeCode (BT-125-1) and filename (BT-125-2)');
   });
 
-  (inv.statedVatAmounts ?? []).forEach((x, i) => {
+  list<{ amountMinor?: unknown }>(inv.statedVatAmounts, 'statedVatAmounts', 'BG-23').forEach((x, i) => {
     if (!Number.isSafeInteger(x?.amountMinor)) err(`statedVatAmounts[${i}].amountMinor`, 'BT-117', 'must be an integer in minor units');
   });
 
@@ -195,6 +229,9 @@ export function checkInvoice(input: unknown): InvoiceIssue[] {
       const p = `lines[${i}]`;
       if (!isObj(l)) { err(p, 'BG-25', 'must be an object'); return; }
       needText(l.name, `${p}.name`, 'BT-153', 'item name');
+      optTexts(l, p, { id: 'BT-126', note: 'BT-127', objectId: 'BT-128', orderLineReference: 'BT-132', buyerAccountingReference: 'BT-133', description: 'BT-154',
+        sellerAssignedId: 'BT-155', buyerAssignedId: 'BT-156', standardItemId: 'BT-157', unitCode: 'BT-130', priceBaseUnitCode: 'BT-150',
+        exemptionReason: 'BT-120', exemptionCode: 'BT-121' });
       needNumber(l.quantity, `${p}.quantity`, 'BT-129', 'quantity');
       if (typeof l.unitPriceMinor !== 'number' || !Number.isFinite(l.unitPriceMinor)) err(`${p}.unitPriceMinor`, 'BT-146', 'net unit price is required (minor units; may be fractional for sub-cent prices)');
       category(l.taxCategory, `${p}.taxCategory`, 'BT-151');
@@ -211,14 +248,14 @@ export function checkInvoice(input: unknown): InvoiceIssue[] {
         l.netAmountMinor !== computedLineNet(l)) add('warning', `${p}.netAmountMinor`, 'BT-131', 'stated line net amount differs from quantity x price (+charges -allowances); the stated value is used');
       optDate(l.periodStart, `${p}.periodStart`, 'BT-134', 'line period start');
       optDate(l.periodEnd, `${p}.periodEnd`, 'BT-135', 'line period end');
-      for (const [list, doc] of [[l.allowances, 'allowance'], [l.charges, 'charge']] as const) {
-        (list ?? []).forEach((a, j) => {
+      for (const [items, doc] of [[l.allowances, 'allowance'], [l.charges, 'charge']] as const) {
+        list<NonNullable<typeof items>[number]>(items, `${p}.${doc === 'allowance' ? 'allowances' : 'charges'}`, doc === 'allowance' ? 'BG-27' : 'BG-28').forEach((a, j) => {
           minor(a?.amountMinor, `${p}.${doc === 'allowance' ? 'allowances' : 'charges'}[${j}].amountMinor`, doc === 'allowance' ? 'BT-136' : 'BT-141', `line ${doc} amount`, true);
           if (blank(a?.reason) && blank(a?.reasonCode)) err(`${p}.${doc === 'allowance' ? 'allowances' : 'charges'}[${j}].reason`, doc === 'allowance' ? 'BT-139' : 'BT-144', `line ${doc} needs a reason text or reason code`);
         });
       }
-      (l.classifications ?? []).forEach((c, j) => { if (blank(c?.code) || blank(c?.scheme)) err(`${p}.classifications[${j}]`, 'BT-158', 'code and scheme (BT-158-1) are required'); });
-      (l.attributes ?? []).forEach((a, j) => { if (blank(a?.name) || blank(a?.value)) err(`${p}.attributes[${j}]`, 'BG-32', 'name (BT-160) and value (BT-161) are required'); });
+      list<{ code?: unknown; scheme?: unknown }>(l.classifications, `${p}.classifications`, 'BT-158').forEach((c, j) => { if (blank(c?.code) || blank(c?.scheme)) err(`${p}.classifications[${j}]`, 'BT-158', 'code and scheme (BT-158-1) are required'); });
+      list<{ name?: unknown; value?: unknown }>(l.attributes, `${p}.attributes`, 'BG-32').forEach((a, j) => { if (blank(a?.name) || blank(a?.value)) err(`${p}.attributes[${j}]`, 'BG-32', 'name (BT-160) and value (BT-161) are required'); });
     });
   }
   return issues;

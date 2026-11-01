@@ -87,3 +87,37 @@ describe('checkInvoice(): mistakes the Schematron would reject later', () => {
     expect(checkInvoice(inv).find((i) => i.path === 'lines[0].taxRate')).toMatchObject({ severity: 'warning', bt: 'BT-152' });
   });
 });
+
+describe('checkInvoice(): wrongly typed fields from plain JavaScript are input errors, not TypeErrors', () => {
+  // Found by a live test: electronicAddress passed as an object reached `q.electronicAddress.includes(...)` and threw
+  // "q.electronicAddress.includes is not a function" out of the serializer instead of an InvoiceInputError.
+  const wrong: [string, (inv: Record<string, any>) => void][] = [
+    ['seller.electronicAddress', (i) => { i.seller.electronicAddress = { value: 'a@b.example' }; }],
+    ['buyer.electronicAddress', (i) => { i.buyer.electronicAddress = 42; }],
+    ['seller.vatId', (i) => { i.seller.vatId = 123456789; }],
+    ['seller.city', (i) => { i.seller.city = ['Berlin']; }],
+    ['seller.contact.email', (i) => { i.seller.contact = { email: true }; }],
+    ['buyer.postcode', (i) => { i.buyer.postcode = 50667; }],
+    ['payment.iban', (i) => { i.payment = { meansCode: '58', iban: { iban: 'DE89' } }; }],
+    ['lines[0].unitCode', (i) => { i.lines[0].unitCode = 1; }],
+    ['lines[0].description', (i) => { i.lines[0].description = {}; }],
+    ['notes', (i) => { i.notes = 'just a string'; }],
+    ['notes[0].subjectCode', (i) => { i.notes = [{ text: 'x', subjectCode: 7 }]; }],
+    ['seller.additionalIds', (i) => { i.seller.additionalIds = 'X1'; }],
+    ['lines[0].allowances', (i) => { i.lines[0].allowances = { amountMinor: 1 }; }],
+    ['lines[0].classifications', (i) => { i.lines[0].classifications = 'CPV'; }],
+    ['delivery', (i) => { i.delivery = 'tomorrow'; }],
+  ];
+  for (const [path, mutate] of wrong) {
+    it(`${path} with the wrong type`, () => {
+      const inv = structuredClone(ok) as unknown as Record<string, any>;
+      mutate(inv);
+      expect(checkInvoice(inv).some((x) => x.severity === 'error' && x.path === path)).toBe(true);
+      for (const build of [() => buildCII(inv as unknown as Invoice), () => buildUBL(inv as unknown as Invoice), () => buildCII(inv as unknown as Invoice, { profile: 'xrechnung' })]) {
+        let thrown: unknown;
+        try { build(); } catch (e) { thrown = e; }
+        expect(thrown, path).toBeInstanceOf(InvoiceInputError);
+      }
+    });
+  }
+});
