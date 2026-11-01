@@ -4,6 +4,8 @@ import { BASE_URL } from './baseUrl.js';
 export interface ComplianceCountry {
   country: string;
   name: string;
+  /** The dataset lists a format this app produces (scripts/copy-compliance-data.mjs). */
+  supported: boolean;
 }
 
 /** Fetches the {country, name} list scripts/copy-compliance-data.mjs writes

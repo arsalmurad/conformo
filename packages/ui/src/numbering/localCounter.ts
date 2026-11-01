@@ -12,14 +12,16 @@
  * series cannot both observe the same starting value.
  */
 const DB_NAME = 'conformo-numbering';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE = 'counters';
+const ISSUED = 'issued';
 
 function openDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
     req.onupgradeneeded = () => {
       if (!req.result.objectStoreNames.contains(STORE)) req.result.createObjectStore(STORE);
+      if (!req.result.objectStoreNames.contains(ISSUED)) req.result.createObjectStore(ISSUED);
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
@@ -58,4 +60,42 @@ export async function peekCounterValue(seriesId: string): Promise<number> {
   });
   db.close();
   return value;
+}
+
+/** "Continue my numbering from my old tool": the next nextCounterValue() call returns `next`. Only moves forward or
+ * sets a fresh series; the gapless guarantee is about never handing out a number twice, and a user who says their
+ * old tool already issued up to 142 is telling us exactly which numbers are taken. */
+export async function setNextCounterValue(seriesId: string, next: number): Promise<void> {
+  if (!Number.isSafeInteger(next) || next < 1) throw new RangeError('the next number must be a whole number of at least 1');
+  const db = await openDb();
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).put(next - 1, seriesId);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+  db.close();
+}
+
+/** Numbers of invoices downloaded on this device, so a hand-typed number that repeats one gets a warning. */
+export async function recordIssuedNumber(number: string): Promise<void> {
+  const db = await openDb();
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(ISSUED, 'readwrite');
+    tx.objectStore(ISSUED).put(Date.now(), number);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+  db.close();
+}
+
+export async function wasIssued(number: string): Promise<boolean> {
+  const db = await openDb();
+  const found = await new Promise<boolean>((resolve, reject) => {
+    const req = db.transaction(ISSUED, 'readonly').objectStore(ISSUED).get(number);
+    req.onsuccess = () => resolve(req.result !== undefined);
+    req.onerror = () => reject(req.error);
+  });
+  db.close();
+  return found;
 }

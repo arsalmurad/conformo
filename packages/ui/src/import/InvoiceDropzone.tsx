@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import type { Invoice } from '@conformo/core';
 import { pdfjsReady } from '../pdfjsWorker.js';
+import { useI18n } from '../i18n/I18n.js';
 
 interface Props {
   onImport: (invoice: Invoice) => void;
@@ -29,6 +30,7 @@ function isPdf(bytes: Uint8Array): boolean {
  * safeguard.
  */
 export function InvoiceDropzone({ onImport }: Props) {
+  const { t } = useI18n();
   const [status, setStatus] = useState<Status>({ kind: 'idle' });
   const [dragOver, setDragOver] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -41,7 +43,7 @@ export function InvoiceDropzone({ onImport }: Props) {
     setStatus({ kind: 'idle' });
     try {
       if (file.size > MAX_BYTES) {
-        setStatus({ kind: 'error', message: `File is ${(file.size / 1e6).toFixed(1)} MB; the limit is 20 MB.` });
+        setStatus({ kind: 'error', message: t.import.tooBig((file.size / 1e6).toFixed(1)) });
         return;
       }
       const bytes = new Uint8Array(await file.arrayBuffer());
@@ -52,31 +54,23 @@ export function InvoiceDropzone({ onImport }: Props) {
         const result = await readInvoiceFromPdf(bytes);
         if (result.visibleTotals.checked && result.visibleTotals.mismatches.length > 0) {
           const fields = result.visibleTotals.mismatches.map((m) => m.label).join(', ');
-          setStatus({
-            kind: 'error',
-            message: `Refusing to import: this PDF's visible ${fields} do not match its embedded XML. ` +
-              `That can mean the page or the XML was altered after the invoice was issued.`,
-          });
+          setStatus({ kind: 'error', message: t.import.tampered(fields) });
           return;
         }
         onImport(result.invoice);
-        setStatus({
-          kind: 'success',
-          message: `Imported ${result.format.toUpperCase()} invoice ${result.invoice.number} from ${file.name}` +
-            (result.visibleTotals.checked ? ' (visible totals match the embedded XML).' : '.'),
-        });
+        setStatus({ kind: 'success', message: t.import.done(result.invoice.number, file.name) });
       } else {
         const xml = new TextDecoder().decode(bytes);
         const result = detectXmlFormat(xml);
         onImport(result.invoice);
-        setStatus({ kind: 'success', message: `Imported ${result.format} invoice ${result.invoice.number} from ${file.name}.` });
+        setStatus({ kind: 'success', message: t.import.done(result.invoice.number, file.name) });
       }
     } catch (err) {
       setStatus({ kind: 'error', message: (err as Error).message });
     } finally {
       setBusy(false);
     }
-  }, [onImport]);
+  }, [onImport, t]);
 
   return (
     <div
@@ -89,9 +83,8 @@ export function InvoiceDropzone({ onImport }: Props) {
         void handleFile(e.dataTransfer.files?.[0]);
       }}
     >
-      <span className="field-label">Import an invoice (replaces the current draft)</span>
-      <label className="file-picker-button" htmlFor="invoice-import-input">
-        Choose file
+      <label className="btn btn-secondary file-picker-button" htmlFor="invoice-import-input">
+        {t.actions.import}
         <input
           id="invoice-import-input"
           className="file-input-hidden"
@@ -101,8 +94,8 @@ export function InvoiceDropzone({ onImport }: Props) {
           onChange={(e) => void handleFile(e.target.files?.[0])}
         />
       </label>
-      <p className="file-picker-name">{fileName ?? 'No file chosen'}</p>
-      <p className="invoice-dropzone-hint">Factur-X/ZUGFeRD PDF, CII, UBL or XRechnung XML. Drag a file here or use the picker.</p>
+      {fileName && <p className="file-picker-name">{fileName}</p>}
+      <p className="more-note">{t.actions.importHint}</p>
       {status.kind === 'error' && <p className="field-hint invoice-dropzone-error">{status.message}</p>}
       {status.kind === 'success' && <p className="field-hint invoice-dropzone-success">{status.message}</p>}
     </div>

@@ -4,12 +4,15 @@ import { mkdtempSync, copyFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { fillLine, fillParty, openApp, section } from './helpers.js';
 
 // `__dirname` doesn't exist in real ESM (this repo is "type": "module") —
 // used to fail here silently under some TS transpilation setups, works
 // under others; this is the portable form regardless of how Playwright's
 // runner happens to load this file.
 const here = path.dirname(fileURLToPath(import.meta.url));
+
+test.use({ locale: 'en-US' });
 
 /**
  * The end-to-end gate. Creates a real invoice through the
@@ -21,46 +24,22 @@ const here = path.dirname(fileURLToPath(import.meta.url));
  * valid invoice."
  */
 test('creates an invoice end to end and the downloaded PDF passes tools/validate.py', async ({ page }) => {
-  await page.goto('/');
+  await openApp(page);
+  await page.getByRole('radio', { name: /A business in another EU country/ }).check();
 
-  const discardBtn = page.getByRole('button', { name: /discard it and start a new invoice/i });
-  if (await discardBtn.isVisible().catch(() => false)) {
-    await discardBtn.click();
-  }
+  await fillParty(page, 'seller', { name: 'Northwind Studio SARL', street: '12 Rue Exemple', postcode: '75004', city: 'Paris', country: 'France', vatId: 'FR32123456789' });
+  await fillParty(page, 'buyer', { name: 'Handelsgesellschaft Muster GmbH', street: 'Hauptstrasse 8', postcode: '10115', city: 'Berlin', country: 'Germany' });
+  // The gapless local sequence is the default: one click takes its next number.
+  await section(page, 'lines').getByRole('button', { name: /^Use next number/ }).click();
+  await expect(section(page, 'lines').getByLabel('Invoice number')).toHaveValue(/^INV-\d{4}-\d{4}$/);
+  await section(page, 'lines').getByLabel('Invoice date').fill('2026-09-22');
+  await fillLine(page, { name: 'Website design', quantity: '1', price: '1000' });
+  await section(page, 'payment').getByLabel('IBAN').fill('FR7630006000011234567890189');
 
-  await expect(page.getByRole('button', { name: /assign next number/i })).toBeVisible();
-  await page.getByRole('button', { name: /assign next number/i }).click();
-  await expect(page.getByRole('button', { name: /assign next number/i })).not.toBeVisible();
-
-  await page.getByLabel('Currency').fill('EUR');
-  await page.getByLabel('Issue date').fill('2026-09-22');
-
-  const seller = page.locator('fieldset.party').filter({ hasText: 'Seller' });
-  await seller.getByLabel('Name').fill('Northwind Studio SARL');
-  await seller.getByLabel('Street').fill('12 Rue Exemple');
-  await seller.getByLabel('Postcode').fill('75004');
-  await seller.getByLabel('City').fill('Paris');
-  await seller.getByLabel('Country').fill('FR');
-  await seller.getByLabel('VAT number').fill('FR32123456789');
-
-  const buyer = page.locator('fieldset.party').filter({ hasText: 'Buyer' });
-  await buyer.getByLabel('Name').fill('Handelsgesellschaft Muster GmbH');
-  await buyer.getByLabel('Street').fill('Hauptstrasse 8');
-  await buyer.getByLabel('Postcode').fill('10115');
-  await buyer.getByLabel('City').fill('Berlin');
-  await buyer.getByLabel('Country').fill('DE');
-
-  await page.getByPlaceholder('Description').fill('Website design');
-  const lineRow = page.locator('.line-row').first();
-  await lineRow.locator('.line-price').fill('1000');
-  await lineRow.locator('.line-rate').fill('20');
-
-  await page.getByLabel('IBAN').fill('FR7630006000011234567890189');
-
-  await expect(page.getByText(/Passes EN 16931/i)).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('heading', { name: 'Accepted under EN 16931' })).toBeVisible({ timeout: 15_000 });
 
   const downloadPromise = page.waitForEvent('download');
-  await page.getByRole('button', { name: /download pdf/i }).click();
+  await page.getByRole('button', { name: 'Download e-invoice (PDF)' }).click();
   const download = await downloadPromise;
 
   const tmpDir = mkdtempSync(path.join(tmpdir(), 'invoice-e2e-'));
@@ -110,22 +89,18 @@ test('creates an invoice end to end and the downloaded PDF passes tools/validate
  * build-PDF -> pdf.js render -> blit-to-visible-canvas pipeline completes,
  * so it's a real completion signal, not a proxy for one.
  */
-test('live preview reflects an edit within 500ms', async ({ page }) => {
-  await page.goto('/');
 
-  const discardBtn = page.getByRole('button', { name: /discard it and start a new invoice/i });
-  if (await discardBtn.isVisible().catch(() => false)) {
-    await discardBtn.click();
-  }
+test('live preview reflects an edit within 500ms', async ({ page }) => {
+  await openApp(page);
 
   const canvas = page.locator('.preview-panel canvas');
   await expect(canvas).toBeVisible();
-  await expect(page.getByText(/Live preview — this is the PDF/i)).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText('This is the PDF you will download.')).toBeVisible({ timeout: 10_000 });
 
   const before = await canvas.getAttribute('data-rendered-generation');
 
   const start = Date.now();
-  await page.getByLabel('Currency').fill('USD');
+  await page.getByLabel('Currency').selectOption('USD');
 
   await expect.poll(() => canvas.getAttribute('data-rendered-generation'), { timeout: 2_000, intervals: [10] }).not.toBe(before);
   const elapsed = Date.now() - start;
@@ -141,9 +116,7 @@ test('live preview reflects an edit within 500ms', async ({ page }) => {
  * eyeballing a screenshot.
  */
 test('live preview has no iframe/blob chrome', async ({ page }) => {
-  await page.goto('/');
-  const discardBtn = page.getByRole('button', { name: /discard it and start a new invoice/i });
-  if (await discardBtn.isVisible().catch(() => false)) await discardBtn.click();
+  await openApp(page);
 
   await expect(page.locator('.preview-panel canvas')).toBeVisible();
   await expect(page.locator('.preview-panel iframe')).toHaveCount(0);
@@ -156,12 +129,10 @@ test('live preview has no iframe/blob chrome', async ({ page }) => {
 for (const width of [1440, 390]) {
   test(`live preview canvas has real content at ${width}px wide`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
-    await page.goto('/');
-    const discardBtn = page.getByRole('button', { name: /discard it and start a new invoice/i });
-    if (await discardBtn.isVisible().catch(() => false)) await discardBtn.click();
+    await openApp(page);
 
-    if (width < 768) {
-      await page.getByRole('tab', { name: 'Preview' }).click();
+    if (width < 900) {
+      await page.getByRole('button', { name: /^Preview/ }).click();
     }
 
     const canvas = page.locator('.preview-panel canvas');

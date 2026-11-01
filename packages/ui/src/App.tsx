@@ -1,76 +1,166 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { Invoice } from '@conformo/core';
 import type { TemplateId } from '@conformo/pdf';
 import { TEMPLATES } from '@conformo/pdf';
+import { AUDIENCES, applyAudience, defaultAudience, isAudienceId, type AudienceId } from './audience.js';
+import { useI18n } from './i18n/I18n.js';
+import type { Strings } from './i18n/strings.js';
 import { useInvoiceDraft } from './state/useInvoiceDraft.js';
+import { emptyInvoice } from './state/emptyInvoice.js';
 import { useLiveValidation } from './validation/useLiveValidation.js';
 import { useTouchedFields } from './validation/useTouchedFields.js';
-import { visibleIssues, type Issue } from './validation/visibleIssues.js';
+import { describe, type Described } from './validation/messages.js';
+import type { Problem } from './validation/problems.js';
 import { useComplianceCountries } from './useComplianceCountries.js';
+import { useNumbering } from './numbering/useNumbering.js';
+import { recordIssuedNumber } from './numbering/localCounter.js';
 import { InvoiceEditor } from './editor/InvoiceEditor.js';
-import { InvoiceDropzone } from './import/InvoiceDropzone.js';
+import { NotesField } from './editor/NotesField.js';
+import { BillingPanel } from './editor/BillingPanel.js';
+import { PaymentLinkField } from './editor/PaymentLinkField.js';
+import { LogoUpload } from './editor/LogoUpload.js';
+import { fieldId } from './editor/Field.js';
 import { InvoicePreview } from './preview/InvoicePreview.js';
-import { buildInvoicePdf, downloadPdf, type EmbeddableLogo } from './pdf/exportPdf.js';
+import { buildDraftPdf, buildInvoicePdf, downloadPdf, type EmbeddableLogo } from './pdf/exportPdf.js';
 import { UnlockScreen } from './UnlockScreen.js';
+import { SiteHeader } from './chrome/SiteHeader.js';
+import { AudiencePicker } from './chrome/AudiencePicker.js';
+import { MoreMenu } from './chrome/MoreMenu.js';
+import { Verdict } from './chrome/Verdict.js';
+import './chrome/site-header.css';
 import './App.css';
 
-/** Only France's and Germany's (XRechnung) CIUS rule sets are actually compiled into this build (see
- * CLAUDE.md invariant 6: "never claim compliance, show it"). The selector
- * still lists every country packages/compliance-data ships, so adding a
- * country to the dataset grows this list on its own, but every option
- * except France stays disabled until its own layer is compiled and proven —
- * an unimplemented option must never look choosable. */
-const COMPILED_COUNTRIES = new Set(['FR', 'DE']);
+const AUDIENCE_KEY = 'conformo.audience';
 
-/** Scrolls to and focuses the input an issue was attributed to (Part C:
- * "clicking an issue scrolls to and focuses the offending field"). Also
- * marks the field touched, so its own inline error appears in place too —
- * clicking the summary and reading the field itself should never disagree. */
-function goToField(key: string, markTouched: (key: string) => void) {
-  markTouched(key);
-  const el = document.querySelector<HTMLElement>(`[data-field="${key}"]`);
-  if (!el) return;
-  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  el.focus();
+function initialAudience(): AudienceId {
+  try {
+    const saved = localStorage.getItem(AUDIENCE_KEY);
+    if (isAudienceId(saved)) return saved;
+  } catch { /* private mode */ }
+  return defaultAudience(typeof navigator !== 'undefined' ? navigator.languages ?? [navigator.language] : []);
+}
+
+/** The words a person reads for a field key, used in the verdict's links and in technical details. */
+export function labelFor(key: string, t: Strings, isB2G: boolean): string {
+  const f = t.fields;
+  const line = /^lines\.(\d+)\.(.+)$/.exec(key);
+  if (line) {
+    const sub: Record<string, string> = { name: f.lineName, quantity: f.quantity, unitPriceMinor: f.unitPrice, taxCategory: f.vatType, taxRate: f.vatRate, exemptionReason: f.exemptionReason };
+    return `${t.lines.line(Number(line[1]) + 1)}: ${sub[line[2]!] ?? line[2]}`;
+  }
+  const party = /^(seller|buyer)\.(.+)$/.exec(key);
+  if (party) {
+    const seller = party[1] === 'seller';
+    const sub: Record<string, string> = {
+      name: seller ? f.sellerName : f.buyerName, street: f.street, postcode: f.postcode, city: f.city, country: f.country,
+      vatId: seller ? f.vatId : f.buyerVatId, taxRegistrationId: f.taxRegistrationId, legalId: f.legalId,
+      electronicAddress: seller ? f.sellerEmail : f.buyerEmail, electronicAddressScheme: f.addressScheme,
+      'contact.name': f.contactName, 'contact.phone': f.contactPhone, 'contact.email': f.contactEmail,
+    };
+    return `${seller ? t.sections.seller : t.sections.buyer}: ${sub[party[2]!] ?? party[2]}`;
+  }
+  const plain: Record<string, string> = {
+    number: f.number, issueDate: f.issueDate, dueDate: f.dueDate, currency: f.currency,
+    buyerReference: isB2G ? f.leitwegId : f.buyerReference, businessProcess: f.businessProcess,
+    'notes.AAB': f.noteAAB, 'notes.PMD': f.notePMD, 'notes.PMT': f.notePMT,
+    'payment.iban': f.iban, 'payment.bic': f.bic, paymentTerms: f.paymentTerms,
+    totals: t.lines.total, lines: t.sections.lines,
+  };
+  return plain[key] ?? key;
 }
 
 export default function App() {
-  const { invoice, setInvoice, profiles, saveProfile, deleteProfile, lock, protectedSince, protect, unlock, discardLockedDraft } =
-    useInvoiceDraft();
-  const [country, setCountry] = useState<'FR' | 'DE' | undefined>(undefined);
+  const { t, lang } = useI18n();
+  const [audienceId, setAudienceId] = useState<AudienceId>(initialAudience);
+  const audience = AUDIENCES[audienceId];
+  const draft = useInvoiceDraft(() => applyAudience(emptyInvoice(AUDIENCES[audienceId].defaultSellerCountry, AUDIENCES[audienceId].defaultBuyerCountry), AUDIENCES[audienceId]));
+  const { invoice, setInvoice, profiles, saveProfile, deleteProfile, lock, protectedSince, protect, unlock, discardLockedDraft } = draft;
   const [template, setTemplate] = useState<TemplateId>('classic');
-  const [exporting, setExporting] = useState(false);
+  const [busy, setBusy] = useState<'pdf' | 'draft' | undefined>();
   const [paymentLink, setPaymentLink] = useState('');
   const [logo, setLogo] = useState<EmbeddableLogo | undefined>(undefined);
-  const validation = useLiveValidation(invoice, country);
-  const touchedFields = useTouchedFields();
-  const complianceCountries = useComplianceCountries();
-  const isUntouched = !invoice.number && !invoice.seller.name && !invoice.buyer.name && invoice.lines.every((l) => !l.name);
-  // Below 768px the editor and preview stack vertically (.workspace's own
-  // media query) — the preview used to be a long scroll below the entire
-  // form. This toggle switches which one is visible instead, so the preview
-  // is one tap away rather than at the bottom of the page. Both stay
-  // mounted (CSS-only show/hide, see .workspace.mobile-view-*) so switching
-  // back and forth never re-triggers a preview rebuild or loses form focus.
   const [mobileView, setMobileView] = useState<'form' | 'preview'>('form');
+  const validation = useLiveValidation(invoice, audience);
+  const touched = useTouchedFields();
+  const countries = useComplianceCountries();
+  const numbering = useNumbering();
+  const isB2G = audienceId === 'de-b2g';
+
+  const chooseAudience = useCallback((id: AudienceId) => {
+    setAudienceId(id);
+    try { localStorage.setItem(AUDIENCE_KEY, id); } catch { /* ignore */ }
+    setInvoice((inv: Invoice) => applyAudience(inv, AUDIENCES[id]));
+  }, [setInvoice]);
+
+  // Errors appear only for a field the user has left, or everywhere after a download attempt. 'lines'/'totals' are
+  // computed, so they follow the line fields.
+  const shown = useCallback((key: string) => {
+    if (touched.isVisible(key)) return true;
+    if (key === 'lines' || key === 'totals') return touched.isVisible('lines.0.name') || touched.isVisible('lines.0.unitPriceMinor');
+    return false;
+  }, [touched]);
+
+  const visible = useMemo(() => validation.problems.filter((p) => shown(p.key)), [validation.problems, shown]);
+  const byKey = useMemo(() => new Map<string, Problem>(visible.map((p) => [p.key, p])), [visible]);
+  const errorFor = useCallback((key: string): Described | undefined => {
+    const p = byKey.get(key);
+    return p ? describe(p, lang) : undefined;
+  }, [byKey, lang]);
+
+  const goTo = useCallback((key: string) => {
+    touched.markTouched(key);
+    setMobileView('form');
+    requestAnimationFrame(() => {
+      const el = document.getElementById(fieldId(key)) ?? document.querySelector<HTMLElement>(`[data-field="${key}"]`);
+      if (!el) return;
+      const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+      el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
+      el.focus({ preventScroll: true });
+    });
+  }, [touched]);
+
+  useEffect(() => {
+    if (lock.status === 'unlocked') document.title = lang === 'de' ? 'Conformo: E-Rechnung erstellen' : 'Conformo: make an e-invoice';
+  }, [lang, lock.status]);
 
   if (lock.status === 'checking') return null;
   if (lock.status === 'locked' || lock.status === 'wrong-passphrase') {
     return <UnlockScreen wrongPassphrase={lock.status === 'wrong-passphrase'} onUnlock={unlock} onDiscard={discardLockedDraft} />;
   }
 
-  async function exportPdf() {
-    touchedFields.revealAll(); // "validate the whole document on first export attempt"
-    setExporting(true);
+  const problems = validation.problems;
+  const draftLabel = t.actions.downloadDraft(audience.standard);
+  const options = { logo, paymentLink: paymentLink || undefined };
+
+  async function downloadEInvoice() {
+    setBusy('pdf');
     try {
-      const bytes = await buildInvoicePdf(invoice, template, { logo, paymentLink: paymentLink || undefined }, country === 'DE' ? 'xrechnung' : 'en16931');
+      const bytes = await buildInvoicePdf(invoice, template, options, audience.profile);
       downloadPdf(bytes, `${invoice.number || 'invoice'}.pdf`);
+      if (invoice.number) void recordIssuedNumber(invoice.number).catch(() => {});
     } finally {
-      setExporting(false);
+      setBusy(undefined);
     }
   }
 
+  async function downloadDraft() {
+    setBusy('draft');
+    try {
+      const bytes = await buildDraftPdf(invoice, template, options, lang === 'de' ? 'ENTWURF' : 'DRAFT',
+        lang === 'de' ? `Entwurf: keine gültige E-Rechnung (${audience.standard})` : `Draft: not a valid e-invoice (${audience.standard})`);
+      downloadPdf(bytes, `${invoice.number || 'invoice'}-draft.pdf`);
+    } finally {
+      setBusy(undefined);
+    }
+  }
+
+  function fixFirst() {
+    touched.revealAll();
+    const first = problems[0];
+    if (first) goTo(first.key);
+  }
+
   function exportJson() {
-    touchedFields.revealAll();
     const blob = new Blob([JSON.stringify(invoice, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -80,168 +170,72 @@ export default function App() {
     URL.revokeObjectURL(url);
   }
 
+  const ready = validation.accepted && !validation.checking && problems.length === 0;
+  const allMissing = problems.length > 0 && problems.every((p) => p.kind === 'missing');
+  let primary: React.ReactNode;
+  if (busy === 'pdf') primary = <button type="button" className="btn btn-primary" disabled>{t.actions.building}</button>;
+  else if (ready) primary = <button type="button" className="btn btn-primary" onClick={() => void downloadEInvoice()}>{t.actions.download}</button>;
+  else if (problems.length > 0) primary = <button type="button" className="btn btn-primary" onClick={fixFirst}>{allMissing ? t.actions.complete(problems.length) : t.actions.fix(problems.length)}</button>;
+  else primary = <button type="button" className="btn btn-primary" disabled>{t.actions.checking}</button>;
+
   return (
     <div className="app">
-      <header className="app-header">
-        <h1>Conformo</h1>
-        <div className="app-header-controls">
-          <label>
-            Country rules
-            <select value={country ?? ''} onChange={(e) => setCountry((e.target.value || undefined) as 'FR' | 'DE' | undefined)}>
-              <option value="">EN 16931 / ZUGFeRD (COMFORT)</option>
-              {complianceCountries.map((c) => (
-                <option key={c.country} value={c.country} disabled={!COMPILED_COUNTRIES.has(c.country)}>
-                  {c.country === 'FR' ? 'France (BR-FR Flux 2)' : c.country === 'DE' ? 'Germany 2027 (XRechnung profile, KoSIT rules)' : `${c.name} (coming soon)`}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Template
-            <select value={template} onChange={(e) => setTemplate(e.target.value as TemplateId)}>
-              {Object.entries(TEMPLATES).map(([id, t]) => (
-                <option key={id} value={id}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-      </header>
-
-      {isUntouched && (
-        <div className="empty-state">
-          <p>
-            <strong>Start with the invoice below, or drop one in.</strong>
-            A downloaded, EN 16931-valid PDF is a few fields away — no account, no server.
-          </p>
-        </div>
-      )}
-
-      {!protectedSince && <ProtectPrompt onProtect={protect} />}
-
-      <InvoiceDropzone onImport={setInvoice} />
-
-      <ValidationSummary
-        checking={validation.checking}
-        ready={validation.ready}
-        totalErrorCount={validation.errorCount}
-        issues={visibleIssues(validation, touchedFields)}
-        structuralError={validation.structuralError}
-        onIssueClick={(key) => goToField(key, touchedFields.markTouched)}
-      />
-
-      <div className="mobile-view-toggle" role="tablist" aria-label="Form or preview">
-        <button type="button" role="tab" aria-selected={mobileView === 'form'} className={mobileView === 'form' ? 'active' : ''} onClick={() => setMobileView('form')}>
-          Form
-        </button>
-        <button type="button" role="tab" aria-selected={mobileView === 'preview'} className={mobileView === 'preview' ? 'active' : ''} onClick={() => setMobileView('preview')}>
-          Preview
+      <a className="skip-link" href="#editor-start">{lang === 'de' ? 'Zum Formular springen' : 'Skip to the form'}</a>
+      <SiteHeader current="app" />
+      <div className="view-toggle" role="group" aria-label={`${t.actions.form} / ${t.actions.preview}`}>
+        <button type="button" aria-pressed={mobileView === 'form'} onClick={() => setMobileView('form')}>{t.actions.form}</button>
+        <button type="button" aria-pressed={mobileView === 'preview'} onClick={() => setMobileView('preview')}>
+          {t.actions.preview}
+          {problems.length > 0 && <span className="view-toggle-count" aria-label={t.actions.fix(problems.length)}>{problems.length}</span>}
         </button>
       </div>
-
-      <div className={`workspace mobile-view-${mobileView}`}>
-        <InvoiceEditor
-          invoice={invoice}
-          onChange={setInvoice}
-          validation={validation}
-          touchedFields={touchedFields}
-          profiles={profiles}
-          onSaveProfile={saveProfile}
-          onDeleteProfile={deleteProfile}
-          paymentLink={paymentLink}
-          onPaymentLinkChange={setPaymentLink}
-          logo={logo}
-          onLogoChange={setLogo}
-        />
-        <InvoicePreview invoice={invoice} template={template} logo={logo} paymentLink={paymentLink} />
-      </div>
-
-      <footer className="app-footer">
-        <div className="app-footer-actions">
-          <button type="button" onClick={exportJson}>
-            Export JSON
-          </button>
-          <button type="button" className="primary" onClick={exportPdf} disabled={exporting}>
-            {exporting ? 'Building PDF…' : 'Download PDF'}
-          </button>
+      <main className={`workspace view-${mobileView}`}>
+        <div className="form-col" id="editor-start">
+          <div className="form-top">
+            <AudiencePicker value={audienceId} onChange={chooseAudience} countries={countries} />
+            <MoreMenu invoice={invoice} onImport={setInvoice} onExportJson={exportJson} protectedSince={protectedSince} onProtect={protect} numbering={numbering} />
+          </div>
+          <InvoiceEditor
+            invoice={invoice}
+            onChange={setInvoice}
+            audience={audience}
+            errorFor={errorFor}
+            onTouch={touched.markTouched}
+            numbering={numbering}
+            profiles={profiles}
+            onSaveProfile={saveProfile}
+            onDeleteProfile={deleteProfile}
+          />
+          <details className="section extras">
+            <summary><h2>{t.sections.extras}</h2></summary>
+            <NotesField invoice={invoice} onChange={setInvoice} />
+            <BillingPanel invoice={invoice} onChange={setInvoice} />
+            <PaymentLinkField value={paymentLink} onChange={setPaymentLink} />
+            <LogoUpload logo={logo} onChange={setLogo} />
+          </details>
         </div>
-      </footer>
-    </div>
-  );
-}
-
-function ValidationSummary({
-  checking,
-  ready,
-  totalErrorCount,
-  issues,
-  structuralError,
-  onIssueClick,
-}: {
-  checking: boolean;
-  ready: boolean;
-  /** The real, unfiltered count — used only to tell "actually passes" apart
-   * from "hasn't been touched yet", never shown as a number of its own
-   * (Part C: a fresh form must not claim to pass EN 16931 just because
-   * nothing has been touched enough to reveal its errors yet). */
-  totalErrorCount: number;
-  issues: Issue[];
-  structuralError?: string;
-  onIssueClick: (key: string) => void;
-}) {
-  if (structuralError) {
-    return <p className="validation-summary validation-bad">Can't build this invoice yet: {structuralError}</p>;
-  }
-  if (!ready) return <p className="validation-summary">Validating…</p>;
-  if (totalErrorCount === 0) {
-    return <p className="validation-summary validation-ok">✓ Passes EN 16931{checking ? ' (rechecking…)' : ''}</p>;
-  }
-  if (issues.length === 0) {
-    // Real errors exist, but nothing the user has touched (or tried to
-    // export) yet — neither a false "passes" nor an alarming red count for
-    // a form nobody has started filling in.
-    return <p className="validation-summary">Fill in the invoice — checks appear as you leave each field.</p>;
-  }
-  return (
-    <div className="validation-summary validation-bad">
-      <p>
-        {issues.length} issue{issues.length === 1 ? '' : 's'} to fix{checking ? ' (rechecking…)' : ''}
-      </p>
-      <ul className="validation-issue-list">
-        {issues.map((issue, i) => (
-          <li key={i}>
-            <button type="button" className="validation-issue" onClick={() => onIssueClick(issue.key)}>
-              <span className="field-error-text">{issue.rule.plainLanguage?.summary ?? issue.rule.message}</span>{' '}
-              <span className="field-error-rule">{issue.rule.ruleId}</span>
+        <div className="preview-col">
+          <Verdict audience={audience} validation={validation} visible={visible} labelFor={(k) => labelFor(k, t, isB2G)} onGo={goTo} />
+          <div className="preview-tools">
+            <label htmlFor="template-select">{t.fields.template}</label>
+            <select id="template-select" value={template} onChange={(e) => setTemplate(e.target.value as TemplateId)}>
+              {Object.entries(TEMPLATES).map(([id, tpl]) => <option key={id} value={id}>{tpl.label}</option>)}
+            </select>
+          </div>
+          <InvoicePreview invoice={invoice} template={template} logo={logo} paymentLink={paymentLink} />
+        </div>
+      </main>
+      <div className="action-bar">
+        <div className="action-bar-inner">
+          {problems.length > 0 && !ready && (
+            <button type="button" className="btn btn-quiet" onClick={() => void downloadDraft()} disabled={busy !== undefined}>
+              {busy === 'draft' ? t.actions.building : draftLabel}
             </button>
-          </li>
-        ))}
-      </ul>
+          )}
+          {primary}
+        </div>
+      </div>
+      <footer className="app-footer">{t.footer}</footer>
     </div>
-  );
-}
-
-function ProtectPrompt({ onProtect }: { onProtect: (passphrase: string) => void }) {
-  const [value, setValue] = useState('');
-  return (
-    <form
-      className="protect-prompt"
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (value.length >= 8) onProtect(value);
-      }}
-    >
-      <input
-        type="password"
-        placeholder="Set a passphrase to save this draft on this device"
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        minLength={8}
-      />
-      <button type="submit" disabled={value.length < 8}>
-        Enable encrypted autosave
-      </button>
-    </form>
   );
 }

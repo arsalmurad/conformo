@@ -4,77 +4,77 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Conformo validator</title>
-<meta name="description" content="Validate an EN 16931 e-invoice (CII or UBL: Factur-X, ZUGFeRD, XRechnung, Peppol BIS) against the official Schematron, entirely in your browser. No signup, no upload to a server.">
-<style>
-  :root { color-scheme: light dark; --ink:#15181d; --mute:#5b6470; --line:#e2e5e9; --accent:#1a56db; --bg:#ffffff; --bad:#991b1b; --good:#166534; }
-  @media (prefers-color-scheme: dark) { :root { --ink:#e8eaed; --mute:#9aa4b2; --line:#2b2f36; --accent:#7aa2ff; --bg:#101215; --bad:#f87171; --good:#4ade80; } }
-  * { box-sizing: border-box; }
-  body { margin: 0; font: 16px/1.5 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--ink); background: var(--bg); }
-  main { max-width: 720px; margin: 0 auto; padding: 32px 20px 80px; }
-  h1 { font-size: 22px; margin: 0 0 4px; }
-  p.lede { color: var(--mute); margin: 0 0 24px; font-size: 14px; }
-  .dropzone { border: 2px dashed var(--line); border-radius: 10px; padding: 28px; text-align: center; }
-  .dropzone.active { border-color: var(--accent); }
-  .file-input-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
-  .file-picker-button { display: inline-block; margin-top: 10px; padding: 8px 16px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font-weight: 600; cursor: pointer; }
-  .file-picker-button:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .file-picker-name { margin-top: 8px; font-size: 13px; color: var(--mute); }
-  textarea { width: 100%; min-height: 160px; font: 13px/1.4 ui-monospace, Consolas, monospace; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: inherit; margin-top: 16px; }
-  .row { display: flex; gap: 12px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
-  button { padding: 8px 16px; border-radius: 6px; border: 1px solid var(--line); background: var(--accent); color: #fff; font-weight: 600; cursor: pointer; }
-  button:disabled { opacity: 0.5; cursor: default; }
-  select { padding: 6px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: inherit; }
-  #status { margin-top: 20px; font-weight: 600; }
-  #status.ok { color: var(--good); }
-  #status.bad { color: var(--bad); }
-  #rulesets h2 { font-size: 14px; margin: 16px 0 4px; }
-  #rulesets ul { padding-left: 18px; margin: 0; font-size: 13px; color: var(--mute); }
-  ul#rules { list-style: none; padding: 0; margin: 16px 0 0; }
-  ul#rules li { border-bottom: 1px solid var(--line); padding: 10px 0; font-size: 14px; }
-  ul#rules li .rule-id { font-weight: 700; }
-  ul#rules li.fatal .rule-id, ul#rules li.error .rule-id { color: var(--bad); }
-  .why { color: var(--mute); font-size: 13px; margin-top: 4px; }
-  footer { max-width: 720px; margin: 40px auto 0; padding: 0 20px; color: var(--mute); font-size: 12px; }
-</style>
+<meta name="description" content="Check whether an e-invoice (XRechnung, ZUGFeRD, Factur-X, Peppol BIS, CII or UBL) will be accepted, against the official rules, entirely in your browser. Nothing is uploaded.">
 </head>
 <body>
-<main>
-  <h1>Conformo validator</h1>
-  <p class="lede">
-    Checks a CII or UBL e-invoice against the official rules for its profile (EN 16931, XRechnung,
-    Peppol BIS Billing 3.0), entirely in your browser. The profile is read from the file; the result
-    lists exactly which rule sets ran. Nothing you drop here is ever uploaded anywhere.
-  </p>
+<a class="skip-link" href="#check" data-i18n="skip"></a>
+<header class="site-header">
+  <div class="site-header-inner">
+    <a class="brand" href="https://conformo-three.vercel.app/"><span class="brand-mark" aria-hidden="true"></span><span class="brand-name">Conformo</span></a>
+    <p class="site-tagline" data-i18n="tagline"></p>
+    <nav class="site-nav" data-i18n-label="navLabel">
+      <a href="https://conformo-three.vercel.app/" data-i18n="navApp"></a>
+      <a href="https://conformo-validate.vercel.app/" aria-current="page" data-i18n="navValidator"></a>
+      <a href="https://conformo-docs.vercel.app/" data-i18n="navDocs"></a>
+      <a href="https://github.com/arsalmurad/conformo">GitHub</a>
+    </nav>
+    <div class="lang-switch" role="group" data-i18n-label="language">
+      <button type="button" lang="de" data-lang="de">DE</button>
+      <button type="button" lang="en" data-lang="en">EN</button>
+    </div>
+  </div>
+</header>
 
-  <div id="dropzone" class="dropzone">
-    <div>Drop a CII XML file or a Factur-X/ZUGFeRD PDF here, or paste XML below.</div>
-    <label class="file-picker-button" for="file-input">Choose file
-      <input id="file-input" class="file-input-hidden" type="file" accept=".xml,.pdf,application/xml,text/xml,application/pdf">
-    </label>
-    <div id="file-name" class="file-picker-name">No file chosen</div>
+<main class="vp" id="check">
+  <div class="vp-intro">
+    <h1 data-i18n="title"></h1>
+    <p class="vp-lede" data-i18n="lede"></p>
   </div>
 
-  <textarea id="xml-input" placeholder="...or paste CII XML here"></textarea>
+  <div class="vp-grid">
+    <section class="vp-input" aria-labelledby="vp-input-title">
+      <h2 id="vp-input-title" class="visually-hidden" data-i18n="inputTitle"></h2>
+      <div id="dropzone" class="dropzone">
+        <p class="dropzone-title" data-i18n="dropTitle"></p>
+        <p class="dropzone-formats" data-i18n="dropFormats"></p>
+        <label class="btn btn-primary file-picker-button" for="file-input">
+          <span data-i18n="choose"></span>
+          <input id="file-input" class="file-input-hidden" type="file" accept=".xml,.pdf,application/xml,text/xml,application/pdf">
+        </label>
+        <p id="file-name" class="file-picker-name" aria-live="polite"></p>
+      </div>
+      <details class="vp-paste">
+        <summary data-i18n="pasteToggle"></summary>
+        <label for="xml-input" class="field-label" data-i18n="pasteLabel"></label>
+        <textarea id="xml-input" spellcheck="false" rows="8"></textarea>
+      </details>
+      <div class="vp-options">
+        <label for="country" class="field-label" data-i18n="countryLabel"></label>
+        <select id="country">
+          <option value="" data-i18n="countryDetect"></option>
+          <option value="DE" data-i18n="countryDE"></option>
+          <option value="FR" data-i18n="countryFR"></option>
+        </select>
+      </div>
+    </section>
 
-  <div class="row">
-    <label for="country">Country rules</label>
-    <select id="country">
-      <option value="">Detect from the file</option>
-      <option value="DE">Germany (B2B 2027 acceptance)</option>
-      <option value="FR">France (BR-FR Flux 2)</option>
-    </select>
-    <button id="validate-btn">Validate</button>
+    <section class="vp-result" aria-labelledby="result-title" aria-live="polite">
+      <div id="result" class="seal seal-idle">
+        <div class="seal-mark" aria-hidden="true" id="result-mark">?</div>
+        <div class="seal-body">
+          <h2 id="result-title" class="seal-title" data-i18n="idleTitle"></h2>
+          <p id="result-sub" class="seal-sub" data-i18n="idleSub"></p>
+          <ol id="fixes" class="vp-fixes"></ol>
+          <details id="tech" class="seal-tech" hidden>
+            <summary data-i18n="technical"></summary>
+            <div id="tech-body"></div>
+          </details>
+        </div>
+      </div>
+    </section>
   </div>
-
-  <div id="status"></div>
-  <div id="rulesets"></div>
-  <ul id="rules"></ul>
 </main>
-<footer>
-  Runs <code>@conformo/validate</code> client-side with the same compiled
-  Schematron the CLI and the app use. Apache-2.0 ·
-  <a href="https://github.com/arsalmurad/conformo">Source</a>
-</footer>
+<footer class="app-footer" data-i18n="footer"></footer>
 <script type="module" src="/src/main.ts"></script>
 </body>
 </html>

@@ -1,0 +1,56 @@
+/* Validator page layout. Tokens, base, buttons and the shared header come from packages/ui (one visual system). */
+.vp { max-width: 1200px; margin: 0 auto; padding: var(--space-6) var(--space-5) var(--space-8); }
+.vp-intro { max-width: 720px; margin-bottom: var(--space-5); }
+.vp-intro h1 { font-size: 30px; margin-bottom: var(--space-2); }
+.vp-lede { margin: 0; color: var(--graphite); font-size: var(--text-lg); }
+.vp-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: var(--space-6); align-items: start; }
+.dropzone {
+  border: 2px dashed var(--field-border); border-radius: var(--radius); background: var(--paper);
+  padding: var(--space-6) var(--space-5); text-align: center; display: flex; flex-direction: column; align-items: center; gap: var(--space-2);
+}
+.dropzone.active { border-color: var(--seal); background: var(--seal-soft); }
+.dropzone-title { margin: 0; font-weight: 700; font-size: var(--text-lg); }
+.dropzone-formats { margin: 0 0 var(--space-2); color: var(--graphite); font-size: var(--text-sm); max-width: 380px; }
+.file-input-hidden { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+.file-picker-button:focus-within { outline: 3px solid var(--focus); outline-offset: 2px; }
+.file-picker-name { margin: 0; min-height: 1.5em; font-size: var(--text-sm); overflow-wrap: anywhere; }
+.vp-paste { margin-top: var(--space-4); }
+.vp-paste summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; text-decoration: underline; }
+.vp-paste textarea { margin-top: var(--space-1); font-size: var(--text-sm); }
+.vp-options { margin-top: var(--space-4); display: flex; flex-direction: column; gap: 4px; }
+.field-label { font-size: var(--text-sm); font-weight: 700; }
+
+.seal {
+  display: grid; grid-template-columns: 52px 1fr; gap: var(--space-3); align-items: start;
+  padding: var(--space-5); background: var(--paper); border-radius: var(--radius); border: 1px solid var(--rule); border-left-width: 6px;
+}
+.seal-ok { border-left-color: var(--seal); }
+.seal-bad { border-left-color: var(--stamp); }
+.seal-idle, .seal-checking { border-left-color: var(--rule); }
+.seal-mark {
+  width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 22px;
+  border: 3px double currentColor; color: var(--graphite); font-variant-numeric: tabular-nums;
+}
+.seal-ok .seal-mark { color: var(--seal); }
+.seal-bad .seal-mark { color: var(--stamp); }
+.seal-title { font-size: var(--text-xl); }
+.seal-sub { margin: 4px 0 0; color: var(--graphite); }
+.vp-fixes { margin: var(--space-4) 0 0; padding-left: var(--space-5); display: flex; flex-direction: column; gap: var(--space-3); }
+.vp-fix::marker { font-weight: 700; color: var(--stamp); }
+.vp-fix p { margin: 0; }
+.vp-fix-text { font-weight: 700; }
+.vp-fix-how { margin-top: 2px !important; }
+.vp-fix-rule { margin-top: 2px !important; font-size: var(--text-sm); color: var(--graphite); overflow-wrap: anywhere; }
+.seal-tech { margin-top: var(--space-4); font-size: var(--text-sm); color: var(--graphite); }
+.seal-tech summary { cursor: pointer; min-height: 32px; display: flex; align-items: center; }
+.seal-tech ul { padding-left: var(--space-4); }
+.seal-tech li, .seal-tech p { overflow-wrap: anywhere; }
+.app-footer { max-width: 1200px; margin: 0 auto; padding: var(--space-5); color: var(--graphite); font-size: var(--text-sm); }
+
+@media (max-width: 860px) {
+  .vp { padding: var(--space-5) var(--space-4) var(--space-6); }
+  .vp-grid { grid-template-columns: minmax(0, 1fr); gap: var(--space-5); }
+  .vp-intro h1 { font-size: 24px; }
+  .seal { grid-template-columns: 40px 1fr; padding: var(--space-4); }
+  .seal-mark { width: 40px; height: 40px; font-size: 18px; }
+}

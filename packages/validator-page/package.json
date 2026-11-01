@@ -12,6 +12,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@conformo/core": "*",
+    "@conformo/formats": "*",
     "@conformo/validate": "*",
     "@conformo/parse": "*"
   },

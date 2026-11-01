@@ -12,11 +12,16 @@ import { fileURLToPath } from 'node:url';
 const dataDir = fileURLToPath(new URL('../../compliance-data/src/data', import.meta.url));
 const destDir = fileURLToPath(new URL('../public', import.meta.url));
 
+const APP_FORMATS = new Set(['cii', 'factur-x', 'zugferd', 'xrechnung']);
+
 const countries = readdirSync(dataDir)
   .filter((f) => f.endsWith('.json'))
   .map((f) => {
-    const { country, name } = JSON.parse(readFileSync(`${dataDir}/${f}`, 'utf-8'));
-    return { country, name };
+    const { country, name, mandates = [] } = JSON.parse(readFileSync(`${dataDir}/${f}`, 'utf-8'));
+    // The app writes a Factur-X/ZUGFeRD PDF with CII inside (XRechnung CII for German authorities). A country is
+    // offered only when its dataset lists one of those formats; the others are named as not supported yet.
+    const supported = mandates.some((m) => (m.requiredFormats ?? []).some((f) => APP_FORMATS.has(f)));
+    return { country, name, supported };
   })
   .sort((a, b) => a.name.localeCompare(b.name));
 

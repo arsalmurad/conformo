@@ -29,6 +29,7 @@
     "pack:smoke": "node tools/pack-smoke.mjs"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@playwright/test": "^1.63.0",
     "@types/node": "^22.0.0",
     "fake-indexeddb": "^6.2.5",

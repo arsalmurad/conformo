@@ -18,10 +18,19 @@ export default defineConfig({
     baseURL: 'http://localhost:5183',
     trace: 'retain-on-failure',
   },
-  webServer: {
-    command: 'npm run build --workspace=packages/ui && npm run preview --workspace=packages/ui -- --port 5183',
-    url: 'http://localhost:5183',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-  },
+  webServer: [
+    {
+      command: 'npm run build --workspace=packages/ui && npm run preview --workspace=packages/ui -- --port 5183 --strictPort',
+      url: 'http://localhost:5183',
+      reuseExistingServer: !process.env.CI,
+      timeout: 180_000,
+    },
+    {
+      // The validator page, a separate deployable (e2e/validator.spec.ts, e2e/a11y.spec.ts, e2e/layout.spec.ts).
+      command: 'npm run build --workspace=packages/validator-page && npm run preview --workspace=packages/validator-page -- --port 5184 --strictPort',
+      url: 'http://localhost:5184',
+      reuseExistingServer: !process.env.CI,
+      timeout: 180_000,
+    },
+  ],
 });

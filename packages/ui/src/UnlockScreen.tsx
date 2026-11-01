@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useI18n } from './i18n/I18n.js';
 
 interface Props {
   wrongPassphrase: boolean;
@@ -7,6 +8,7 @@ interface Props {
 }
 
 export function UnlockScreen({ wrongPassphrase, onUnlock, onDiscard }: Props) {
+  const { t } = useI18n();
   const [value, setValue] = useState('');
   return (
     <div className="unlock-screen">
@@ -16,20 +18,22 @@ export function UnlockScreen({ wrongPassphrase, onUnlock, onDiscard }: Props) {
           onUnlock(value);
         }}
       >
-        <h1>Encrypted draft found on this device</h1>
-        <p>Enter the passphrase you protected it with. There is no recovery — the key is never stored anywhere.</p>
+        <h1>{t.unlock.title}</h1>
+        <p>{t.unlock.body}</p>
+        <label className="visually-hidden" htmlFor="unlock-pass">{t.unlock.placeholder}</label>
         <input
+          id="unlock-pass"
           type="password"
           autoFocus
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          placeholder="Passphrase"
+          placeholder={t.unlock.placeholder}
         />
-        {wrongPassphrase && <p className="unlock-error">That passphrase didn't decrypt the draft. Try again.</p>}
-        <button type="submit">Unlock</button>
+        {wrongPassphrase && <p className="unlock-error">{t.unlock.wrong}</p>}
+        <button type="submit" className="btn btn-primary">{t.unlock.submit}</button>
       </form>
       <button type="button" className="discard" onClick={onDiscard}>
-        Discard it and start a new invoice instead
+        {t.unlock.discard}
       </button>
     </div>
   );

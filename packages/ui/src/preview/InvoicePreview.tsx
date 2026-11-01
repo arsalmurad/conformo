@@ -4,6 +4,7 @@ import type { TemplateId } from '@conformo/pdf';
 import { InvoiceInputError } from '@conformo/formats';
 import { buildPreviewPdf, type EmbeddableLogo } from '../pdf/exportPdf.js';
 import { pdfjsReady, sharedWorker } from '../pdfjsWorker.js';
+import { useI18n } from '../i18n/I18n.js';
 
 // Small on purpose: the live preview must reflect an edit within 500ms end
 // to end. This still coalesces a fast burst of keystrokes into one rebuild;
@@ -51,6 +52,7 @@ interface Props {
  * blank or half-drawn page.
  */
 export function InvoicePreview({ invoice, template, logo, paymentLink }: Props) {
+  const { t } = useI18n();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [status, setStatus] = useState<'rendering' | 'ready' | 'error'>('rendering');
   const [error, setError] = useState<string | undefined>();
@@ -132,7 +134,7 @@ export function InvoicePreview({ invoice, template, logo, paymentLink }: Props) 
       } catch (err) {
         if (myGeneration !== generation.current) return;
         if (err instanceof Error && err.name === 'RenderingCancelledException') return;
-        setError(err instanceof InvoiceInputError ? err.message : "Can't render a preview yet.");
+        setError(err instanceof InvoiceInputError ? err.message : undefined);
         if (!(err instanceof InvoiceInputError)) console.warn('preview render failed:', err);
         setStatus('error');
       }
@@ -148,11 +150,11 @@ export function InvoicePreview({ invoice, template, logo, paymentLink }: Props) 
   }, []);
 
   return (
-    <aside className="preview-panel" aria-label="Invoice preview">
-      <p className="preview-status">
-        {status === 'error' ? error : status === 'rendering' ? 'Updating preview…' : 'Live preview — this is the PDF you’ll download.'}
+    <section className="preview-panel" aria-label={t.preview.label}>
+      <p className="preview-status" aria-live="polite">
+        {status === 'error' ? error ?? t.preview.error : status === 'rendering' ? t.preview.updating : t.preview.ready}
       </p>
       <canvas ref={canvasRef} role="img" aria-label={`Preview of invoice ${invoice.number || 'draft'}`} />
-    </aside>
+    </section>
   );
 }

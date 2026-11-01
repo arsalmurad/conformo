@@ -1,91 +1,53 @@
-import { useState } from 'react';
-import { useNumbering } from '../numbering/useNumbering.js';
-import { FieldErrors } from './FieldErrors.js';
-import type { RuleResult } from '@conformo/validate/browser';
+import { useEffect, useState } from 'react';
+import { useI18n } from '../i18n/I18n.js';
+import type { Numbering } from '../numbering/useNumbering.js';
+import { wasIssued } from '../numbering/localCounter.js';
+import type { Described } from '../validation/messages.js';
+import { Field } from './Field.js';
 
 interface Props {
   value: string;
   onChange: (number: string) => void;
-  errors?: RuleResult[];
+  numbering: Numbering;
+  error?: Described;
 }
 
-/** Replaces a free-text invoice number with an assigned one: the user must
- * not be able to free-type a number that breaks the sequence, so once a
- * number is assigned this field shows it read-only rather than editable.
- * A gapless number, once drawn, stays drawn even if this draft is later
- * abandoned — that's what gapless means in real bookkeeping, not a bug to
- * work around here. */
-export function NumberField({ value, onChange, errors }: Props) {
-  const { config, setConfig, provider, assignNext, assigning, error } = useNumbering();
-  const [showSettings, setShowSettings] = useState(false);
+/**
+ * The invoice number (BT-1). Typing is allowed: people moving from another tool continue their own numbering. The
+ * gapless local sequence stays the default: one click takes its next number, and the "Numbering" settings (in the
+ * More menu) continue an existing sequence from any number. A number already downloaded on this device gets a warning,
+ * not a block: it may be a deliberate re-issue of the same invoice.
+ */
+export function NumberField({ value, onChange, numbering, error }: Props) {
+  const { t } = useI18n();
+  const [duplicate, setDuplicate] = useState(false);
 
-  // A plain <div>, not <label>: this field holds several independent
-  // buttons (assign, change source) alongside the value, and a <label>
-  // wrapping more than the one form control it names produces a confused
-  // accessible name — confirmed by Playwright's own accessibility snapshot
-  // during e2e/create-invoice.spec.ts, which showed the "Assign next
-  // number" button's name swallowing unrelated sibling text ("Change
-  // numbering source", the BR-02 error) rather than just its own label.
-  const hasErrors = !!errors?.length || !!error;
-  // Empty (no number assigned yet) is "not finished", not "wrong" — same
-  // incomplete/invalid distinction InvoiceEditor's Field makes for every
-  // other required field (Part C).
-  const incomplete = hasErrors && !value;
+  useEffect(() => {
+    let cancelled = false;
+    if (!value) { setDuplicate(false); return; }
+    const timer = setTimeout(() => {
+      wasIssued(value).then((d) => { if (!cancelled) setDuplicate(d); }).catch(() => {});
+    }, 250);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [value]);
+
+  const warn: Described | undefined = duplicate && !error ? { text: t.numbering.duplicate } : undefined;
   return (
-    <div className={`field ${hasErrors ? (incomplete ? 'field-incomplete' : 'field-invalid') : ''}`} id="field-number">
-      <span className="field-label">Invoice number</span>
-      {value ? (
-        <input
-          data-field="number"
-          value={value}
-          readOnly
-          aria-readonly
-          aria-describedby={hasErrors ? 'number-desc' : undefined}
-          aria-invalid={hasErrors || undefined}
-          title="Assigned from the numbering sequence — not editable"
-        />
-      ) : (
+    <div className="number-field">
+      <Field fieldKey="number" label={t.fields.number} error={error ?? warn} required>
+        <input value={value} autoComplete="off" spellCheck={false} onChange={(e) => onChange(e.target.value)} />
+      </Field>
+      {!value && (
         <button
           type="button"
-          data-field="number"
-          aria-describedby={hasErrors ? 'number-desc' : undefined}
-          onClick={() => void assignNext().then((n) => n && onChange(n))}
-          disabled={assigning}
+          className="btn btn-quiet number-next"
+          disabled={numbering.assigning}
+          onClick={() => void numbering.assignNext().then((n) => n && onChange(n))}
         >
-          {assigning ? 'Assigning…' : `Assign next number (${provider.label})`}
+          {numbering.assigning ? t.numbering.assigning : numbering.peek ? t.numbering.useNext(numbering.peek) : t.numbering.useNextUnknown}
         </button>
       )}
-      <button type="button" className="number-settings-toggle" onClick={() => setShowSettings((s) => !s)}>
-        {showSettings ? 'Hide' : 'Change'} numbering source
-      </button>
-      {showSettings && (
-        <div className="number-settings">
-          <label>
-            <input
-              type="radio"
-              checked={config.kind === 'local'}
-              onChange={() => setConfig({ kind: 'local', seriesId: 'default' })}
-            />
-            Local sequence (this device, no server)
-          </label>
-          <label>
-            <input type="radio" checked={config.kind === 'webhook'} onChange={() => setConfig({ kind: 'webhook', url: '' })} />
-            Webhook (your own server — SQLite, Postgres, or anything else behind it)
-          </label>
-          {config.kind === 'webhook' && (
-            <input
-              className="number-webhook-url"
-              placeholder="https://your-server.example/next-invoice-number"
-              value={config.url}
-              onChange={(e) => setConfig({ kind: 'webhook', url: e.target.value })}
-            />
-          )}
-        </div>
-      )}
-      <div id="number-desc">
-        <FieldErrors errors={errors} />
-        {error && <p className="field-hint">Couldn't assign a number: {error}</p>}
-      </div>
+      {numbering.error && <p className="field-msg field-msg-error">{numbering.error}</p>}
     </div>
   );
 }

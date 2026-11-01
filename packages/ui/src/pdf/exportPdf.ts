@@ -1,4 +1,4 @@
-import { PDFDocument } from 'pdf-lib';
+import { PDFDocument, degrees, rgb, type PDFFont } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 import { totals } from '@conformo/core';
 import type { Invoice } from '@conformo/core';
@@ -26,6 +26,10 @@ async function loadAssets() {
 }
 
 async function buildPage(invoice: Invoice, templateId: TemplateId, options: RenderOptions): Promise<PDFDocument> {
+  return (await buildPageWithFonts(invoice, templateId, options)).pdf;
+}
+
+async function buildPageWithFonts(invoice: Invoice, templateId: TemplateId, options: RenderOptions): Promise<{ pdf: PDFDocument; bold: PDFFont }> {
   const { regularBytes, boldBytes } = await loadAssets();
   const t = totals(invoice);
   const pdf = await PDFDocument.create();
@@ -33,7 +37,7 @@ async function buildPage(invoice: Invoice, templateId: TemplateId, options: Rend
   const regular = await pdf.embedFont(regularBytes, { subset: true });
   const bold = await pdf.embedFont(boldBytes, { subset: true });
   await renderInvoicePage(pdf, { regular, bold }, invoice, t, templateId, options);
-  return pdf;
+  return { pdf, bold };
 }
 
 /** Builds the same PDF/A-3 Factur-X document tools/build-sample.ts produces
@@ -87,6 +91,40 @@ export async function buildPreviewPdf(
   options: RenderOptions = {},
 ): Promise<Uint8Array> {
   const pdf = await buildPage(invoice, templateId, options);
+  return pdf.save({ useObjectStreams: false });
+}
+
+/**
+ * "Download anyway" for an invoice that fails its rules: the page as it stands, stamped DRAFT on every page, with NO
+ * embedded XML and no PDF/A-3 / Factur-X metadata. An invoice that fails XRechnung must never leave the app looking
+ * like an XRechnung: a receiving system reads the embedded XML, not the stamp. Deterministic like everything else.
+ */
+export async function buildDraftPdf(
+  invoice: Invoice,
+  templateId: TemplateId,
+  options: RenderOptions = {},
+  stamp = 'DRAFT',
+  notice = 'Draft: not a valid e-invoice',
+): Promise<Uint8Array> {
+  const { pdf, bold } = await buildPageWithFonts(invoice, templateId, options);
+  for (const page of pdf.getPages()) {
+    const { width, height } = page.getSize();
+    const size = 96;
+    const w = bold.widthOfTextAtSize(stamp, size);
+    page.drawText(stamp, {
+      x: width / 2 - (w / 2) * Math.cos(Math.PI / 4) + (size / 2) * Math.sin(Math.PI / 4),
+      y: height / 2 - (w / 2) * Math.sin(Math.PI / 4) - (size / 2) * Math.cos(Math.PI / 4),
+      size, font: bold, color: rgb(0.75, 0.1, 0.1), opacity: 0.18, rotate: degrees(45),
+    });
+    page.drawText(notice, { x: 36, y: height - 22, size: 10, font: bold, color: rgb(0.75, 0.1, 0.1) });
+  }
+  pdf.setTitle(`${notice}: ${invoice.number || 'invoice'}`);
+  // No clock in the document (determinism invariant): pdf-lib stamps "now" by default.
+  const when = /^\d{4}-\d{2}-\d{2}$/.test(invoice.issueDate) ? new Date(`${invoice.issueDate}T00:00:00Z`) : new Date(0);
+  pdf.setCreationDate(when);
+  pdf.setModificationDate(when);
+  pdf.setProducer('Conformo');
+  pdf.setCreator('Conformo');
   return pdf.save({ useObjectStreams: false });
 }
 

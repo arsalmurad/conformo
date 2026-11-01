@@ -1,367 +1,279 @@
-import { cloneElement, isValidElement } from 'react';
-import type { Invoice, Line, Party, TaxCategory } from '@conformo/core';
+import type { Invoice, Party } from '@conformo/core';
+import { totals } from '@conformo/core';
 import { localeForInvoice } from '@conformo/pdf';
-import type { LiveValidation } from '../validation/useLiveValidation.js';
-import type { TouchedFields } from '../validation/useTouchedFields.js';
-import { touchKeyFor } from '../validation/touchKey.js';
+import { looksLikeLeitwegId } from '@conformo/formats';
+import type { Audience } from '../audience.js';
+import { noteText, setNote, withSellerCountry } from '../audience.js';
+import { useI18n } from '../i18n/I18n.js';
+import { formatMoney } from '../money.js';
 import type { PartyProfile } from '../profiles/types.js';
-import type { EmbeddableLogo } from '../pdf/exportPdf.js';
-import { checkIban } from '../profiles/iban.js';
-import { checkVatFormat } from '../profiles/vat.js';
 import { EAS_CODES } from '../profiles/eas.js';
-import { FieldErrors } from './FieldErrors.js';
-import { ProfilePicker } from './ProfilePicker.js';
-import { MoneyInput } from './MoneyInput.js';
-import { BillingPanel } from './BillingPanel.js';
-import { NumberField } from './NumberField.js';
-import { NotesField } from './NotesField.js';
-import { PaymentLinkField } from './PaymentLinkField.js';
-import { LogoUpload } from './LogoUpload.js';
+import { checkVatFormat } from '../profiles/vat.js';
+import type { Numbering } from '../numbering/useNumbering.js';
+import type { Described } from '../validation/messages.js';
+import { Field } from './Field.js';
+import { CountryInput } from './CountryInput.js';
 import { LocaleDateInput } from './LocaleDateInput.js';
+import { NumberField } from './NumberField.js';
+import { LineItems } from './LineItems.js';
+import { ProfilePicker } from './ProfilePicker.js';
 
-/** Client-side hints (IBAN checksum, VAT format) run instantly, unlike the
- * Schematron round trip — no point waiting 350ms and a WASM-ish transform to
- * tell someone they transposed two IBAN digits. */
-function ibanHint(iban: string | undefined): string | undefined {
-  if (!iban) return undefined;
-  const result = checkIban(iban);
-  return result.valid ? undefined : `This IBAN ${result.reason}.`;
-}
-
-function vatHint(vatId: string | undefined): string | undefined {
-  if (!vatId) return undefined;
-  const result = checkVatFormat(vatId);
-  return result.valid ? undefined : `This VAT number ${result.reason}.`;
-}
-
-const TAX_CATEGORIES: { value: TaxCategory; label: string }[] = [
-  { value: 'S', label: 'S — Standard rated' },
-  { value: 'Z', label: 'Z — Zero rated' },
-  { value: 'E', label: 'E — Exempt from VAT' },
-  { value: 'AE', label: 'AE — Reverse charge' },
-  { value: 'K', label: 'K — Intra-community supply' },
-  { value: 'G', label: 'G — Export outside the EU' },
-  { value: 'O', label: 'O — Not subject to VAT' },
-];
+const CURRENCIES = ['EUR', 'CHF', 'GBP', 'USD', 'PLN', 'CZK', 'DKK', 'SEK', 'NOK', 'HUF', 'RON', 'BGN'];
 
 interface Props {
   invoice: Invoice;
   onChange: (invoice: Invoice) => void;
-  validation: LiveValidation;
-  touchedFields: TouchedFields;
+  audience: Audience;
+  /** The visible problem for a field (already filtered to touched fields), in the UI language. */
+  errorFor: (key: string) => Described | undefined;
+  onTouch: (key: string) => void;
+  numbering: Numbering;
   profiles: PartyProfile[];
   onSaveProfile: (profile: PartyProfile) => void;
   onDeleteProfile: (id: string) => void;
-  paymentLink: string;
-  onPaymentLinkChange: (link: string) => void;
-  logo: EmbeddableLogo | undefined;
-  onLogoChange: (logo: EmbeddableLogo | undefined) => void;
 }
 
-export function InvoiceEditor({
-  invoice,
-  onChange,
-  validation,
-  touchedFields,
-  profiles,
-  onSaveProfile,
-  onDeleteProfile,
-  paymentLink,
-  onPaymentLinkChange,
-  logo,
-  onLogoChange,
-}: Props) {
-  const { byField, bySection } = validation;
-  const { isVisible, markTouched } = touchedFields;
-  // Same locale the PDF itself renders with (packages/pdf/src/locale.ts) —
-  // the date fields should show the invoice's own country's format, not
-  // guess independently and risk disagreeing with the document it produces.
-  const locale = localeForInvoice(invoice.buyer.country, invoice.seller.country);
 
-  // Only a field the user has actually blurred (or an export attempt) shows
-  // its errors — see useTouchedFields. 'tax'/'totals' have no input of their
-  // own to blur (they're computed from the lines, not typed directly), so
-  // they piggyback on the lines section having been touched.
-  const fieldErrors = (key: string) => (isVisible(touchKeyFor(key)) ? byField[key] : undefined);
-  const sectionErrors = (key: 'lines' | 'tax' | 'totals' | 'payment') => (isVisible(touchKeyFor(key)) ? bySection[key] : undefined);
+/** The scheme travels with the address: EM for an email, 0204 for a Leitweg-ID, otherwise what the user picked. */
+function schemeFor(address: string, current: string | undefined): string | undefined {
+  if (!address) return undefined;
+  if (address.includes('@')) return 'EM';
+  if (looksLikeLeitwegId(address)) return '0204';
+  return current && current !== 'EM' ? current : undefined;
+}
+
+export function InvoiceEditor({ invoice, onChange, audience, errorFor, onTouch, numbering, profiles, onSaveProfile, onDeleteProfile }: Props) {
+  const { t, lang } = useI18n();
+  const locale = localeForInvoice(invoice.buyer.country, invoice.seller.country);
+  const isB2G = audience.id === 'de-b2g';
+  const isFR = audience.id === 'fr-b2b';
+  const req = (key: string) => audience.required.some((r) => r.key === key);
 
   const set = <K extends keyof Invoice>(key: K, value: Invoice[K]) => onChange({ ...invoice, [key]: value });
-  const setParty = (side: 'seller' | 'buyer', patch: Partial<Party>) =>
-    onChange({ ...invoice, [side]: { ...invoice[side], ...patch } });
-  const setLine = (index: number, patch: Partial<Line>) =>
-    onChange({ ...invoice, lines: invoice.lines.map((l, i) => (i === index ? { ...l, ...patch } : l)) });
-  const addLine = () =>
-    onChange({ ...invoice, lines: [...invoice.lines, { name: '', quantity: 1, unitPriceMinor: 0, taxCategory: 'S', taxRate: 0 }] });
-  const removeLine = (index: number) => onChange({ ...invoice, lines: invoice.lines.filter((_, i) => i !== index) });
+  const setParty = (side: 'seller' | 'buyer', patch: Partial<Party>) => onChange({ ...invoice, [side]: { ...invoice[side], ...patch } });
+  const setContact = (patch: Partial<NonNullable<Party['contact']>>) =>
+    setParty('seller', { contact: { ...invoice.seller.contact, ...patch } });
 
-  // A single delegated blur handler for the whole form, rather than an
-  // onBlur prop threaded through every one of the ~25 inputs below: React's
-  // onBlur bubbles (it's backed by the native "focusout" event, not "blur"),
-  // so this fires for every field and reads which one via data-field.
+  // React's onBlur bubbles (it is focusout), so one handler marks whichever field was left as touched.
   const handleBlur = (e: React.FocusEvent<HTMLFormElement>) => {
-    const field = (e.target as HTMLElement).dataset.field;
-    if (field) markTouched(field);
+    const key = (e.target as HTMLElement).dataset.field;
+    if (key) onTouch(key);
+  };
+
+  let sum: ReturnType<typeof totals> | undefined;
+  try { sum = totals(invoice); } catch { sum = undefined; }
+
+  const vatHint = (v: string | undefined) => {
+    if (!v) return undefined;
+    const r = checkVatFormat(v);
+    return r.valid ? undefined : (lang === 'de' ? `Ungewöhnliches Format: ${r.reason}.` : `Unusual format: this VAT ID ${r.reason}.`);
+  };
+
+  const party = (side: 'seller' | 'buyer') => {
+    const p = invoice[side];
+    const s = side === 'seller';
+    const k = (f: string) => `${side}.${f}`;
+    return (
+      <>
+        <Field fieldKey={k('name')} label={s ? t.fields.sellerName : t.fields.buyerName} error={errorFor(k('name'))} required>
+          <input value={p.name} autoComplete={s ? 'organization' : 'off'} onChange={(e) => setParty(side, { name: e.target.value })} />
+        </Field>
+        <Field fieldKey={k('street')} label={t.fields.street} error={errorFor(k('street'))}>
+          <input value={p.street ?? ''} autoComplete={s ? 'street-address' : 'off'} onChange={(e) => setParty(side, { street: e.target.value || undefined })} />
+        </Field>
+        <div className="row row-postcode">
+          <Field fieldKey={k('postcode')} label={t.fields.postcode} error={errorFor(k('postcode'))} required={req(k('postcode'))}>
+            <input value={p.postcode ?? ''} autoComplete={s ? 'postal-code' : 'off'} onChange={(e) => setParty(side, { postcode: e.target.value || undefined })} />
+          </Field>
+          <Field fieldKey={k('city')} label={t.fields.city} error={errorFor(k('city'))} required={req(k('city'))}>
+            <input value={p.city ?? ''} autoComplete={s ? 'address-level2' : 'off'} onChange={(e) => setParty(side, { city: e.target.value || undefined })} />
+          </Field>
+        </div>
+        <Field fieldKey={k('country')} label={t.fields.country} error={errorFor(k('country'))} required>
+          <CountryInput value={p.country} onValue={(country) => (s ? onChange(withSellerCountry(invoice, country)) : setParty(side, { country }))} />
+        </Field>
+        <Field fieldKey={k('vatId')} label={s ? t.fields.vatId : t.fields.buyerVatId} hint={vatHint(p.vatId) ?? (s ? t.hints.vatId : undefined)} error={errorFor(k('vatId'))}>
+          <input value={p.vatId ?? ''} spellCheck={false} onChange={(e) => setParty(side, { vatId: e.target.value.toUpperCase().replace(/\s/g, '') || undefined })} />
+        </Field>
+      </>
+    );
+  };
+
+  const addressField = (side: 'seller' | 'buyer') => {
+    const p = invoice[side];
+    const k = `${side}.electronicAddress`;
+    const address = p.electronicAddress ?? '';
+    const needsScheme = !!address && !address.includes('@') && !looksLikeLeitwegId(address);
+    return (
+      <>
+        <Field
+          fieldKey={k}
+          label={side === 'seller' ? t.fields.sellerEmail : t.fields.buyerEmail}
+          hint={side === 'seller' ? t.hints.sellerEmail : isB2G ? t.hints.buyerEmailB2G : t.hints.buyerEmail}
+          error={errorFor(k)}
+          required={req(k)}
+        >
+          <input
+            value={address}
+            spellCheck={false}
+            autoComplete={side === 'seller' ? 'email' : 'off'}
+            onChange={(e) => {
+              const v = e.target.value.trim();
+              setParty(side, { electronicAddress: v || undefined, electronicAddressScheme: schemeFor(v, p.electronicAddressScheme) });
+            }}
+          />
+        </Field>
+        {needsScheme && (
+          <Field fieldKey={`${side}.electronicAddressScheme`} label={t.fields.addressScheme} error={errorFor(`${side}.electronicAddressScheme`)} required>
+            <select value={p.electronicAddressScheme ?? ''} onChange={(e) => setParty(side, { electronicAddressScheme: e.target.value || undefined })}>
+              <option value="">—</option>
+              {EAS_CODES.filter((c) => c.code !== 'EM').map((c) => <option key={c.code} value={c.code}>{c.label}</option>)}
+            </select>
+          </Field>
+        )}
+      </>
+    );
   };
 
   return (
-    <form className="editor" onSubmit={(e) => e.preventDefault()} onBlur={handleBlur}>
-      <section className="editor-row">
-        <NumberField value={invoice.number} onChange={(number) => set('number', number)} errors={fieldErrors('number')} />
-        <Field label="Currency" errors={fieldErrors('currency')}>
-          <input data-field="currency" value={invoice.currency} onChange={(e) => set('currency', e.target.value.toUpperCase())} maxLength={3} />
-        </Field>
-        <Field label="Issue date" errors={fieldErrors('issueDate')}>
-          <LocaleDateInput data-field="issueDate" locale={locale} value={invoice.issueDate} onChange={(v) => set('issueDate', v)} />
-        </Field>
-        <Field label="Due date" errors={fieldErrors('dueDate')}>
-          <LocaleDateInput
-            data-field="dueDate"
-            locale={locale}
-            value={invoice.dueDate ?? ''}
-            onChange={(v) => set('dueDate', v || undefined)}
-          />
-        </Field>
-      </section>
-
-      <section className="editor-parties">
-        <PartyFields
-          title="Seller"
-          side="seller"
-          party={invoice.seller}
-          onChange={(p) => setParty('seller', p)}
-          fieldErrors={fieldErrors}
-          profiles={profiles}
-          onSaveProfile={onSaveProfile}
-          onDeleteProfile={onDeleteProfile}
-        />
-        <PartyFields
-          title="Buyer"
-          side="buyer"
-          party={invoice.buyer}
-          onChange={(p) => setParty('buyer', p)}
-          fieldErrors={fieldErrors}
-          profiles={profiles}
-          onSaveProfile={onSaveProfile}
-          onDeleteProfile={onDeleteProfile}
-        />
-      </section>
-
-      <section className="editor-lines" id="field-lines">
-        <h3>Invoice lines</h3>
-        <FieldErrors errors={sectionErrors('lines')} />
-        {invoice.lines.map((line, i) => (
-          <div className="line-row" key={i}>
-            <input
-              className="line-name"
-              data-field="lines"
-              placeholder="Description"
-              value={line.name}
-              onChange={(e) => setLine(i, { name: e.target.value })}
-            />
-            <input
-              className="line-qty"
-              data-field="lines"
-              type="number"
-              step="any"
-              value={line.quantity}
-              onChange={(e) => setLine(i, { quantity: Number(e.target.value) })}
-            />
-            <MoneyInput
-              className="line-price"
-              dataField="lines"
-              minor={line.unitPriceMinor}
-              onChange={(unitPriceMinor) => setLine(i, { unitPriceMinor })}
-              key={i}
-            />
-            <select data-field="lines" value={line.taxCategory} onChange={(e) => setLine(i, { taxCategory: e.target.value as TaxCategory })}>
-              {TAX_CATEGORIES.map((c) => (
-                <option key={c.value} value={c.value}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
-            <input
-              className="line-rate"
-              data-field="lines"
-              type="number"
-              step="0.01"
-              value={line.taxRate}
-              onChange={(e) => setLine(i, { taxRate: Number(e.target.value) })}
-              disabled={line.taxCategory === 'O'}
-            />
-            <button type="button" className="line-remove" onClick={() => removeLine(i)} aria-label="Remove line">
-              ×
-            </button>
+    <form className="editor" onSubmit={(e) => e.preventDefault()} onBlur={handleBlur} noValidate>
+      <section className="section" aria-labelledby="sec-seller">
+        <div className="section-head">
+          <h2 id="sec-seller"><span className="section-num" aria-hidden="true">1</span>{t.sections.seller}</h2>
+          <ProfilePicker party={invoice.seller} profiles={profiles} onLoad={(seller) => onChange({ ...invoice, seller })}
+            onSave={onSaveProfile} onDelete={onDeleteProfile} sectionLabel={t.sections.seller} />
+        </div>
+        {party('seller')}
+        {invoice.seller.country === 'DE' && (
+          <Field fieldKey="seller.taxRegistrationId" label={t.fields.taxRegistrationId} hint={t.hints.taxRegistrationId} error={errorFor('seller.taxRegistrationId')}>
+            <input value={invoice.seller.taxRegistrationId ?? ''} onChange={(e) => setParty('seller', { taxRegistrationId: e.target.value || undefined })} />
+          </Field>
+        )}
+        {isFR && (
+          <Field fieldKey="seller.legalId" label={t.fields.legalId} hint={t.hints.legalId} error={errorFor('seller.legalId')} required>
+            <input value={invoice.seller.legalId ?? ''} inputMode="numeric"
+              onChange={(e) => setParty('seller', { legalId: e.target.value.replace(/\s/g, '') || undefined, legalIdScheme: e.target.value ? '0002' : undefined })} />
+          </Field>
+        )}
+        {addressField('seller')}
+        {isB2G && (
+          <div className="subgroup">
+            <p className="subgroup-hint">{t.hints.contact}</p>
+            <Field fieldKey="seller.contact.name" label={t.fields.contactName} error={errorFor('seller.contact.name')} required>
+              <input value={invoice.seller.contact?.name ?? ''} autoComplete="name" onChange={(e) => setContact({ name: e.target.value || undefined })} />
+            </Field>
+            <div className="row">
+              <Field fieldKey="seller.contact.phone" label={t.fields.contactPhone} error={errorFor('seller.contact.phone')} required>
+                <input type="tel" value={invoice.seller.contact?.phone ?? ''} autoComplete="tel" onChange={(e) => setContact({ phone: e.target.value || undefined })} />
+              </Field>
+              <Field fieldKey="seller.contact.email" label={t.fields.contactEmail} error={errorFor('seller.contact.email')} required>
+                <input type="email" value={invoice.seller.contact?.email ?? ''} autoComplete="email" onChange={(e) => setContact({ email: e.target.value || undefined })} />
+              </Field>
+            </div>
           </div>
-        ))}
-        <button type="button" onClick={addLine}>
-          + Add line
-        </button>
+        )}
       </section>
 
-      <section id="field-tax">
-        <FieldErrors errors={sectionErrors('tax')} />
-        <FieldErrors errors={sectionErrors('totals')} />
+      <section className="section" aria-labelledby="sec-buyer">
+        <div className="section-head">
+          <h2 id="sec-buyer"><span className="section-num" aria-hidden="true">2</span>{t.sections.buyer}</h2>
+          <ProfilePicker party={invoice.buyer} profiles={profiles} onLoad={(buyer) => onChange({ ...invoice, buyer })}
+            onSave={onSaveProfile} onDelete={onDeleteProfile} sectionLabel={t.sections.buyer} />
+        </div>
+        {party('buyer')}
+        {isB2G ? (
+          <Field fieldKey="buyerReference" label={t.fields.leitwegId} hint={t.hints.leitwegId} error={errorFor('buyerReference')} required>
+            <input
+              value={invoice.buyerReference ?? ''}
+              spellCheck={false}
+              onChange={(e) => {
+                const v = e.target.value.trim();
+                const prev = invoice.buyerReference ?? '';
+                // The authority's e-invoice address is normally its Leitweg-ID (scheme 0204): keep them in step while
+                // the address is empty or still mirrors the Leitweg-ID.
+                const mirror = !invoice.buyer.electronicAddress || invoice.buyer.electronicAddress === prev;
+                onChange({
+                  ...invoice,
+                  buyerReference: v || undefined,
+                  buyer: mirror ? { ...invoice.buyer, electronicAddress: v || undefined, electronicAddressScheme: v ? schemeFor(v, undefined) : undefined } : invoice.buyer,
+                });
+              }}
+            />
+          </Field>
+        ) : (
+          <Field fieldKey="buyerReference" label={t.fields.buyerReference} error={errorFor('buyerReference')}>
+            <input value={invoice.buyerReference ?? ''} onChange={(e) => set('buyerReference', e.target.value || undefined)} />
+          </Field>
+        )}
+        {addressField('buyer')}
       </section>
 
-      <BillingPanel invoice={invoice} onChange={onChange} />
+      <section className="section" aria-labelledby="sec-lines">
+        <div className="section-head">
+          <h2 id="sec-lines"><span className="section-num" aria-hidden="true">3</span>{t.sections.lines}</h2>
+        </div>
+        <div className="row row-details">
+          <NumberField value={invoice.number} onChange={(n) => set('number', n)} numbering={numbering} error={errorFor('number')} />
+          <Field fieldKey="issueDate" label={t.fields.issueDate} error={errorFor('issueDate')} required>
+            <LocaleDateInput locale={locale} value={invoice.issueDate} onChange={(v) => set('issueDate', v)} />
+          </Field>
+          <Field fieldKey="dueDate" label={t.fields.dueDate} error={errorFor('dueDate')}>
+            <LocaleDateInput locale={locale} value={invoice.dueDate ?? ''} onChange={(v) => set('dueDate', v || undefined)} />
+          </Field>
+          <Field fieldKey="currency" label={t.fields.currency} error={errorFor('currency')}>
+            <select value={invoice.currency} onChange={(e) => set('currency', e.target.value)}>
+              {(CURRENCIES.includes(invoice.currency) ? CURRENCIES : [invoice.currency, ...CURRENCIES]).map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </Field>
+        </div>
+        {isFR && (
+          <Field fieldKey="businessProcess" label={t.fields.businessProcess} error={errorFor('businessProcess')} required>
+            <select value={invoice.businessProcess ?? ''} onChange={(e) => set('businessProcess', e.target.value || undefined)}>
+              <option value="">—</option>
+              {(['S1', 'B1', 'M1'] as const).map((c) => <option key={c} value={c}>{t.businessProcess[c]}</option>)}
+            </select>
+          </Field>
+        )}
+        <LineItems invoice={invoice} onChange={onChange} errorFor={errorFor} />
+        {sum && (
+          <dl className="totals num">
+            <div><dt>{t.lines.subtotal}</dt><dd>{formatMoney(sum.taxBasis, invoice.currency, lang)}</dd></div>
+            <div><dt>{t.lines.vat}</dt><dd>{formatMoney(sum.taxTotal, invoice.currency, lang)}</dd></div>
+            <div className="totals-grand"><dt>{t.lines.total}</dt><dd>{formatMoney(sum.grand, invoice.currency, lang)}</dd></div>
+          </dl>
+        )}
+        {errorFor('totals') && <p className="field-msg field-msg-error" data-field="totals" tabIndex={-1}>{errorFor('totals')!.text}</p>}
+        {errorFor('lines') && <p className="field-msg field-msg-error" data-field="lines" tabIndex={-1}>{errorFor('lines')!.text}</p>}
+      </section>
 
-      <section className="editor-row">
-        <Field label="IBAN" errors={sectionErrors('payment')} hint={ibanHint(invoice.payment?.iban)}>
-          <input
-            data-field="payment"
-            value={invoice.payment?.iban ?? ''}
-            onChange={(e) => set('payment', { meansCode: '58', ...invoice.payment, iban: e.target.value.toUpperCase() })}
-          />
-        </Field>
-        <Field label="Payment terms">
+      <section className="section" aria-labelledby="sec-payment">
+        <div className="section-head">
+          <h2 id="sec-payment"><span className="section-num" aria-hidden="true">4</span>{t.sections.payment}</h2>
+        </div>
+        <div className="row">
+          <Field fieldKey="payment.iban" label={t.fields.iban} error={errorFor('payment.iban')} className="grow">
+            <input value={invoice.payment?.iban ?? ''} spellCheck={false}
+              onChange={(e) => set('payment', { meansCode: '58', ...invoice.payment, iban: e.target.value.toUpperCase() || undefined })} />
+          </Field>
+          <Field fieldKey="payment.bic" label={t.fields.bic} error={errorFor('payment.bic')}>
+            <input value={invoice.payment?.bic ?? ''} spellCheck={false}
+              onChange={(e) => set('payment', { meansCode: '58', ...invoice.payment, bic: e.target.value.toUpperCase() || undefined })} />
+          </Field>
+        </div>
+        <Field fieldKey="paymentTerms" label={t.fields.paymentTerms} error={errorFor('paymentTerms')}>
           <input value={invoice.paymentTerms ?? ''} onChange={(e) => set('paymentTerms', e.target.value || undefined)} />
         </Field>
-      </section>
-
-      <section className="editor-row">
-        <PaymentLinkField value={paymentLink} onChange={onPaymentLinkChange} />
-        <LogoUpload logo={logo} onChange={onLogoChange} />
-      </section>
-
-      <NotesField invoice={invoice} onChange={onChange} />
-    </form>
-  );
-}
-
-function PartyFields({
-  title,
-  side,
-  party,
-  onChange,
-  fieldErrors,
-  profiles,
-  onSaveProfile,
-  onDeleteProfile,
-}: {
-  title: string;
-  side: 'seller' | 'buyer';
-  party: Party;
-  onChange: (patch: Partial<Party>) => void;
-  fieldErrors: (key: string) => import('@conformo/validate/browser').RuleResult[] | undefined;
-  profiles: PartyProfile[];
-  onSaveProfile: (profile: PartyProfile) => void;
-  onDeleteProfile: (id: string) => void;
-}) {
-  const isEmail = (party.electronicAddress ?? '').includes('@');
-  return (
-    <fieldset className="party" id={`field-${side}`}>
-      <legend>{title}</legend>
-      <ProfilePicker party={party} profiles={profiles} onLoad={onChange} onSave={onSaveProfile} onDelete={onDeleteProfile} />
-      <Field label="Name" errors={fieldErrors(`${side}.name`)}>
-        <input data-field={`${side}.name`} value={party.name} onChange={(e) => onChange({ name: e.target.value })} />
-      </Field>
-      <Field label="Street" errors={fieldErrors(`${side}.street`)}>
-        <input data-field={`${side}.street`} value={party.street ?? ''} onChange={(e) => onChange({ street: e.target.value || undefined })} />
-      </Field>
-      <div className="editor-row">
-        <Field label="Postcode" errors={fieldErrors(`${side}.postcode`)}>
-          <input data-field={`${side}.postcode`} value={party.postcode ?? ''} onChange={(e) => onChange({ postcode: e.target.value || undefined })} />
-        </Field>
-        <Field label="City" errors={fieldErrors(`${side}.city`)}>
-          <input data-field={`${side}.city`} value={party.city ?? ''} onChange={(e) => onChange({ city: e.target.value || undefined })} />
-        </Field>
-        <Field label="Country" errors={fieldErrors(`${side}.country`)}>
-          <input
-            data-field={`${side}.country`}
-            value={party.country}
-            onChange={(e) => onChange({ country: e.target.value.toUpperCase() })}
-            maxLength={2}
-            placeholder="FR"
-          />
-        </Field>
-      </div>
-      <Field label="VAT number" errors={fieldErrors(`${side}.vatId`)} hint={vatHint(party.vatId)}>
-        <input data-field={`${side}.vatId`} value={party.vatId ?? ''} onChange={(e) => onChange({ vatId: e.target.value.toUpperCase() || undefined })} />
-      </Field>
-      <Field label="Electronic address" errors={fieldErrors(`${side}.electronicAddress`)}>
-        <input
-          data-field={`${side}.electronicAddress`}
-          value={party.electronicAddress ?? ''}
-          placeholder="name@example.com, or a scheme-specific ID"
-          onChange={(e) => onChange({ electronicAddress: e.target.value || undefined })}
-        />
-      </Field>
-      {!isEmail && party.electronicAddress && (
-        <Field label="Address scheme" hint={!party.electronicAddressScheme ? 'Required for a non-email address (BT-34/BT-49).' : undefined}>
-          <select
-            value={party.electronicAddressScheme ?? ''}
-            onChange={(e) => onChange({ electronicAddressScheme: e.target.value || undefined })}
-          >
-            <option value="">Select a scheme…</option>
-            {EAS_CODES.map((c) => (
-              <option key={c.code} value={c.code}>
-                {c.label}
-              </option>
+        {isFR && (
+          <div className="subgroup">
+            <h3 className="subgroup-title">{t.sections.france}</h3>
+            {(['AAB', 'PMD', 'PMT'] as const).map((code) => (
+              <Field key={code} fieldKey={`notes.${code}`} label={t.fields[`note${code}`]} error={errorFor(`notes.${code}`)} required>
+                <input value={noteText(invoice, code)} onChange={(e) => onChange(setNote(invoice, code, e.target.value))} />
+              </Field>
             ))}
-          </select>
-        </Field>
-      )}
-    </fieldset>
-  );
-}
-
-function isEmptyValue(v: unknown): boolean {
-  return v === undefined || v === null || v === '';
-}
-
-function Field({
-  label,
-  errors,
-  hint,
-  children,
-}: {
-  label: string;
-  errors?: import('@conformo/validate/browser').RuleResult[];
-  hint?: string;
-  children: React.ReactNode;
-}) {
-  const hasErrors = !!errors?.length;
-  // "A missing buyer name while typing is not the same class of thing as a
-  // structurally invalid VAT breakdown" (Part C) — a required field that's
-  // simply still empty reads as unfinished, not as broken, even though both
-  // are the same Schematron severity underneath. Detected from the child
-  // input's own `value`, so every Field call site gets this for free.
-  const value = isValidElement(children) ? (children.props as { value?: unknown }).value : undefined;
-  const incomplete = hasErrors && isEmptyValue(value);
-  const stateClass = hasErrors ? (incomplete ? 'field-incomplete' : 'field-invalid') : hint ? 'field-invalid' : '';
-
-  // WCAG 3.3.1/4.1.2: the error text and hint are a DESCRIPTION of the input,
-  // not part of its accessible NAME — without this, a screen reader would
-  // fold the whole label's text (including error/hint copy that changes as
-  // you type) into the input's name instead of announcing it as a separate,
-  // stable description on focus. Falls back to a slug of the label for the
-  // few call sites with no data-field (e.g. "Address scheme"), so every
-  // Field that has something to describe gets a stable id, not only the
-  // ones already wired into touch-tracking.
-  const dataField = isValidElement(children) ? (children.props as Record<string, unknown>)['data-field'] : undefined;
-  const hasDescription = hasErrors || !!hint;
-  const describedById = hasDescription
-    ? typeof dataField === 'string'
-      ? `${dataField.replace(/\./g, '-')}-desc`
-      : `${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-desc`
-    : undefined;
-  const child =
-    isValidElement(children) && describedById
-      ? cloneElement(children as React.ReactElement<Record<string, unknown>>, {
-          'aria-describedby': describedById,
-          'aria-invalid': hasErrors || undefined,
-        })
-      : children;
-
-  return (
-    <label className={`field ${stateClass}`}>
-      <span className="field-label">{label}</span>
-      {child}
-      <div id={describedById}>
-        <FieldErrors errors={errors} />
-        {hint && <p className="field-hint">{hint}</p>}
-      </div>
-    </label>
+          </div>
+        )}
+      </section>
+    </form>
   );
 }

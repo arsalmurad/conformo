@@ -36,8 +36,8 @@ function migrate(decrypted: PersistedState | Invoice): PersistedState {
   return { invoice: decrypted as Invoice, profiles: [] };
 }
 
-export function useInvoiceDraft() {
-  const [invoice, setInvoice] = useState<Invoice>(emptyInvoice);
+export function useInvoiceDraft(initial: () => Invoice = () => emptyInvoice()) {
+  const [invoice, setInvoice] = useState<Invoice>(initial);
   const [profiles, setProfiles] = useState<PartyProfile[]>([]);
   const [lock, setLock] = useState<LockState>({ status: 'checking' });
   const [protectedSince, setProtectedSince] = useState(false);

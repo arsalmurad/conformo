@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { checkLogoFile } from '../hardening/logo.js';
 import { convertToPng } from '../hardening/imageConvert.js';
 import type { EmbeddableLogo } from '../pdf/exportPdf.js';
+import { useI18n } from '../i18n/I18n.js';
 
 interface Props {
   logo: EmbeddableLogo | undefined;
@@ -19,6 +20,7 @@ const MIME_BY_KIND = { png: 'image/png', jpeg: 'image/jpeg', webp: 'image/webp' 
  * conversion, so the conversion step can't be used to smuggle something
  * that would otherwise have been rejected. */
 export function LogoUpload({ logo, onChange }: Props) {
+  const { t } = useI18n();
   const [error, setError] = useState<string | undefined>(undefined);
   const [previewUrl, setPreviewUrl] = useState<string | undefined>(undefined);
 
@@ -40,9 +42,9 @@ export function LogoUpload({ logo, onChange }: Props) {
 
   return (
     <div className="logo-upload">
-      <span className="field-label">Logo (optional, shown on the PDF)</span>
-      <label className="file-picker-button" htmlFor="logo-upload-input">
-        Choose file
+      <span className="field-label">{t.fields.logo}</span>
+      <label className="btn btn-secondary file-picker-button" htmlFor="logo-upload-input">
+        {t.actions.addLogo}
         <input
           id="logo-upload-input"
           className="file-input-hidden"
@@ -53,8 +55,8 @@ export function LogoUpload({ logo, onChange }: Props) {
       </label>
       {previewUrl && <img src={previewUrl} alt="Logo preview" className="logo-preview" />}
       {logo && (
-        <button type="button" onClick={() => { onChange(undefined); setPreviewUrl(undefined); }}>
-          Remove logo
+        <button type="button" className="btn btn-quiet" onClick={() => { onChange(undefined); setPreviewUrl(undefined); }}>
+          {t.actions.removeLogo}
         </button>
       )}
       {error && <p className="field-hint">{error}</p>}

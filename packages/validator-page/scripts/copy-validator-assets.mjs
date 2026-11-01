@@ -35,4 +35,8 @@ for (const [src, name] of files) {
   if (src.endsWith('.gz')) writeFileSync(`${destDir}/${name}`, gunzipSync(readFileSync(src)));
   else copyFileSync(src, `${destDir}/${name}`);
 }
-console.log(`copied ${files.length} validator assets into public/validator/`);
+// The page shares the app's typeface (packages/ui/src/index.css loads it from /assets/fonts): self-hosted, no font CDN.
+const fontDir = fileURLToPath(new URL('../public/assets/fonts', import.meta.url));
+mkdirSync(fontDir, { recursive: true });
+for (const f of ['WorkSans-Regular.ttf', 'WorkSans-Bold.ttf']) copyFileSync(`${repoRoot}/packages/ui/public/assets/fonts/${f}`, `${fontDir}/${f}`);
+console.log(`copied ${files.length} validator assets into public/validator/ and the fonts into public/assets/fonts/`);

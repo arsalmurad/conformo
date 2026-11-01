@@ -1,80 +1,71 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Invoice } from '@conformo/core';
-import { buildCII, InvoiceInputError } from '@conformo/formats';
-import type { RuleResult } from '@conformo/validate/browser';
+import { buildCII, checkInvoice } from '@conformo/formats';
+import type { ValidationResult } from '@conformo/validate/browser';
+import type { Audience } from '../audience.js';
 import { validateInvoiceXml } from './browserValidator.js';
-import { targetFor, type Section } from './fieldMap.js';
+import { clientProblems, mergeProblems, problemsFromInput, problemsFromRules, sortProblems, type Problem } from './problems.js';
 
-// 350ms originally; raised to 750ms after the live preview (InvoicePreview.tsx)
-// needed to hit a 500ms edit-to-updated-preview budget. Both this hook and
-// the preview run their own independent debounce off the same invoice edit,
-// and SaxonJS's schematron transform() — even in its "async" mode — still
-// occupies the main thread for a real stretch once it starts. At 350ms, this
-// validation pass's start routinely landed *during* the preview's own
-// 250-420ms completion window, and measured e2e as real, repeatable preview
-// slowdowns (not noise: ~40-50% of edits missed the 500ms budget with this
-// at 350ms, dropping to ~90% passing once moved past the preview's own
-// window). 750ms is still imperceptible as a delay to a person typing, and
-// nowhere near the 10-second time-to-invoice budget.
+// 750ms, not less: the Schematron transform occupies the main thread for a while, and the live preview has its own
+// 500ms edit-to-repaint budget (see the e2e test). Starting validation inside the preview's window made ~half the
+// edits miss it at 350ms.
 const DEBOUNCE_MS = 750;
 
 export interface LiveValidation {
+  /** A pass is running for the latest edit; the problem list may be stale until it finishes. */
   checking: boolean;
-  /** True once at least one validation pass has completed — avoids flashing
-   * every field red on the very first render before the debounce fires. */
+  /** At least one full pass has finished (input + client checks always; rules when they could run). */
   ready: boolean;
-  byField: Record<string, RuleResult[]>;
-  bySection: Partial<Record<Section, RuleResult[]>>;
-  errorCount: number;
-  /** Set when the invoice couldn't even be serialized to XML — e.g. an
-   * electronic address with no scheme code that isn't an e-mail address
-   * (see InvoiceInputError in @conformo/formats). This is a REAL
-   * problem the user needs to see, not the same as "still typing": silently
-   * reporting zero issues here would show a false "passes EN 16931" for a
-   * document that doesn't even have a body yet. */
-  structuralError?: string;
+  /** Everything that stops this invoice from being accepted under the chosen audience, in form order. */
+  problems: Problem[];
+  /** True when the official rule sets ran on this exact invoice and found nothing. Never true otherwise: a draft the
+   * Schematron could not run on is not "valid". */
+  accepted: boolean;
+  /** The rule sets that ran, for the technical details. */
+  ruleSets: ValidationResult['ruleSets'];
+  /** The validator's own assets failed to load (offline before first visit, a broken deploy). */
+  unavailable?: string;
 }
 
-const EMPTY: LiveValidation = { checking: false, ready: false, byField: {}, bySection: {}, errorCount: 0 };
+const EMPTY: LiveValidation = { checking: true, ready: false, problems: [], accepted: false, ruleSets: [] };
 
-export function useLiveValidation(invoice: Invoice, country: 'FR' | 'DE' | undefined): LiveValidation {
+export function useLiveValidation(invoice: Invoice, audience: Audience): LiveValidation {
   const [result, setResult] = useState<LiveValidation>(EMPTY);
   const generation = useRef(0);
 
   useEffect(() => {
     const myGeneration = ++generation.current;
-    setResult((prev) => ({ ...prev, checking: true }));
+    // Input and client checks are instant, so the problem list and the download gate never lag behind the form;
+    // only the official Schematron pass is debounced.
+    const input = problemsFromInput(checkInvoice(invoice), invoice);
+    const client = clientProblems(invoice, audience);
+    const quick = sortProblems(mergeProblems(input, client));
+    setResult((prev) => ({ ...prev, checking: input.length === 0, problems: input.length ? quick : prev.ready ? mergeKeep(quick, prev.problems) : quick, accepted: false, ready: input.length > 0 || prev.ready }));
+    if (input.length > 0) return;
+
     const timer = setTimeout(async () => {
       let outcome: LiveValidation;
       try {
-        const xml = buildCII(invoice, { profile: country === 'DE' ? 'xrechnung' : 'en16931' });
-        const { results } = await validateInvoiceXml(xml, country ? { country } : {});
-        const failures = results.filter((r) => r.severity === 'error' || r.severity === 'fatal');
-        const byField: Record<string, RuleResult[]> = {};
-        const bySection: LiveValidation['bySection'] = {};
-        for (const r of failures) {
-          const target = targetFor(r.fields);
-          if (target.kind === 'field') (byField[target.field] ??= []).push(r);
-          else (bySection[target.section] ??= []).push(r);
-        }
-        outcome = { checking: false, ready: true, byField, bySection, errorCount: failures.length };
+        const xml = buildCII(invoice, { profile: audience.profile });
+        const v = await validateInvoiceXml(xml, audience.country ? { country: audience.country } : {});
+        const rules = problemsFromRules(v.results, invoice);
+        const problems = sortProblems(mergeProblems(client, rules));
+        outcome = { checking: false, ready: true, problems, accepted: v.valid && problems.length === 0, ruleSets: v.ruleSets };
       } catch (err) {
-        if (err instanceof InvoiceInputError) {
-          // A real, actionable problem — surface it rather than hiding it
-          // behind a false "0 issues".
-          outcome = { ...EMPTY, ready: true, errorCount: 1, structuralError: err.message };
-        } else {
-          // Something else went wrong (e.g. the validator's own assets
-          // haven't loaded yet); don't crash the editor over it, but don't
-          // claim a clean pass either.
-          console.warn('live validation skipped:', err);
-          outcome = { ...EMPTY, ready: false };
-        }
+        console.warn('live validation failed:', err);
+        outcome = { checking: false, ready: true, problems: quick, accepted: false, ruleSets: [], unavailable: err instanceof Error ? err.message : String(err) };
       }
       if (myGeneration === generation.current) setResult(outcome);
     }, DEBOUNCE_MS);
     return () => clearTimeout(timer);
-  }, [invoice, country]);
+  }, [invoice, audience]);
 
   return result;
+}
+
+/** While the rules re-run, keep showing the rule problems of the previous pass for fields not yet re-checked, so a
+ * problem does not vanish and reappear on every keystroke. */
+function mergeKeep(quick: Problem[], previous: Problem[]): Problem[] {
+  const rules = previous.filter((p) => p.source === 'rules');
+  return sortProblems(mergeProblems(quick, rules));
 }

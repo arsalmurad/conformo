@@ -1,4 +1,6 @@
 import { checkPaymentLink } from '../hardening/paymentLink.js';
+import { useI18n } from '../i18n/I18n.js';
+import { Field } from './Field.js';
 
 interface Props {
   value: string;
@@ -12,12 +14,12 @@ interface Props {
  * hardening/paymentLink.ts: HTTPS-only, no javascript:, no localhost or
  * private-network host, no embedded credentials. */
 export function PaymentLinkField({ value, onChange }: Props) {
+  const { t, lang } = useI18n();
   const check = checkPaymentLink(value);
+  const error = check.valid ? undefined : { text: lang === 'de' ? `Dieser Link ${check.reason}.` : `This link ${check.reason}.` };
   return (
-    <label className={`field ${!check.valid ? 'field-invalid' : ''}`}>
-      <span className="field-label">Payment link (optional — e.g. a Stripe/PayPal checkout URL)</span>
-      <input value={value} onChange={(e) => onChange(e.target.value)} placeholder="https://buy.stripe.com/…" />
-      {!check.valid && <p className="field-hint">This link {check.reason}.</p>}
-    </label>
+    <Field fieldKey="paymentLink" label={t.fields.paymentLink} hint={t.hints.paymentLink} error={error}>
+      <input type="url" value={value} onChange={(e) => onChange(e.target.value)} placeholder="https://buy.stripe.com/…" />
+    </Field>
   );
 }
