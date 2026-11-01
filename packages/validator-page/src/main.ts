@@ -7,6 +7,8 @@ import { validateInvoiceXml } from './browserValidator.js';
 import { describe } from '../../ui/src/validation/messages.js';
 import { keyForRule, valueAt } from '../../ui/src/validation/problems.js';
 import type { Problem } from '../../ui/src/validation/problems.js';
+import { labelFor } from '../../ui/src/validation/labels.js';
+import { STRINGS } from '../../ui/src/i18n/strings.js';
 import '../../ui/src/index.css';
 import '../../ui/src/chrome/site-header.css';
 import './style.css';
@@ -141,8 +143,9 @@ function esc(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-function fixItem(rule: RuleResult, invoice: Invoice | undefined): string {
+function fixItem(rule: RuleResult, invoice: Invoice | undefined, xrechnung: boolean): string {
   const t = S[lang];
+  let field: string | undefined;
   let text = rule.plainLanguage?.summary ?? rule.message;
   let fix = rule.plainLanguage?.fix;
   if (invoice) {
@@ -152,9 +155,10 @@ function fixItem(rule: RuleResult, invoice: Invoice | undefined): string {
     const d = describe(p, lang);
     // A field-specific sentence beats the generic one; the generic fallback only when nothing better exists.
     const generic = /official check rejects this|offizielle Prüfung lehnt/.test(d.text);
-    if (!generic) { text = d.text; fix = d.fix; } else if (lang === 'de') { text = rule.message; fix = undefined; }
+    if (!generic) { text = d.text; fix = d.fix; field = labelFor(key, STRINGS[lang], xrechnung); } else if (lang === 'de') { text = rule.message; fix = undefined; }
   }
   return `<li class="vp-fix">
+    ${field ? `<p class="vp-fix-field">${esc(field)}</p>` : ''}
     <p class="vp-fix-text">${esc(text)}</p>
     ${fix ? `<p class="vp-fix-how">${esc(fix)}</p>` : ''}
     <p class="vp-fix-rule">${esc(t.rule)} ${esc(rule.ruleId)}${rule.message !== text ? ` · ${esc(rule.message)}` : ''}</p>
@@ -195,7 +199,7 @@ function render(): void {
   } else {
     result.className = 'seal seal-bad'; mark.textContent = String(count);
     title.textContent = t.rejected(count); sub.textContent = t.rejectedSub(std);
-    fixes.innerHTML = (xsdFailed ? `<li class="vp-fix"><p class="vp-fix-text">${esc(t.xsd)}</p></li>` : '') + failures.map((f) => fixItem(f, invoice)).join('');
+    fixes.innerHTML = (xsdFailed ? `<li class="vp-fix"><p class="vp-fix-text">${esc(t.xsd)}</p></li>` : '') + failures.map((f) => fixItem(f, invoice, r.ruleSets.some((x) => x.id.startsWith('xrechnung')))).join('');
   }
   tech.hidden = false;
   const sets = r.ruleSets.map((s) => `<li>${esc(s.label)} (${esc(s.source)}): ${esc(t.fired(s.fired, s.failed))}</li>`).join('');
@@ -211,6 +215,13 @@ function set(state: typeof last): void {
   render();
 }
 
+/** On a phone the verdict sits below the drop zone: bring it into view once there is one. */
+function revealResult(): void {
+  if (window.innerWidth > 860) return;
+  const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  result.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+}
+
 let run = 0;
 async function check(xml: string, name?: string): Promise<void> {
   const mine = ++run;
@@ -221,7 +232,10 @@ async function check(xml: string, name?: string): Promise<void> {
     const r = await validateInvoiceXml(xml, country ? { country } : {});
     let invoice: Invoice | undefined;
     try { invoice = detectXmlFormat(xml).invoice; } catch { invoice = undefined; }
-    if (mine === run) set({ kind: 'done', r, invoice, name });
+    if (mine === run) {
+      set({ kind: 'done', r, invoice, name });
+      revealResult();
+    }
   } catch (err) {
     if (mine === run) set({ kind: 'error', message: (err as Error).message });
   }

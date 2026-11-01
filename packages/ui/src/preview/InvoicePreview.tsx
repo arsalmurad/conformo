@@ -16,6 +16,8 @@ interface Props {
   template: TemplateId;
   logo: EmbeddableLogo | undefined;
   paymentLink: string;
+  /** Controls shown on the status line (the layout picker). */
+  children?: React.ReactNode;
 }
 
 /**
@@ -51,7 +53,7 @@ interface Props {
  * screen, unchanged, for the entire rebuild, so a slow edit never flashes a
  * blank or half-drawn page.
  */
-export function InvoicePreview({ invoice, template, logo, paymentLink }: Props) {
+export function InvoicePreview({ invoice, template, logo, paymentLink, children }: Props) {
   const { t } = useI18n();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [status, setStatus] = useState<'rendering' | 'ready' | 'error'>('rendering');
@@ -71,6 +73,19 @@ export function InvoicePreview({ invoice, template, logo, paymentLink }: Props) 
   // collected) on every render, which implicitly freed this; reusing one
   // worker across the app's lifetime means nothing else does that anymore.
   const currentDoc = useRef<{ destroy: () => Promise<void> } | null>(null);
+  // The panel's width, rounded: the page is redrawn when it changes (window resize, or the mobile Preview tab making a
+  // hidden panel visible: a canvas drawn while hidden was stuck at the 380px fallback).
+  const [panelWidth, setPanelWidth] = useState(0);
+  useEffect(() => {
+    const el = canvasRef.current?.parentElement;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(([entry]) => {
+      const w = Math.round(entry?.contentRect.width ?? 0);
+      if (w > 0) setPanelWidth((prev) => (Math.abs(prev - w) >= 8 ? w : prev));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   useEffect(() => {
     const myGeneration = ++generation.current;
@@ -141,7 +156,7 @@ export function InvoicePreview({ invoice, template, logo, paymentLink }: Props) 
     }, DEBOUNCE_MS);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- rebuild on any input that changes what buildInvoicePdf produces
-  }, [invoice, template, logo, paymentLink]);
+  }, [invoice, template, logo, paymentLink, panelWidth]);
 
   // Only on unmount — the effect above already destroys the PREVIOUS doc
   // each time it loads a new one, so this just cleans up the very last one.
@@ -151,9 +166,12 @@ export function InvoicePreview({ invoice, template, logo, paymentLink }: Props) 
 
   return (
     <section className="preview-panel" aria-label={t.preview.label}>
-      <p className="preview-status" aria-live="polite">
-        {status === 'error' ? error ?? t.preview.error : status === 'rendering' ? t.preview.updating : t.preview.ready}
-      </p>
+      <div className="preview-bar">
+        <p className="preview-status" aria-live="polite">
+          {status === 'error' ? error ?? t.preview.error : status === 'rendering' ? t.preview.updating : t.preview.ready}
+        </p>
+        {children}
+      </div>
       <canvas ref={canvasRef} role="img" aria-label={`Preview of invoice ${invoice.number || 'draft'}`} />
     </section>
   );

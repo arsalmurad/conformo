@@ -16,16 +16,19 @@
 /* Who is this invoice for? */
 .audience { border: 0; margin: 0; padding: 0; }
 .audience-question { font-size: var(--text-xl); font-weight: 700; padding: 0; margin-bottom: var(--space-3); }
-.audience-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }
+.audience-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); align-items: start; }
 .audience-option {
   position: relative; display: grid; grid-template-columns: auto 1fr; column-gap: var(--space-2); row-gap: 2px;
-  padding: var(--space-3); border: 1px solid var(--rule); border-radius: var(--radius); background: var(--paper); cursor: pointer;
+  padding: 10px var(--space-3); min-height: 44px; border: 1px solid var(--rule); border-radius: var(--radius); background: var(--paper); cursor: pointer;
 }
+.audience-option:not(.is-selected) .audience-detail { display: none; }
 .audience-option input { grid-row: 1 / span 2; margin: 3px 0 0; width: 18px; height: 18px; accent-color: var(--seal); }
 .audience-option.is-selected { border-color: var(--seal); box-shadow: inset 4px 0 0 var(--seal); }
 .audience-title { font-weight: 700; }
 .audience-detail { color: var(--graphite); font-size: var(--text-sm); }
 .audience-unsupported { margin: var(--space-2) 0 0; font-size: var(--text-sm); color: var(--graphite); }
+.audience-unsupported summary { cursor: pointer; text-decoration: underline; min-height: 32px; display: inline-flex; align-items: center; }
+.audience-unsupported p { margin: var(--space-1) 0 0; }
 
 /* More menu */
 .more-menu { position: relative; flex: none; }
@@ -165,10 +168,12 @@
 .seal-tech code { font-family: inherit; font-weight: 700; font-variant-numeric: tabular-nums; }
 
 /* ---------------------------------------------------------------- preview: the paper on the desk */
-.preview-tools { display: flex; align-items: center; justify-content: flex-end; gap: var(--space-2); font-size: var(--text-sm); }
+.preview-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; margin-bottom: var(--space-2); }
+.preview-tools { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); }
+.seal-more { margin-top: var(--space-1); padding-left: 0; font-size: var(--text-sm); }
 .preview-tools select { width: auto; min-width: 160px; min-height: 40px; padding: 6px 10px; }
 .preview-panel { background: transparent; }
-.preview-status { margin: 0 0 var(--space-2); font-size: var(--text-sm); color: var(--graphite); }
+.preview-status { margin: 0; font-size: var(--text-sm); color: var(--graphite); }
 .preview-panel canvas { display: block; width: 100%; height: auto; background: #fff; box-shadow: var(--shadow-paper); }
 
 /* ---------------------------------------------------------------- mobile toggle and action bar */
@@ -214,12 +219,12 @@
 }
 
 @media (max-width: 640px) {
-  .form-top { flex-direction: column-reverse; }
-  .form-top .more-menu { align-self: flex-end; }
+  .form-top { position: relative; }
+  .form-top .audience-question { padding-right: 104px; min-height: 44px; display: flex; align-items: center; }
+  .form-top .more-menu { position: absolute; right: 0; top: 0; }
   .more-panel { right: auto; left: auto; position: absolute; right: 0; }
   .audience-options { grid-template-columns: minmax(0, 1fr); gap: var(--space-1); }
   .audience-option { padding: var(--space-2) var(--space-3); }
-  .audience-option:not(.is-selected) .audience-detail { display: none; }
   .section { padding-left: 0; }
   .section-num { position: static; margin-right: var(--space-2); flex: none; }
   .row, .row-postcode, .row-details { grid-template-columns: minmax(0, 1fr); }

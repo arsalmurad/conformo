@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { Audience } from '../audience.js';
 import { useI18n } from '../i18n/I18n.js';
 import type { LiveValidation } from '../validation/useLiveValidation.js';
@@ -22,6 +23,9 @@ interface Props {
 export function Verdict({ audience, validation, visible, labelFor, onGo }: Props) {
   const { t, lang } = useI18n();
   const { problems, accepted, checking, ready, ruleSets } = validation;
+  const [expanded, setExpanded] = useState(false);
+  // Three at a time: the seal sits above the preview, and a long list would push the document off the screen.
+  const shownList = expanded ? visible : visible.slice(0, 3);
   const allMissing = problems.length > 0 && problems.every((p) => p.kind === 'missing');
   // Calm until it matters: the seal turns to the problem colour only once a problem is actually shown (a field the
   // user left, or a download attempt). Before that it counts what is still needed, neutrally.
@@ -41,7 +45,7 @@ export function Verdict({ audience, validation, visible, labelFor, onGo }: Props
         <p className="seal-sub">{state === 'ok' ? t.verdict.okDetail : state === 'todo' ? t.verdict.startHint : audience.standard}</p>
         {state !== 'ok' && visible.length > 0 && (
           <ul className="seal-list">
-            {visible.map((p) => {
+            {shownList.map((p) => {
               const d = describe(p, lang);
               return (
                 <li key={p.key}>
@@ -53,6 +57,11 @@ export function Verdict({ audience, validation, visible, labelFor, onGo }: Props
               );
             })}
           </ul>
+        )}
+        {state !== 'ok' && visible.length > 3 && (
+          <button type="button" className="btn btn-quiet seal-more" aria-expanded={expanded} onClick={() => setExpanded((e) => !e)}>
+            {expanded ? t.verdict.showLess : t.verdict.showMore(visible.length - 3)}
+          </button>
         )}
         {(ruleSets.length > 0 || problems.some((p) => p.ruleId)) && (
           <details className="seal-tech">

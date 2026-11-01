@@ -3,7 +3,7 @@ import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { repoRoot } from './helpers.js';
 
-const VALIDATOR = 'http://localhost:5184/';
+const VALIDATOR = process.env.VALIDATOR_URL ?? 'http://localhost:5184/';
 test.use({ locale: 'en-US' });
 
 /** A real XRechnung UBL document from the CLI, and a broken copy without the buyer reference (BR-DE-15). */

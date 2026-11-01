@@ -10,6 +10,8 @@ import { defineConfig } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './e2e',
+  // e2e/screenshots.spec.ts writes docs/screenshots; it is a generator, run only with SCREENSHOTS=1.
+  testIgnore: process.env.SCREENSHOTS ? [] : ['**/screenshots.spec.ts'],
   timeout: 60_000,
   fullyParallel: false, // one worker: the local numbering counter is shared, global IndexedDB state
   retries: 0,

@@ -38,6 +38,7 @@
 .vp-fixes { margin: var(--space-4) 0 0; padding-left: var(--space-5); display: flex; flex-direction: column; gap: var(--space-3); }
 .vp-fix::marker { font-weight: 700; color: var(--stamp); }
 .vp-fix p { margin: 0; }
+.vp-fix-field { font-size: var(--text-sm); font-weight: 700; color: var(--graphite); }
 .vp-fix-text { font-weight: 700; }
 .vp-fix-how { margin-top: 2px !important; }
 .vp-fix-rule { margin-top: 2px !important; font-size: var(--text-sm); color: var(--graphite); overflow-wrap: anywhere; }

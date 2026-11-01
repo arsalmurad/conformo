@@ -63,7 +63,7 @@ for (const width of WIDTHS) {
 
   test(`validator at ${width}px: nothing overflows`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
-    await page.goto('http://localhost:5184/');
+    await page.goto(process.env.VALIDATOR_URL ?? 'http://localhost:5184/');
     await page.getByText('Or paste the XML').click();
     const m = await measure(page);
     expect(m.narrow).toEqual([]);

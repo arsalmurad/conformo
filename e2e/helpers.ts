@@ -9,9 +9,9 @@ export const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)
 
 export async function openApp(page: Page) {
   await page.goto('/');
-  const discard = page.getByRole('button', { name: /discard it and start a new invoice/i });
+  const discard = page.getByRole('button', { name: /discard it and start a new invoice|Entwurf verwerfen/i });
   if (await discard.isVisible().catch(() => false)) await discard.click();
-  await expect(page.getByRole('group', { name: 'Who is this invoice for?' })).toBeVisible();
+  await expect(page.locator('fieldset.audience')).toBeVisible();
 }
 
 export const section = (page: Page, id: 'seller' | 'buyer' | 'lines' | 'payment') => page.locator(`section[aria-labelledby="sec-${id}"]`);

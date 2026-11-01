@@ -26,7 +26,7 @@ for (const scheme of ['light', 'dark'] as const) {
 
   test(`validator, ${scheme}: empty and with a result`, async ({ page }) => {
     await page.emulateMedia({ colorScheme: scheme });
-    await page.goto('http://localhost:5184/');
+    await page.goto(process.env.VALIDATOR_URL ?? 'http://localhost:5184/');
     expect(await serious(page)).toEqual([]);
     await page.getByText('Or paste the XML').click();
     await page.getByLabel('Invoice XML').fill('<note/>');

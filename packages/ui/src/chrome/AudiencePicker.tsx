@@ -35,9 +35,10 @@ export function AudiencePicker({ value, onChange, countries }: Props) {
         ))}
       </div>
       {names.length > 0 && (
-        <p className="audience-unsupported">
-          <strong>{t.audience.unsupportedTitle}:</strong> {t.audience.unsupported(list)}
-        </p>
+        <details className="audience-unsupported">
+          <summary>{t.audience.unsupportedTitle}</summary>
+          <p>{t.audience.unsupported(list)}</p>
+        </details>
       )}
     </fieldset>
   );

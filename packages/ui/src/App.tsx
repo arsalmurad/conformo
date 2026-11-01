@@ -4,7 +4,7 @@ import type { TemplateId } from '@conformo/pdf';
 import { TEMPLATES } from '@conformo/pdf';
 import { AUDIENCES, applyAudience, defaultAudience, isAudienceId, type AudienceId } from './audience.js';
 import { useI18n } from './i18n/I18n.js';
-import type { Strings } from './i18n/strings.js';
+import { labelFor } from './validation/labels.js';
 import { useInvoiceDraft } from './state/useInvoiceDraft.js';
 import { emptyInvoice } from './state/emptyInvoice.js';
 import { useLiveValidation } from './validation/useLiveValidation.js';
@@ -38,35 +38,6 @@ function initialAudience(): AudienceId {
     if (isAudienceId(saved)) return saved;
   } catch { /* private mode */ }
   return defaultAudience(typeof navigator !== 'undefined' ? navigator.languages ?? [navigator.language] : []);
-}
-
-/** The words a person reads for a field key, used in the verdict's links and in technical details. */
-export function labelFor(key: string, t: Strings, isB2G: boolean): string {
-  const f = t.fields;
-  const line = /^lines\.(\d+)\.(.+)$/.exec(key);
-  if (line) {
-    const sub: Record<string, string> = { name: f.lineName, quantity: f.quantity, unitPriceMinor: f.unitPrice, taxCategory: f.vatType, taxRate: f.vatRate, exemptionReason: f.exemptionReason };
-    return `${t.lines.line(Number(line[1]) + 1)}: ${sub[line[2]!] ?? line[2]}`;
-  }
-  const party = /^(seller|buyer)\.(.+)$/.exec(key);
-  if (party) {
-    const seller = party[1] === 'seller';
-    const sub: Record<string, string> = {
-      name: seller ? f.sellerName : f.buyerName, street: f.street, postcode: f.postcode, city: f.city, country: f.country,
-      vatId: seller ? f.vatId : f.buyerVatId, taxRegistrationId: f.taxRegistrationId, legalId: f.legalId,
-      electronicAddress: seller ? f.sellerEmail : f.buyerEmail, electronicAddressScheme: f.addressScheme,
-      'contact.name': f.contactName, 'contact.phone': f.contactPhone, 'contact.email': f.contactEmail,
-    };
-    return `${seller ? t.sections.seller : t.sections.buyer}: ${sub[party[2]!] ?? party[2]}`;
-  }
-  const plain: Record<string, string> = {
-    number: f.number, issueDate: f.issueDate, dueDate: f.dueDate, currency: f.currency,
-    buyerReference: isB2G ? f.leitwegId : f.buyerReference, businessProcess: f.businessProcess,
-    'notes.AAB': f.noteAAB, 'notes.PMD': f.notePMD, 'notes.PMT': f.notePMT,
-    'payment.iban': f.iban, 'payment.bic': f.bic, paymentTerms: f.paymentTerms,
-    totals: t.lines.total, lines: t.sections.lines,
-  };
-  return plain[key] ?? key;
 }
 
 export default function App() {
@@ -129,6 +100,7 @@ export default function App() {
   }
 
   const problems = validation.problems;
+  const allMissingAll = problems.every((p) => p.kind === 'missing');
   const draftLabel = t.actions.downloadDraft(audience.standard);
   const options = { logo, paymentLink: paymentLink || undefined };
 
@@ -186,7 +158,12 @@ export default function App() {
         <button type="button" aria-pressed={mobileView === 'form'} onClick={() => setMobileView('form')}>{t.actions.form}</button>
         <button type="button" aria-pressed={mobileView === 'preview'} onClick={() => setMobileView('preview')}>
           {t.actions.preview}
-          {problems.length > 0 && <span className="view-toggle-count" aria-label={t.actions.fix(problems.length)}>{problems.length}</span>}
+          {problems.length > 0 && (
+            <>
+              <span className="view-toggle-count" aria-hidden="true">{problems.length}</span>
+              <span className="visually-hidden">{`: ${allMissingAll ? t.verdict.incomplete(problems.length) : t.verdict.problems(problems.length)}`}</span>
+            </>
+          )}
         </button>
       </div>
       <main className={`workspace view-${mobileView}`}>
@@ -216,13 +193,14 @@ export default function App() {
         </div>
         <div className="preview-col">
           <Verdict audience={audience} validation={validation} visible={visible} labelFor={(k) => labelFor(k, t, isB2G)} onGo={goTo} />
-          <div className="preview-tools">
-            <label htmlFor="template-select">{t.fields.template}</label>
-            <select id="template-select" value={template} onChange={(e) => setTemplate(e.target.value as TemplateId)}>
-              {Object.entries(TEMPLATES).map(([id, tpl]) => <option key={id} value={id}>{tpl.label}</option>)}
-            </select>
-          </div>
-          <InvoicePreview invoice={invoice} template={template} logo={logo} paymentLink={paymentLink} />
+          <InvoicePreview invoice={invoice} template={template} logo={logo} paymentLink={paymentLink}>
+            <div className="preview-tools">
+              <label htmlFor="template-select">{t.fields.template}</label>
+              <select id="template-select" value={template} onChange={(e) => setTemplate(e.target.value as TemplateId)}>
+                {Object.entries(TEMPLATES).map(([id, tpl]) => <option key={id} value={id}>{tpl.label}</option>)}
+              </select>
+            </div>
+          </InvoicePreview>
         </div>
       </main>
       <div className="action-bar">

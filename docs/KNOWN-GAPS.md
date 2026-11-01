@@ -36,5 +36,11 @@ PyPI, and blocked everything else. Consequences:
   against the FeRD specification text.
 - **Official ZUGFeRD / Factur-X sample PDFs** (FeRD, FNFE) were unreachable, so the conformance report covers the KoSIT test suite, the Peppol examples and the CEN
   examples and unit tests, not PDF samples.
-- **Windows** was not available. Scripts avoid shell-isms and use `py`/`python3` probing, `node:path` and `npm.cmd` handling, but nothing here was executed on Windows.
+- **Windows**: every RELEASE.md section 0 gate, including the e2e suite and KoSIT via Java, has been run on Windows 10 (Node 24, Python 3.13, Temurin 17) as well as on the Linux CI runner.
 - **Storecove** has no public repository, so the comparison page could not verify anything about it.
+- **The PDF's own labels are English** ("INVOICE", "BILL TO", "Amount due") whatever the customer's language, although the
+  app around it is English and German. Dates and amounts already follow the invoice's country. Translating the labels
+  changes the output of every template in `packages/pdf` and needs new reference output for the PDF/A and
+  determinism tests.
+- **The app does not offer VAT category K** (intra-EU supply of goods): EN 16931 then also needs the delivery date and
+  deliver-to country (BR-IC-11/12), which the form does not ask for yet. The library and CLI support K.
