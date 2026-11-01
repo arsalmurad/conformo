@@ -5,7 +5,7 @@ Legally valid e-invoices as a function call or an AI tool call. Open source, and
 You give it an invoice as JSON. You get back XRechnung, UBL, CII or a Factur-X / ZUGFeRD PDF, and a validation result from the
 official rule sets that shows which rules ran. Nothing leaves your machine unless you send it.
 
-**[Web app](https://conformo-three.vercel.app)** · **[Validator](https://conformo-validate.vercel.app)** · **[Country docs](https://conformo-docs.vercel.app)** · **[Germany 2027 guide](docs/GERMANY-2027.md)**
+**[Web app](https://conformo-three.vercel.app)** · **[Validator](https://conformo-validate.vercel.app)** · **[Developer docs](https://conformo-docs.vercel.app)** · **[Germany 2027 guide](docs/GERMANY-2027.md)**
 
 ## Quickstart
 

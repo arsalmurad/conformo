@@ -35,3 +35,14 @@ for (const scheme of ['light', 'dark'] as const) {
     expect(await serious(page)).toEqual([]);
   });
 }
+
+const DOCS = process.env.DOCS_URL ?? 'http://127.0.0.1:5185/';
+for (const scheme of ['light', 'dark'] as const) {
+  test(`docs site, ${scheme}: every section page`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    for (const p of ['index.html', 'library.html', 'cli.html', 'mcp.html', 'http.html', 'germany-2027.html', 'conformance.html', 'limits.html', 'countries/index.html', 'countries/de.html']) {
+      await page.goto(DOCS + p);
+      expect(await serious(page), p).toEqual([]);
+    }
+  });
+}

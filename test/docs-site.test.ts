@@ -34,4 +34,27 @@ describe('docs-site: builds one page per mandate country from the dataset', () =
       expect(html).not.toMatch(/href="\//);
     }
   });
+
+  it('is a developer entry point: quickstart, every section, the conformance figures, OpenAPI, the same header as the app', () => {
+    const read = (f: string) => fs.readFileSync(`packages/docs-site/dist/${f}`, 'utf-8');
+    const home = read('index.html');
+    expect(home).toContain('npm install @conformo/toolkit');
+    expect(home).toContain("createXml(invoice, 'cii')");
+    for (const href of ['library.html', 'cli.html', 'mcp.html', 'http.html', 'germany-2027.html', 'conformance.html', 'countries/index.html', 'limits.html']) {
+      expect(home).toContain(`href="./${href}"`);
+      expect(fs.existsSync(`packages/docs-site/dist/${href}`)).toBe(true);
+    }
+    for (const link of ['https://conformo-three.vercel.app/', 'https://conformo-validate.vercel.app/', 'https://github.com/arsalmurad/conformo']) expect(home).toContain(link);
+    // The KoSIT figures come from the generated report, so they cannot be typed in by hand and go stale.
+    const report = fs.readFileSync('docs/CONFORMANCE.md', 'utf-8');
+    const kosit = /\| KoSIT XRechnung test suite \|(?:[^|]*\|){5}\s*(\d+\/\d+)/.exec(report)![1]!;
+    expect(read('conformance.html')).toContain(`<b>${kosit}</b>`);
+    expect(home).toContain(`<b>${kosit}</b>`);
+    expect(JSON.parse(read('openapi.json')).openapi).toMatch(/^3\.1/);
+    expect(read('mcp.html')).toContain('claude_desktop_config.json');
+    expect(read('mcp.html')).toContain('.cursor/mcp.json');
+    expect(read('mcp.html')).toContain('claude mcp add conformo');
+    expect(read('assets/site.css')).toContain("url('fonts/WorkSans-Regular.ttf')");
+  });
 });
+

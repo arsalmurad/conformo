@@ -71,3 +71,15 @@ for (const width of WIDTHS) {
     expect(m.scroll).toBeLessThanOrEqual(0);
   });
 }
+
+const DOCS = process.env.DOCS_URL ?? 'http://127.0.0.1:5185/';
+for (const width of WIDTHS) {
+  test(`docs site at ${width}px: no horizontal page scroll`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    for (const p of ['index.html', 'library.html', 'http.html', 'conformance.html', 'countries/de.html']) {
+      await page.goto(DOCS + p);
+      // Code and wide tables scroll inside their own box; the page itself never does.
+      expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth), p).toBeLessThanOrEqual(0);
+    }
+  });
+}

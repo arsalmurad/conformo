@@ -64,6 +64,7 @@ console.log('npm install of the tarballs into a fresh project');
 sh(npm, ['install', '--no-audit', '--no-fund', '--loglevel=error'], { cwd: proj });
 
 const docs = ['README.md', ...readdirSync(path.join(root, 'docs')).filter((f) => f.endsWith('.md')).map((f) => `docs/${f}`),
+  ...readdirSync(path.join(root, 'docs', 'site')).filter((f) => f.endsWith('.md')).map((f) => `docs/site/${f}`),
   ...pkgs.map((p) => `packages/${p.dir}/README.md`)].filter((f) => existsSync(path.join(root, f))).map((f) => path.join(root, f));
 let failed = false;
 const r = spawnSync(process.execPath, [path.join(root, 'tools/doctest.mjs'), '--cwd', proj, ...docs], { encoding: 'utf-8', stdio: 'inherit' });

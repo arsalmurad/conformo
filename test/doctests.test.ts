@@ -8,6 +8,8 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const docs = [
   'README.md',
   ...readdirSync(path.join(root, 'docs')).filter((f) => f.endsWith('.md')).map((f) => `docs/${f}`),
+  // The docs site's own pages (packages/docs-site renders them; bash/json samples run in test/docs-site-samples.test.ts).
+  ...readdirSync(path.join(root, 'docs', 'site')).filter((f) => f.endsWith('.md')).map((f) => `docs/site/${f}`),
   ...readdirSync(path.join(root, 'packages')).map((p) => `packages/${p}/README.md`),
 ].filter((f) => existsSync(path.join(root, f)));
 
