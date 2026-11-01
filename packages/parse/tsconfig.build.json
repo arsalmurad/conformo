@@ -1,19 +1,8 @@
 {
-  "extends": "../../tsconfig.json",
+  "extends": "../../tsconfig.build.base.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": ".",
-    "declaration": true,
-    "noEmit": false,
-    "allowImportingTsExtensions": false,
-    "paths": {
-      "@conformo/core": [
-        "./packages/core/dist/src/index.d.ts"
-      ],
-      "@conformo/formats": [
-        "./packages/formats/dist/src/index.d.ts"
-      ]
-    }
+    "rootDir": "."
   },
   "include": [
     "src/**/*.ts"

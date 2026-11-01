@@ -3,7 +3,7 @@ import fontkit from '@pdf-lib/fontkit';
 import { totals } from '@conformo/core';
 import type { Invoice } from '@conformo/core';
 import { buildCII } from '@conformo/formats';
-import { finalizePDFA, renderInvoicePage, type TemplateId, type RenderOptions } from '@conformo/pdf';
+import { finalizePDFA, renderInvoicePage, type FacturXProfile, type TemplateId, type RenderOptions } from '@conformo/pdf';
 import { BASE_URL } from '../baseUrl.js';
 
 export type EmbeddableLogo = NonNullable<RenderOptions['logo']>;
@@ -44,15 +44,15 @@ export async function buildInvoicePdf(
   invoice: Invoice,
   templateId: TemplateId,
   options: RenderOptions = {},
+  profile: FacturXProfile = 'en16931',
 ): Promise<Uint8Array> {
-  const xml = buildCII(invoice);
+  const xml = buildCII(invoice, { profile });
   const { iccBytes } = await loadAssets();
   const pdf = await buildPage(invoice, templateId, options);
 
   await finalizePDFA(pdf, {
     xml,
-    xmlFilename: 'factur-x.xml',
-    conformanceLevel: 'EN 16931',
+    profile,
     title: `Invoice ${invoice.number || 'draft'}`,
     author: invoice.seller.name || 'Conformo',
     producer: 'Conformo',
@@ -75,16 +75,17 @@ export async function buildInvoicePdf(
  * back to a pdf.js canvas preview (measured ~1100ms on getDocument() alone,
  * dwarfing font-embed/render's ~100ms): the PDF/A wrapper adds a multi-KB
  * embedded XML attachment, an ICC color profile, and the AF/Names machinery
- * pdf.js has to index even though none of it is drawn. buildCII(invoice) is
- * still called for its validation side effect (throws InvoiceInputError for
- * a structurally incomplete invoice), so "can't render a preview yet" still
- * fires the same way it does for the real export. */
+ * pdf.js has to index even though none of it is drawn. No buildCII() here:
+ * it runs checkInvoice(), which rejects every blank required term (BT-1,
+ * BT-27, BT-153...), and a draft has those until it is finished — gating
+ * the preview on it left the canvas empty from the first keystroke to the
+ * last. The validation summary already lists what is missing; the preview
+ * shows the page as it stands. */
 export async function buildPreviewPdf(
   invoice: Invoice,
   templateId: TemplateId,
   options: RenderOptions = {},
 ): Promise<Uint8Array> {
-  buildCII(invoice);
   const pdf = await buildPage(invoice, templateId, options);
   return pdf.save({ useObjectStreams: false });
 }

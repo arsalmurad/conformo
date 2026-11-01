@@ -1,62 +1,15 @@
-import { validateInBrowser } from '@conformo/validate/browser';
-import type { SaxonJSLike, ValidationResult } from '@conformo/validate/browser';
+import { createPageValidator } from '@conformo/validate/page';
+import type { ValidateOptions, ValidationResult } from '@conformo/validate/page';
 import { BASE_URL } from '../baseUrl.js';
 
 /**
- * Loads the free SaxonJS2.rt.js runtime (no Node built-ins — see
- * tools/fetch-saxonjs.mjs) as a real <script> tag, the way a browser page
- * does it, and the compiled SEF artefacts as fetched JSON. This is the
- * browser-only counterpart to @conformo/validate's Node entry: that
- * entry imports `node:fs` and the Node `saxon-js` package directly, which
- * cannot be bundled for a browser at all, so this module — not that one —
- * is what packages/ui is allowed to import. All three files are served from
- * public/validator/ (gitignored; populated by `npm run copy-validator-assets`,
- * which prebuild/predev already runs).
+ * Browser-side validation for the live editor, served from public/validator/ (gitignored; filled by
+ * scripts/copy-validator-assets.mjs). The app only ever generates CII, so it needs the CII rule sets:
+ * EN 16931 always, XRechnung for the Germany profile, French CTC for France. The first is prefetched so
+ * the first edit does not wait for the network (an edit-to-preview budget of 500ms depends on it).
  */
-let saxonPromise: Promise<SaxonJSLike> | undefined;
-let en16931Promise: Promise<object> | undefined;
-let frCtcPromise: Promise<object> | undefined;
+const validatePage = createPageValidator(BASE_URL, ['en16931-cii']);
 
-function loadSaxon(): Promise<SaxonJSLike> {
-  if (!saxonPromise) {
-    saxonPromise = new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      // BASE_URL (baseUrl.ts), not a hardcoded "/" — see vite.config.ts's
-      // VITE_BASE_PATH, for when this is deployed under a subpath.
-      script.src = `${BASE_URL}validator/SaxonJS2.rt.js`;
-      script.onload = () => resolve((window as unknown as { SaxonJS: SaxonJSLike }).SaxonJS);
-      script.onerror = () => reject(new Error('failed to load the SaxonJS runtime'));
-      document.head.appendChild(script);
-    });
-  }
-  return saxonPromise;
-}
-
-function loadSef(name: 'en16931' | 'fr-ctc'): Promise<object> {
-  return fetch(`${BASE_URL}validator/${name}.sef.json`).then((r) => {
-    if (!r.ok) throw new Error(`missing compiled Schematron artefact ${name}.sef.json (run npm run schematron:compile)`);
-    return r.json();
-  });
-}
-
-// Kicked off eagerly, at module load, not lazily on the first validation
-// call: found by actually loading the page and editing a field right away —
-// the SaxonJS runtime + the EN 16931 SEF (both multi-file, multi-KB fetches)
-// were still in flight when the *first* edit's validation pass needed them,
-// and that same first-edit moment competed with the live preview's own
-// pdf.js worker cold-start for the same network/main-thread time, pushing
-// the preview well past its own 500ms budget. Every invoice needs the EN
-// 16931 SEF regardless of country, so it's safe to always prefetch; the
-// French CTC SEF stays lazy (loadSef('fr-ctc') below) since it's only ever
-// needed if the user selects France.
-loadSaxon();
-en16931Promise ??= loadSef('en16931');
-
-export async function validateInvoiceXml(xml: string, country: 'FR' | undefined): Promise<ValidationResult> {
-  const [saxonJs, en16931] = await Promise.all([
-    loadSaxon(),
-    (en16931Promise ??= loadSef('en16931')),
-  ]);
-  const frCtc = country === 'FR' ? await (frCtcPromise ??= loadSef('fr-ctc')) : undefined;
-  return validateInBrowser(saxonJs, xml, en16931, frCtc);
+export function validateInvoiceXml(xml: string, options: ValidateOptions = {}): Promise<ValidationResult> {
+  return validatePage(xml, options);
 }

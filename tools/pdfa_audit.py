@@ -1,13 +1,18 @@
 import pikepdf, re, sys
 from lxml import etree
-p = pikepdf.open('out/invoice.pdf')
+import sys
+# usage: pdfa_audit.py [pdf] [attachment name] [fx:ConformanceLevel]   (defaults: the EN 16931 sample)
+PDF = sys.argv[1] if len(sys.argv) > 1 else 'out/invoice.pdf'
+XML_NAME = sys.argv[2] if len(sys.argv) > 2 else 'factur-x.xml'
+LEVEL = sys.argv[3] if len(sys.argv) > 3 else 'EN 16931'
+p = pikepdf.open(PDF)
 root = p.Root
 fails, warns = [], []
 def chk(cond, msg):
     print(("  PASS  " if cond else "  FAIL  ") + msg)
     if not cond: fails.append(msg)
 
-raw = open('out/invoice.pdf','rb').read()
+raw = open(PDF,'rb').read()
 print("\n[A] File level")
 chk(raw.startswith(b'%PDF-1.'), f"PDF header present ({raw[:8].decode(errors='replace')})")
 chk(b'/Encrypt' not in raw, "no /Encrypt (PDF/A forbids encryption)")
@@ -29,8 +34,8 @@ chk(conf in ('A','B','U'), f"pdfaid:conformance = {conf}")
 chk(get('//pdfaSchema:namespaceURI/text()') == 'urn:factur-x:pdfa:CrossIndustryDocument:invoice:1p0#',
     "Factur-X pdfaExtension schema declared")
 chk(len(t.xpath('//pdfaSchema:property//rdf:li', namespaces=ns)) == 4, "all 4 fx properties declared in extension schema")
-chk(get('//fx:DocumentFileName/text()') == 'factur-x.xml', f"fx:DocumentFileName = {get('//fx:DocumentFileName/text()')}")
-chk(get('//fx:ConformanceLevel/text()') == 'EN 16931', f"fx:ConformanceLevel = {get('//fx:ConformanceLevel/text()')}")
+chk(get('//fx:DocumentFileName/text()') == XML_NAME, f"fx:DocumentFileName = {get('//fx:DocumentFileName/text()')} (want {XML_NAME})")
+chk(get('//fx:ConformanceLevel/text()') == LEVEL, f"fx:ConformanceLevel = {get('//fx:ConformanceLevel/text()')} (want {LEVEL})")
 chk(get('//fx:DocumentType/text()') == 'INVOICE', "fx:DocumentType = INVOICE")
 
 print("\n[C] OutputIntent")
@@ -48,14 +53,14 @@ af = root.get('/AF')
 chk(af is not None and len(af) >= 1, "catalog-level /AF array present")
 spec = af[0]
 chk(str(spec.get('/AFRelationship')) == '/Alternative', f"AFRelationship = {spec.get('/AFRelationship')}")
-chk(str(spec.get('/F')) == 'factur-x.xml', "/F filename = factur-x.xml")
-chk(str(spec.get('/UF')) == 'factur-x.xml', "/UF filename = factur-x.xml")
+chk(str(spec.get('/F')) == XML_NAME, f"/F filename = {XML_NAME}")
+chk(str(spec.get('/UF')) == XML_NAME, f"/UF filename = {XML_NAME}")
 st = spec['/EF']['/F']
 chk(b'/Subtype /text#2Fxml' in raw, "EF /Subtype written as escaped name /text#2Fxml in raw bytes")
 chk(st.get('/Params') is not None and '/Size' in st['/Params'], "EF /Params/Size present")
 chk(int(st['/Params']['/Size']) == len(bytes(st.read_bytes())), "declared Size matches actual bytes")
 nm = root['/Names']['/EmbeddedFiles']['/Names']
-chk(len(nm) >= 2 and str(nm[0]) == 'factur-x.xml', "also reachable via /Names/EmbeddedFiles name tree")
+chk(len(nm) >= 2 and str(nm[0]) == XML_NAME, "also reachable via /Names/EmbeddedFiles name tree")
 
 print("\n[E] Fonts")
 fonts, embedded = [], []

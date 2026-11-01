@@ -21,12 +21,12 @@ describe('Leitweg-ID check digits (ISO 7064 MOD 97-10)', () => {
 describe('XRechnung profile', () => {
   it('serializes CII with the XRechnung CustomizationID', () => {
     const xml = buildXRechnungCII(inv);
-    expect(xml).toContain('urn:xoev-de:kosit:standard:xrechnung_3.0');
+    expect(xml).toContain('urn:xeinkauf.de:kosit:xrechnung_3.0');
   });
 
   it('serializes UBL with the XRechnung CustomizationID', () => {
     const xml = buildXRechnungUBL(inv);
-    expect(xml).toContain('urn:xoev-de:kosit:standard:xrechnung_3.0');
+    expect(xml).toContain('urn:xeinkauf.de:kosit:xrechnung_3.0');
   });
 
   it('reports no errors for a fixture that already has BG-6 and the Leitweg-ID', () => {

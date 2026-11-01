@@ -1,41 +1,60 @@
 import { readFileSync } from "node:fs";
+import { gunzipSync } from "node:zlib";
 import { fileURLToPath } from "node:url";
 import SaxonJS from "saxon-js";
-import { assertCii, runSchematron, toValidationResult } from "./core.js";
+import { createEngine } from "./engine.js";
+import { nodeXsdRunner } from "./xsd.node.js";
 import type { CompiledSchematron, ValidateOptions, ValidationResult } from "./types.js";
 
-export type { RuleResult, PlainLanguageMessage, ValidateOptions, ValidationResult, SaxonJSLike } from "./types.js";
+export type {
+  RuleResult, PlainLanguageMessage, ValidateOptions, ValidationResult, SaxonJSLike, Syntax, Profile,
+  DetectedDocument, RuleSetRun, XsdRun, Notice,
+} from "./types.js";
+export { ValidationInputError } from "./types.js";
 export { getPlainLanguageMessage } from "./messages/index.js";
+export { detectDocument, profileFromCustomizationId } from "./detect.js";
+export { planRulesets } from "./engine.js";
 
 const artefactsDir = fileURLToPath(new URL("../artefacts/", import.meta.url));
-const sefCache = new Map<string, CompiledSchematron>();
 
-function loadSef(name: string): CompiledSchematron {
-  const cached = sefCache.get(name);
-  if (cached) return cached;
-  const path = `${artefactsDir}${name}.sef.json`;
-  let text: string;
+function readArtefact(name: string): string {
   try {
-    text = readFileSync(path, "utf-8");
+    const buf = readFileSync(`${artefactsDir}${name}`);
+    return (name.endsWith(".gz") ? gunzipSync(buf) : buf).toString("utf-8");
   } catch {
-    throw new Error(
-      `Missing compiled Schematron artefact "${name}.sef.json". Run: npm run schematron:compile`,
-    );
+    throw new Error(`Missing compiled validation artefact "${name}". Run: npm run schematron:compile`);
   }
-  const sef = JSON.parse(text) as CompiledSchematron;
-  sefCache.set(name, sef);
-  return sef;
 }
 
-/** Validates a Factur-X/CII invoice against the compiled EN 16931 Schematron,
- * plus a country's CIUS layer on top when `country` is given. Runs
- * client-side with no server: the same `runSchematron` core also runs
- * unmodified in a browser (see src/browser.ts and test/validate-browser.test.ts). */
-export async function validate(xml: string, options: ValidateOptions = {}): Promise<ValidationResult> {
-  assertCii(xml);
-  const runs = [await runSchematron(SaxonJS, xml, loadSef("en16931"))];
-  if (options.country === "FR") {
-    runs.push(await runSchematron(SaxonJS, xml, loadSef("fr-ctc")));
+interface RulesetsFile {
+  rulesets: Record<string, { label: string; source: string }>;
+  levelOverrides?: Record<string, Record<string, string>>;
+}
+
+function rulesetsFile(): RulesetsFile {
+  try {
+    return JSON.parse(readArtefact("rulesets.json")) as RulesetsFile;
+  } catch {
+    return { rulesets: {} };
   }
-  return toValidationResult(runs);
+}
+
+let engine: ReturnType<typeof createEngine> | undefined;
+
+/**
+ * Validates a CII or UBL invoice. The syntax and profile are read from the document (root element and
+ * BT-24) and decide which rule sets run: EN 16931, plus XRechnung or Peppol BIS Billing 3.0, plus the
+ * French CTC rules when `country: "FR"`. The result lists exactly which rule sets ran. XSD validation
+ * runs too (disable with `xsd: false`). Runs locally, with no server.
+ */
+export async function validate(xml: string, options: ValidateOptions = {}): Promise<ValidationResult> {
+  const meta = rulesetsFile();
+  engine ??= createEngine({
+    saxon: SaxonJS,
+    loadRuleset: async (id): Promise<CompiledSchematron | string> => readArtefact(`${id}.sef.json.gz`),
+    xsd: nodeXsdRunner,
+    info: meta.rulesets,
+    levelOverrides: meta.levelOverrides,
+  });
+  return engine.validate(xml, options);
 }

@@ -8,25 +8,43 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: '22', cache: npm }
       - uses: actions/setup-python@v5
-        with: { python-version: '3.11' }
+        with: { python-version: '3.12', cache: pip, cache-dependency-path: tools/requirements.txt }
+      # Java only for the official KoSIT validator in the conformance run.
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '17' }
       - run: npm ci
-      - run: pip install factur-x pikepdf lxml saxonche
+      - run: pip install -r tools/requirements.txt
       - run: npm run typecheck
-      - name: Compile the validator's Schematron -> SEF artefacts (gitignored, not committed)
+      - name: Fetch pinned third-party artefacts (tools/artefacts.manifest.json; versions + SHA-256 / commit pins)
+        run: npm run artefacts:fetch -- --group build,corpora,java
+      - name: Compile the validator's rule sets (SEF) and copy the XSDs (gitignored, not committed)
         run: npm run schematron:compile
       - name: Fetch the SaxonJS browser runtime (gitignored, not committed)
         run: npm run saxonjs:fetch
       - run: npm run test
-      - name: Build sample and validate against official schemas
+      - name: Build sample and validate against official schemas (all Factur-X/ZUGFeRD profiles)
         run: |
           npm run build:sample
-          python3 tools/validate.py
-          python3 tools/pdfa_audit.py
+          npm run validate
       - name: Determinism check
         run: |
-          npm run build:sample && sha256sum out/invoice.pdf > a.txt
-          npm run build:sample && sha256sum out/invoice.pdf > b.txt
+          npm run build:sample && sha256sum out/invoice.pdf out/invoice-*.pdf > a.txt
+          npm run build:sample && sha256sum out/invoice.pdf out/invoice-*.pdf > b.txt
           diff a.txt b.txt || (echo "PDF output is not deterministic" && exit 1)
+      - name: Generated files are up to date (EN 16931 coverage, JSON Schema, OpenAPI)
+        run: |
+          npm run coverage:generate
+          npm run schema:generate
+          npm run openapi:generate --if-present
+          git diff --exit-code docs/EN16931-COVERAGE.md packages/schema/invoice.schema.json docs/openapi.json || (echo "a generated file is stale: run the generate scripts and commit" && exit 1)
+      - name: Conformance against the official validators and sample corpora (regenerates docs/CONFORMANCE.md)
+        run: |
+          npm run conformance -- --strict
+          git diff --exit-code docs/CONFORMANCE.md || (echo "docs/CONFORMANCE.md changed: commit the regenerated report" && exit 1)
+      - name: Pack smoke test - npm pack every package, install into a fresh project, run every code block in README and docs
+        run: npm run pack:smoke
+      - name: Bundle sizes (budgets in tools/size-budget.json)
+        run: node tools/check-sizes.mjs
       - name: Install Playwright's Chromium (+ system deps)
         run: npx playwright install --with-deps chromium
       - name: End-to-end gate - create an invoice through the real UI, assert the downloaded PDF passes tools/validate.py

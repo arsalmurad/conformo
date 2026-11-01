@@ -1,0 +1,223 @@
+{
+  "number": "RE-2027-0042",
+  "typeCode": "380",
+  "issueDate": "2027-01-15",
+  "taxPointDate": "2027-01-10",
+  "dueDate": "2027-02-14",
+  "currency": "EUR",
+  "buyerReference": "04011000-1234512345-35",
+  "projectReference": "PROJ-77",
+  "contractReference": "CON-2026-9",
+  "orderReference": "PO-5521",
+  "salesOrderReference": "SO-9981",
+  "receivingAdviceReference": "RA-31",
+  "despatchAdviceReference": "DA-42",
+  "tenderOrLotReference": "LOT-3",
+  "invoicedObjectId": "METER-0815",
+  "invoicedObjectIdScheme": "AAA",
+  "buyerAccountingReference": "4711-ACC",
+  "notes": [
+    {
+      "text": "Vielen Dank für Ihren Auftrag."
+    }
+  ],
+  "paymentTerms": "Zahlbar innerhalb von 30 Tagen netto.",
+  "periodStart": "2026-12-01",
+  "periodEnd": "2026-12-31",
+  "seller": {
+    "name": "Muster Software GmbH",
+    "tradingName": "Muster Soft",
+    "id": "SELLER-1",
+    "additionalIds": [
+      {
+        "id": "SELLER-2",
+        "scheme": "0088"
+      }
+    ],
+    "legalId": "HRB 12345",
+    "legalIdScheme": "0204",
+    "vatId": "DE123456789",
+    "taxRegistrationId": "21/815/08150",
+    "additionalLegalInfo": "Amtsgericht Berlin HRB 12345",
+    "street": "Hauptstraße 1",
+    "street2": "Hinterhaus",
+    "street3": "3. OG",
+    "city": "Berlin",
+    "postcode": "10115",
+    "subdivision": "Berlin",
+    "country": "DE",
+    "electronicAddress": "rechnung@muster-software.example",
+    "electronicAddressScheme": "EM",
+    "contact": {
+      "name": "Erika Mustermann",
+      "phone": "+49 30 1234567",
+      "email": "erika@muster-software.example"
+    },
+    "idScheme": "0088"
+  },
+  "buyer": {
+    "name": "Stadt Beispielhausen",
+    "tradingName": "Hauptamt",
+    "id": "BUYER-1",
+    "legalId": "991-12345-12",
+    "legalIdScheme": "0204",
+    "street": "Rathausplatz 1",
+    "city": "Beispielhausen",
+    "postcode": "50667",
+    "country": "DE",
+    "electronicAddress": "04011000-1234512345-35",
+    "electronicAddressScheme": "0204",
+    "contact": {
+      "name": "Max Beispiel",
+      "phone": "+49 221 998877",
+      "email": "max@beispielhausen.example"
+    },
+    "idScheme": "0088"
+  },
+  "taxRepresentative": {
+    "name": "Steuer Vertreter AG",
+    "vatId": "DE987654321",
+    "street": "Weg 2",
+    "street3": "c/o X",
+    "city": "Hamburg",
+    "postcode": "20095",
+    "country": "DE"
+  },
+  "payee": {
+    "name": "Factoring Bank AG",
+    "id": "PAYEE-9",
+    "legalId": "HRB 999",
+    "legalIdScheme": "0204",
+    "idScheme": "0088"
+  },
+  "delivery": {
+    "partyName": "Lager Süd",
+    "locationId": "LOC-7",
+    "locationIdScheme": "0088",
+    "date": "2027-01-10",
+    "street": "Lagerweg 9",
+    "street2": "Tor 4",
+    "street3": "Rampe B",
+    "city": "Köln",
+    "postcode": "50667",
+    "subdivision": "NRW",
+    "country": "DE"
+  },
+  "precedingInvoices": [
+    {
+      "number": "RE-2026-0100",
+      "issueDate": "2026-12-01"
+    }
+  ],
+  "payment": {
+    "meansCode": "59",
+    "meansText": "SEPA-Lastschrift",
+    "reference": "RE-2027-0042",
+    "iban": "DE89370400440532013000",
+    "accountName": "Muster Software GmbH",
+    "bic": "COBADEFFXXX",
+    "directDebit": {
+      "mandateId": "MANDAT-2026-001",
+      "creditorId": "DE98ZZZ09999999999",
+      "debitedAccountIban": "DE02120300000000202051"
+    }
+  },
+  "attachments": [
+    {
+      "id": "ANL-1",
+      "description": "Leistungsnachweis",
+      "content": "UERGIGNvbnRlbnQ=",
+      "mimeCode": "application/pdf",
+      "filename": "leistung.pdf"
+    },
+    {
+      "id": "ANL-2",
+      "description": "Online-Portal",
+      "url": "https://example.com/portal/42"
+    }
+  ],
+  "lines": [
+    {
+      "id": "10",
+      "note": "Pauschale für Dezember",
+      "objectId": "OBJ-1",
+      "objectIdScheme": "ABZ",
+      "orderLineReference": "1",
+      "buyerAccountingReference": "KST-100",
+      "periodStart": "2026-12-01",
+      "periodEnd": "2026-12-31",
+      "name": "Wartungsvertrag Software",
+      "description": "Monatliche Wartung",
+      "sellerAssignedId": "WART-1",
+      "buyerAssignedId": "B-WART",
+      "standardItemId": "4012345678901",
+      "standardItemIdScheme": "0160",
+      "classifications": [
+        {
+          "code": "72000000",
+          "scheme": "STI",
+          "schemeVersion": "1.0"
+        }
+      ],
+      "originCountry": "DE",
+      "attributes": [
+        {
+          "name": "Farbe",
+          "value": "blau"
+        }
+      ],
+      "quantity": 2.5,
+      "unitCode": "HUR",
+      "unitPriceMinor": 12000,
+      "grossPriceMinor": 13000,
+      "priceDiscountMinor": 1000,
+      "allowances": [
+        {
+          "amountMinor": 1500,
+          "reason": "Rabatt",
+          "reasonCode": "95"
+        }
+      ],
+      "charges": [
+        {
+          "amountMinor": 500,
+          "reason": "Eilzuschlag",
+          "reasonCode": "FC"
+        }
+      ],
+      "taxCategory": "S",
+      "taxRate": 19
+    },
+    {
+      "name": "Lizenz pro Stück (Preis je 100)",
+      "quantity": 250,
+      "unitCode": "C62",
+      "unitPriceMinor": 99.5,
+      "priceBaseQuantity": 100,
+      "priceBaseUnitCode": "C62",
+      "taxCategory": "S",
+      "taxRate": 19
+    }
+  ],
+  "allowances": [
+    {
+      "amountMinor": 1000,
+      "reason": "Treuerabatt",
+      "reasonCode": "95",
+      "taxCategory": "S",
+      "taxRate": 19
+    }
+  ],
+  "charges": [
+    {
+      "amountMinor": 2000,
+      "reason": "Versand",
+      "reasonCode": "FC",
+      "taxCategory": "S",
+      "taxRate": 19
+    }
+  ],
+  "prepaidMinor": 5000,
+  "roundingMinor": 0,
+  "businessProcess": "B1"
+}

@@ -1,0 +1,5 @@
+{
+  "kosit-testsuite/src/test/business-cases/extension/05.01a-INVOICE_ubl.xml#roundtrip-totals": "XRechnung extension scenario with third-party payment (BG-DEX-09, cac:PrepaidPayment, two prepaid amounts). The model has no BG-DEX-09, so on re-reading the amount due is computed without them; the conversion reports this in parse().totalsCheck instead of hiding it. Extension-only terms are out of scope.",
+  "cen-examples/cii/examples/XRechnung-O.xml#roundtrip-fixpoint": "The document has an empty buyer electronic address element that carries only schemeID=\"EM\". There is no address to preserve, so the writer emits nothing and the scheme is gone on the second read. No business value is lost.",
+  "cen-examples/cii/examples/huf_example_cii.xml#roundtrip-totals": "Hungarian invoice in HUF that states VAT rounded to the nearest 100 forint (1,867,900 where 27% of the taxable amount is 1,867,860). The CEN rules accept it; Conformo recomputes totals from the lines to the minor unit and reports the difference (parse().totalsCheck, and a warning on convert). Hungarian national rounding is not implemented."
+}

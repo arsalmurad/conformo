@@ -36,6 +36,7 @@ export function parseSvrl(svrl: string): { results: RuleResult[]; firedCount: nu
       fields: extractFields(message),
       xpath: unescapeXml(attrs.location ?? ""),
       message,
+      ruleSet: "",
     });
   }
   const firedCount = countOccurrences(svrl, "<svrl:fired-rule");

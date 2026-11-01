@@ -1,0 +1,12 @@
+{
+  "number": "AG-2026-001", "issueDate": "2026-09-01", "dueDate": "2026-09-30", "currency": "EUR",
+  "buyerReference": "04011000-1234512345-06",
+  "seller": {
+    "name": "Agent Demo GmbH", "vatId": "DE123456789", "street": "Hauptstrasse 1", "city": "Berlin", "postcode": "10115", "country": "DE",
+    "electronicAddress": "billing@agent-demo.example", "electronicAddressScheme": "EM",
+    "contact": { "name": "Billing", "phone": "+49 30 1234567", "email": "billing@agent-demo.example" }
+  },
+  "buyer": { "name": "Beispiel AG", "street": "Marktplatz 2", "city": "Hamburg", "postcode": "20095", "country": "DE", "electronicAddress": "ap@beispiel.example", "electronicAddressScheme": "EM" },
+  "payment": { "meansCode": "58", "iban": "DE89370400440532013000" },
+  "lines": [{ "name": "Consulting", "quantity": 10, "unitPriceMinor": 10000, "unitCode": "HUR", "taxCategory": "S", "taxRate": 19 }]
+}

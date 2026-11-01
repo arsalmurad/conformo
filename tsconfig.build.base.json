@@ -1,0 +1,43 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "allowImportingTsExtensions": false,
+    "paths": {
+      "@conformo/core": [
+        "./packages/core/dist/src/index.d.ts"
+      ],
+      "@conformo/formats": [
+        "./packages/formats/dist/src/index.d.ts"
+      ],
+      "@conformo/pdf": [
+        "./packages/pdf/dist/src/index.d.ts"
+      ],
+      "@conformo/parse": [
+        "./packages/parse/dist/src/index.d.ts"
+      ],
+      "@conformo/compliance-data": [
+        "./packages/compliance-data/dist/src/index.d.ts"
+      ],
+      "@conformo/validate": [
+        "./packages/validate/dist/src/index.d.ts"
+      ],
+      "@conformo/schema": [
+        "./packages/schema/dist/src/index.d.ts"
+      ],
+      "@conformo/toolkit": [
+        "./packages/toolkit/dist/src/index.d.ts"
+      ],
+      "@conformo/validate/browser": [
+        "./packages/validate/dist/src/browser.d.ts"
+      ],
+      "@conformo/validate/page": [
+        "./packages/validate/dist/src/page.d.ts"
+      ],
+      "@conformo/validate/coverage": [
+        "./packages/validate/dist/src/coverage.d.ts"
+      ]
+    }
+  }
+}

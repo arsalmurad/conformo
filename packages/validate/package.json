@@ -1,6 +1,6 @@
 {
   "name": "@conformo/validate",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Validates EN 16931 electronic invoices against the official CEN Schematron (plus country CIUS rules), in Node or a browser.",
   "author": "Muhammad Arsal Murad",
   "license": "Apache-2.0",
@@ -24,12 +24,14 @@
   "exports": {
     ".": "./src/index.ts",
     "./browser": "./src/browser.ts",
-    "./coverage": "./src/coverage.ts"
+    "./coverage": "./src/coverage.ts",
+    "./page": "./src/page.ts"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && node -e \"require('fs').cpSync('artefacts','dist/artefacts',{recursive:true})\" && node ../../tools/write-dist-manifest.mjs ."
+    "build": "node ../../tools/clean-dist.mjs && tsc -p tsconfig.build.json && node -e \"require('fs').cpSync('artefacts','dist/artefacts',{recursive:true})\" && node ../../tools/write-dist-manifest.mjs ."
   },
   "dependencies": {
-    "saxon-js": "^2.7.0"
+    "saxon-js": "2.7.0",
+    "xmllint-wasm": "5.3.0"
   }
 }

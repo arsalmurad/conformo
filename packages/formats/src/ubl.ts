@@ -15,9 +15,9 @@
  * BT-21 (note subject code) has no element of its own in UBL. The binding prefixes
  * it to the note text as "#AAB#text", which is also what the French rules expect.
  */
-import { totals, lineNet } from '@conformo/core';
-import type { AllowanceCharge, Invoice, Party, TaxCategory } from '@conformo/core';
-import { assertSerializable, dec, electronicAddressScheme, money, req, tag, wrap } from './xml.js';
+import { CREDIT_NOTE_TYPE_CODES, totals, lineNet } from '@conformo/core';
+import type { AllowanceCharge, Invoice, LineAllowanceCharge, Party, TaxCategory } from '@conformo/core';
+import { assertInvoice, dec, electronicAddressScheme, money, price, req, tag, wrap } from './xml.js';
 import { CUSTOMIZATION_ID, businessProcess } from './profiles.js';
 import type { Profile } from './profiles.js';
 
@@ -33,7 +33,9 @@ export const UBL_NS = {
 const NS = UBL_NS;
 
 export interface UBLOptions {
-  profile?: Profile;
+  profile?: Exclude<Profile, 'extended'>;
+  /** Writes this exact BT-24 instead of the profile's (see CIIOptions.customizationId). */
+  customizationId?: string;
 }
 
 interface AddressParts {
@@ -62,22 +64,27 @@ const locationAddress = (a: AddressParts): string => wrap('cac:Address', address
 const scheme = (id: string): string => wrap('cac:TaxScheme', req('cbc:ID', id));
 
 // A rate is never written for category O (BR-O-05); 0 is written for E, Z, AE, K, G.
-const percent = (category: TaxCategory, r: number): string =>
-  category === 'O' ? '' : tag('cbc:Percent', dec(r));
+const percent = (category: TaxCategory, r: number, forceZeroForO = false): string =>
+  category === 'O' && !forceZeroForO ? '' : tag('cbc:Percent', dec(category === 'O' ? 0 : r));
 
-const taxCategory = (name: string, category: TaxCategory, r: number, code?: string, reason?: string): string =>
+const taxCategory = (name: string, category: TaxCategory, r: number, code?: string, reason?: string, forceZeroForO = false): string =>
   wrap(name,
     req('cbc:ID', category) +
-    percent(category, r) +
+    percent(category, r, forceZeroForO) +
     tag('cbc:TaxExemptionReasonCode', code) +
     tag('cbc:TaxExemptionReason', reason) +
     scheme('VAT'));
 
 // Party is a strict sequence: EndpointID, PartyIdentification, PartyName, PostalAddress,
 // PartyTaxScheme, PartyLegalEntity, Contact.
-const party = (p: Party): string => wrap('cac:Party',
+const partyIds = (p: Party, sepaCreditorId?: string): string =>
+  [{ id: p.id, scheme: p.idScheme }, ...(p.additionalIds ?? []), { id: sepaCreditorId, scheme: 'SEPA' }]
+    .filter((x) => x.id)
+    .map((x) => wrap('cac:PartyIdentification', tag('cbc:ID', x.id, { schemeID: x.scheme }))).join('');
+
+const party = (p: Party, sepaCreditorId?: string): string => wrap('cac:Party',
   tag('cbc:EndpointID', p.electronicAddress, { schemeID: electronicAddressScheme(p) }) +   // BT-34 / BT-49
-  wrap('cac:PartyIdentification', tag('cbc:ID', p.id, { schemeID: p.idScheme })) +          // BT-29 / BT-46
+  partyIds(p, sepaCreditorId) +                                                             // BT-29 / BT-46 (+ BT-90)
   wrap('cac:PartyName', tag('cbc:Name', p.tradingName)) +                                   // BT-28 / BT-45
   postal(p) +
   wrap('cac:PartyTaxScheme', p.vatId ? req('cbc:CompanyID', p.vatId) + scheme('VAT') : '') + // BT-31
@@ -93,13 +100,14 @@ const party = (p: Party): string => wrap('cac:Party',
 
 export function buildUBL(invoice: Invoice, options: UBLOptions = {}): string {
   const profile = options.profile ?? 'en16931';
-  assertSerializable(invoice);
+  assertInvoice(invoice);
   const t = totals(invoice);
   const cur = invoice.currency;
-  const credit = invoice.typeCode === '381';
+  const credit = CREDIT_NOTE_TYPE_CODES.includes(invoice.typeCode ?? '380');
   const root = credit ? 'CreditNote' : 'Invoice';
   const amount = (name: string, minor: number, currency = cur): string =>
     req(`cbc:${name}`, money(minor), { currencyID: currency });
+  const priceAmount = (name: string, minor: number): string => req(`cbc:${name}`, price(minor), { currencyID: cur });
   const hasTaxCurrency = !!invoice.taxCurrency && invoice.taxCurrency !== cur;
 
   const allowanceCharge = (a: AllowanceCharge, isCharge: boolean): string => wrap('cac:AllowanceCharge',
@@ -111,40 +119,81 @@ export function buildUBL(invoice: Invoice, options: UBLOptions = {}): string {
     (a.baseAmountMinor === undefined ? '' : amount('BaseAmount', a.baseAmountMinor)) +
     taxCategory('cac:TaxCategory', a.taxCategory, a.taxRate));
 
-  const lines = invoice.lines.map((l, i) => wrap(credit ? 'cac:CreditNoteLine' : 'cac:InvoiceLine',
-    req('cbc:ID', String(i + 1)) +
-    req(credit ? 'cbc:CreditedQuantity' : 'cbc:InvoicedQuantity', dec(l.quantity), { unitCode: l.unitCode ?? 'C62' }) +
-    amount('LineExtensionAmount', lineNet(l)) +
-    wrap('cac:Item',
-      tag('cbc:Description', l.description) +
-      req('cbc:Name', l.name) +
-      wrap('cac:BuyersItemIdentification', tag('cbc:ID', l.buyerAssignedId)) +              // BT-156
-      wrap('cac:SellersItemIdentification', tag('cbc:ID', l.sellerAssignedId)) +            // BT-155
-      wrap('cac:StandardItemIdentification',                                                // BT-157
-        tag('cbc:ID', l.standardItemId, { schemeID: l.standardItemIdScheme })) +
-      wrap('cac:OriginCountry', tag('cbc:IdentificationCode', l.originCountry)) +           // BT-159
-      taxCategory('cac:ClassifiedTaxCategory', l.taxCategory, l.taxRate)) +
-    wrap('cac:Price', amount('PriceAmount', l.unitPriceMinor)))).join('');
+  const lineAC = (a: LineAllowanceCharge, isCharge: boolean): string => wrap('cac:AllowanceCharge',
+    req('cbc:ChargeIndicator', isCharge ? 'true' : 'false') +
+    tag('cbc:AllowanceChargeReasonCode', a.reasonCode) +
+    tag('cbc:AllowanceChargeReason', a.reason) +
+    tag('cbc:MultiplierFactorNumeric', a.percent === undefined ? undefined : dec(a.percent)) +
+    amount('Amount', a.amountMinor) +
+    (a.baseAmountMinor === undefined ? '' : amount('BaseAmount', a.baseAmountMinor)));
+
+  const lines = invoice.lines.map((l, i) => {
+    const hasGross = l.grossPriceMinor !== undefined || l.priceDiscountMinor !== undefined;
+    const unit = l.unitCode ?? 'C62';
+    return wrap(credit ? 'cac:CreditNoteLine' : 'cac:InvoiceLine',
+      req('cbc:ID', l.id ?? String(i + 1)) +
+      tag('cbc:Note', l.note) +                                                              // BT-127
+      req(credit ? 'cbc:CreditedQuantity' : 'cbc:InvoicedQuantity', dec(l.quantity), { unitCode: unit }) +
+      amount('LineExtensionAmount', lineNet(l)) +
+      tag('cbc:AccountingCost', l.buyerAccountingReference) +                                // BT-133
+      (l.periodStart || l.periodEnd ? wrap('cac:InvoicePeriod',                              // BG-26
+        tag('cbc:StartDate', l.periodStart) + tag('cbc:EndDate', l.periodEnd)) : '') +
+      wrap('cac:OrderLineReference', tag('cbc:LineID', l.orderLineReference)) +              // BT-132
+      (l.objectId ? wrap('cac:DocumentReference',                                            // BT-128
+        req('cbc:ID', l.objectId, { schemeID: l.objectIdScheme }) + req('cbc:DocumentTypeCode', '130')) : '') +
+      (l.allowances ?? []).map((a) => lineAC(a, false)).join('') +
+      (l.charges ?? []).map((c) => lineAC(c, true)).join('') +
+      wrap('cac:Item',
+        tag('cbc:Description', l.description) +
+        req('cbc:Name', l.name) +
+        wrap('cac:BuyersItemIdentification', tag('cbc:ID', l.buyerAssignedId)) +              // BT-156
+        wrap('cac:SellersItemIdentification', tag('cbc:ID', l.sellerAssignedId)) +            // BT-155
+        wrap('cac:StandardItemIdentification',                                                // BT-157
+          tag('cbc:ID', l.standardItemId, { schemeID: l.standardItemIdScheme })) +
+        wrap('cac:OriginCountry', tag('cbc:IdentificationCode', l.originCountry)) +           // BT-159
+        (l.classifications ?? []).map((c) => wrap('cac:CommodityClassification',              // BT-158
+          tag('cbc:ItemClassificationCode', c.code, { listID: c.scheme, listVersionID: c.schemeVersion }))).join('') +
+        taxCategory('cac:ClassifiedTaxCategory', l.taxCategory, l.taxRate) +
+        (l.attributes ?? []).map((a) => wrap('cac:AdditionalItemProperty',                    // BG-32
+          req('cbc:Name', a.name) + req('cbc:Value', a.value))).join('')) +
+      wrap('cac:Price',
+        priceAmount('PriceAmount', l.unitPriceMinor) +
+        (l.priceBaseQuantity !== undefined
+          ? tag('cbc:BaseQuantity', dec(l.priceBaseQuantity), { unitCode: l.priceBaseUnitCode }) : '') +
+        (hasGross ? wrap('cac:AllowanceCharge',                                               // BT-147 / BT-148
+          req('cbc:ChargeIndicator', 'false') +
+          priceAmount('Amount', l.priceDiscountMinor ?? 0) +
+          (l.grossPriceMinor !== undefined ? priceAmount('BaseAmount', l.grossPriceMinor) : '')) : '')));
+  }).join('');
 
   const notes = (invoice.notes ?? []).map((n) =>
     tag('cbc:Note', n.subjectCode ? `#${n.subjectCode}#${n.text}` : n.text)).join('');
 
   const p = invoice.payment;
-  const paymentMeans = wrap('cac:PaymentMeans',
+  const dd = p?.directDebit;
+  const account = (iban: string | undefined, name?: string, bic?: string) => wrap('cac:PayeeFinancialAccount',
+    tag('cbc:ID', iban) +                                                                   // BT-84
+    tag('cbc:Name', name) +                                                                 // BT-85
+    wrap('cac:FinancialInstitutionBranch', tag('cbc:ID', bic)));                            // BT-86
+  const paymentMeans = !p ? '' : wrap('cac:PaymentMeans',
     req('cbc:PaymentMeansCode', p.meansCode, { name: p.meansText }) +                       // BT-81, BT-82
     (credit ? tag('cbc:PaymentDueDate', invoice.dueDate) : '') +                            // BT-9, CreditNote only
     tag('cbc:PaymentID', p.reference) +                                                     // BT-83
-    wrap('cac:PayeeFinancialAccount',
-      tag('cbc:ID', p.iban) +                                                               // BT-84
-      tag('cbc:Name', p.accountName) +                                                      // BT-85
-      wrap('cac:FinancialInstitutionBranch', tag('cbc:ID', p.bic))));                       // BT-86
+    (p.card ? wrap('cac:CardAccount',                                                       // BG-18
+      req('cbc:PrimaryAccountNumberID', p.card.pan) + req('cbc:NetworkID', 'mock') + tag('cbc:HolderName', p.card.holderName)) : '') +
+    account(p.iban, p.accountName, p.bic) +
+    (dd?.mandateId || dd?.debitedAccountIban ? wrap('cac:PaymentMandate',                   // BG-19
+      tag('cbc:ID', dd.mandateId) +                                                         // BT-89
+      wrap('cac:PayerFinancialAccount', tag('cbc:ID', dd.debitedAccountIban))) : '')) +     // BT-91
+    (p.additionalAccounts ?? []).map((a) => wrap('cac:PaymentMeans',
+      req('cbc:PaymentMeansCode', p.meansCode) + account(a.iban, a.accountName, a.bic))).join('');   // UBL-SR-46: the text only once
 
   const taxTotal = wrap('cac:TaxTotal',
     amount('TaxAmount', t.taxTotal) +
     t.groups.map((g) => wrap('cac:TaxSubtotal',
       amount('TaxableAmount', g.basis) +
       amount('TaxAmount', g.amount) +
-      taxCategory('cac:TaxCategory', g.category, g.rate, g.exemptionCode, g.exemptionReason))).join('')) +
+      taxCategory('cac:TaxCategory', g.category, g.rate, g.exemptionCode, g.exemptionReason, profile === 'xrechnung'))).join('')) +   // BR-DE-14
     (hasTaxCurrency ? wrap('cac:TaxTotal', amount('TaxAmount', invoice.taxTotalInTaxCurrencyMinor ?? 0, invoice.taxCurrency)) : '');
 
   const monetary = wrap('cac:LegalMonetaryTotal',
@@ -160,7 +209,8 @@ export function buildUBL(invoice: Invoice, options: UBLOptions = {}): string {
   const d = invoice.delivery;
   const delivery = d ? wrap('cac:Delivery',
     tag('cbc:ActualDeliveryDate', d.date) +                                                 // BT-72
-    (d.street || d.city || d.postcode || d.country ? wrap('cac:DeliveryLocation', locationAddress(d)) : '') + // BG-15
+    (d.locationId || d.street || d.city || d.postcode || d.country
+      ? wrap('cac:DeliveryLocation', tag('cbc:ID', d.locationId, { schemeID: d.locationIdScheme }) + locationAddress(d)) : '') + // BT-71, BG-15
     wrap('cac:DeliveryParty', wrap('cac:PartyName', tag('cbc:Name', d.partyName)))) : '';   // BT-70
 
   const tr = invoice.taxRepresentative;
@@ -172,27 +222,53 @@ export function buildUBL(invoice: Invoice, options: UBLOptions = {}): string {
   const process = businessProcess(profile, invoice.businessProcess);
   const ns = credit ? NS.creditNote : NS.invoice;
 
+  const extraDocs =
+    (invoice.attachments ?? []).map((a) => wrap('cac:AdditionalDocumentReference',            // BG-24
+      req('cbc:ID', a.id) + tag('cbc:DocumentDescription', a.description) +
+      wrap('cac:Attachment',
+        tag('cbc:EmbeddedDocumentBinaryObject', a.content, { mimeCode: a.mimeCode, filename: a.filename }) +
+        wrap('cac:ExternalReference', tag('cbc:URI', a.url))))).join('') +
+    (invoice.invoicedObjectId ? wrap('cac:AdditionalDocumentReference',                        // BT-18
+      req('cbc:ID', invoice.invoicedObjectId, { schemeID: invoice.invoicedObjectIdScheme }) + req('cbc:DocumentTypeCode', '130')) : '');
+  const payee = invoice.payee;
+  const payeeParty = payee ? wrap('cac:PayeeParty',                                           // BG-10
+    wrap('cac:PartyIdentification', tag('cbc:ID', payee.id, { schemeID: payee.idScheme })) +
+    wrap('cac:PartyName', req('cbc:Name', payee.name)) +
+    wrap('cac:PartyLegalEntity', tag('cbc:CompanyID', payee.legalId, { schemeID: payee.legalIdScheme }))) : '';
+  const periodHeader = invoice.periodStart || invoice.periodEnd || invoice.taxPointDateCode
+    ? wrap('cac:InvoicePeriod', tag('cbc:StartDate', invoice.periodStart) + tag('cbc:EndDate', invoice.periodEnd) +
+        tag('cbc:DescriptionCode', invoice.taxPointDateCode))                                 // BG-14, BT-8
+    : '';
+  const orderRef = invoice.orderReference || invoice.salesOrderReference
+    ? wrap('cac:OrderReference', req('cbc:ID', invoice.orderReference ?? 'NA') + tag('cbc:SalesOrderID', invoice.salesOrderReference)) : '';
+
   return `<?xml version="1.0" encoding="UTF-8"?>\n` +
     `<${root} xmlns="${ns}" xmlns:cac="${NS.cac}" xmlns:cbc="${NS.cbc}">` +
-      req('cbc:CustomizationID', CUSTOMIZATION_ID[profile]) +                               // BT-24
+      req('cbc:CustomizationID', options.customizationId ?? CUSTOMIZATION_ID[profile]) +                               // BT-24
       tag('cbc:ProfileID', process) +                                                       // BT-23
       req('cbc:ID', invoice.number) +
       req('cbc:IssueDate', invoice.issueDate) +
       (credit ? '' : tag('cbc:DueDate', invoice.dueDate)) +
       req(credit ? 'cbc:CreditNoteTypeCode' : 'cbc:InvoiceTypeCode', invoice.typeCode ?? '380') +
       notes +
+      tag('cbc:TaxPointDate', invoice.taxPointDate) +                                       // BT-7
       req('cbc:DocumentCurrencyCode', cur) +
-      tag('cbc:TaxCurrencyCode', hasTaxCurrency ? invoice.taxCurrency : undefined) +        // BT-6
+      tag('cbc:TaxCurrencyCode', invoice.taxCurrency) +                                     // BT-6
+      tag('cbc:AccountingCost', invoice.buyerAccountingReference) +                         // BT-19
       tag('cbc:BuyerReference', invoice.buyerReference) +                                  // BT-10
-      (invoice.periodStart || invoice.periodEnd                                            // BG-14
-        ? wrap('cac:InvoicePeriod', tag('cbc:StartDate', invoice.periodStart) + tag('cbc:EndDate', invoice.periodEnd))
-        : '') +
-      wrap('cac:OrderReference', tag('cbc:ID', invoice.orderReference)) +                  // BT-13
+      periodHeader +
+      orderRef +                                                                            // BT-13, BT-14
       (invoice.precedingInvoices ?? []).map((r) => wrap('cac:BillingReference',            // BG-3
         wrap('cac:InvoiceDocumentReference', req('cbc:ID', r.number) + tag('cbc:IssueDate', r.issueDate)))).join('') +
+      wrap('cac:DespatchDocumentReference', tag('cbc:ID', invoice.despatchAdviceReference)) + // BT-16
+      wrap('cac:ReceiptDocumentReference', tag('cbc:ID', invoice.receivingAdviceReference)) + // BT-15
+      wrap('cac:OriginatorDocumentReference', tag('cbc:ID', invoice.tenderOrLotReference)) +  // BT-17
       wrap('cac:ContractDocumentReference', tag('cbc:ID', invoice.contractReference)) +    // BT-12
-      wrap('cac:AccountingSupplierParty', party(invoice.seller)) +
+      extraDocs +
+      wrap('cac:ProjectReference', tag('cbc:ID', invoice.projectReference)) +               // BT-11
+      wrap('cac:AccountingSupplierParty', party(invoice.seller, dd?.creditorId)) +
       wrap('cac:AccountingCustomerParty', party(invoice.buyer)) +
+      payeeParty +
       taxRep +
       delivery +
       paymentMeans +

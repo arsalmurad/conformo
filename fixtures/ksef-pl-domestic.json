@@ -1,0 +1,12 @@
+{
+  "number": "FV/2027/01/0007", "issueDate": "2027-01-15", "dueDate": "2027-02-14", "currency": "PLN",
+  "seller": { "name": "Przykład Sp. z o.o.", "vatId": "PL5265877635", "street": "ul. Kwiatowa 1", "postcode": "00-001", "city": "Warszawa", "country": "PL", "contact": { "email": "biuro@przyklad.example", "phone": "221234567" } },
+  "buyer": { "name": "Klient S.A.", "vatId": "PL1111111111", "street": "ul. Polna 2", "postcode": "30-001", "city": "Kraków", "country": "PL" },
+  "payment": { "meansCode": "58", "iban": "PL73111111111111111111111111" },
+  "lines": [
+    { "name": "Usługa doradcza", "quantity": 10, "unitCode": "HUR", "unitPriceMinor": 15000, "taxCategory": "S", "taxRate": 23 },
+    { "name": "Książka", "quantity": 3, "unitCode": "C62", "unitPriceMinor": 4999, "taxCategory": "S", "taxRate": 5 },
+    { "name": "Szkolenie zwolnione", "quantity": 1, "unitCode": "C62", "unitPriceMinor": 20000, "taxCategory": "E", "taxRate": 0, "exemptionReason": "art. 43 ust. 1 pkt 26 ustawy o VAT" },
+    { "name": "Eksport krajowy 0%", "quantity": 2, "unitCode": "C62", "unitPriceMinor": 1000, "taxCategory": "Z", "taxRate": 0 }
+  ]
+}

@@ -220,7 +220,7 @@ export async function renderInvoicePage(
   y -= 26;
 
   draw('PAYMENT', M, y, { size: 7.5, color: mute, f: bold });
-  if (invoice.payment.iban) draw(`Bank transfer to IBAN ${invoice.payment.iban}`, M, y - 14, { size: 9 });
+  if (invoice.payment?.iban) draw(`Bank transfer to IBAN ${invoice.payment.iban}`, M, y - 14, { size: 9 });
   draw(`Reference ${invoice.number}.${invoice.paymentTerms ? ` ${invoice.paymentTerms}.` : ''}`, M, y - 26, { size: 9, color: mute });
   y -= 26;
   if (options.paymentLink) {

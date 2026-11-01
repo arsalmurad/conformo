@@ -1,0 +1,20 @@
+Hono 4.13.8 and @hono/node-server 2.1.1 are pinned exactly: they are the versions already in package-lock.json (pulled in by the MCP SDK), so no second copy is installed.
+Dependencies are only in packages/server; core and formats stay dependency-free. zod and zod-to-json-schema match @conformo/schema's versions.
+Request bodies are validated with the strict zod schemas (same objects the OpenAPI is generated from), so an unknown key is a 422 rather than silently dropped, as in the MCP server.
+Zod problems inside `invoice` come back as 422 invalid_invoice with paths relative to the invoice and an empty `bt` (zod does not know BT ids); problems from the toolkit (InvoiceInputError) carry their BT ids. Problems outside `invoice` are 422 invalid_request.
+Every error body is {error, message, issues?}; `message` is added to the {error, issues} shape asked for so non-issue errors (413, 400, 404) have somewhere to say what happened.
+/v1/validate takes the option fields nested under `options` ({xml|pdfBase64, options:{country,profile,xsd}}), not at the top level; one place only, and strict parsing rejects the wrong one.
+Exactly one of xml/pdfBase64 (source/sourcePdfBase64 for convert) is required; none or both is 422 invalid_request. A PDF must decode from base64 and start with %PDF.
+Any other error thrown by the toolkit while reading a user-supplied document (not XML, unsupported syntax, broken PDF) is 422 unprocessable_document with the error message only; an error elsewhere is 500 internal_error with a fixed message, logged without stack.
+/v1/convert answers `to` (the format written); an unknown `to` is rejected by the zod enum with 422 invalid_request.
+POST /v1/invoices/pdf returns application/pdf by default and JSON only when the Accept header contains application/json; warnings are not returned for PDFs (the MCP tool derives them from checkInvoice, the XML endpoint already exposes them).
+GET /v1/rules/:id answers 404 not_found for an unknown rule instead of 200 found:false (the HTTP status should say so); GET /v1/requirements/:country is 404 for an unsupported country and accepts any letter case.
+Body limit uses hono/body-limit (Content-Length and streamed bytes), default 8 MiB, option maxBodyBytes or CONFORMO_SERVER_MAX_BODY; option beats env. Applied to /v1/* only.
+CORS is off unless the cors option or CONFORMO_SERVER_CORS_ORIGINS (comma list, "*" allowed) is set; then only GET/POST/OPTIONS with Content-Type and Accept are allowed and no credentials.
+No Host-header (DNS-rebinding) check as the MCP HTTP server has: this API serves no ambient-authority data and CORS is off by default, and a reverse proxy owns Host in deployment. Documented as "no auth built in".
+Default bind 127.0.0.1:8788. The Dockerfile sets host 0.0.0.0 inside the container only, with the docs telling the operator to publish the port on 127.0.0.1 or behind a proxy.
+OpenAPI is built by openapi.ts from schemas.ts plus an endpoint table; the Invoice JSON Schema comes from @conformo/schema (draft-07 output, valid inside 3.1 once $schema is removed). Format enum and Invoice are hoisted into components so clients generate one type.
+The committed docs/openapi.json is written by `npm run openapi:generate`; test/server.test.ts fails when it differs from the generated text. Version in the spec is the package version.
+Spec request examples use a small invented German invoice and are executed by the test against the real server, so the examples cannot rot. Response examples are given only where they are small and real (health, errors, requirement list).
+/docs is a static HTML page with inline CSS, no scripts and no external URLs.
+Dockerfile.server could not be built here (no Docker daemon in the sandbox); it is written conservatively but untested. It runs the TypeScript sources through tsx as the rest of the repo does (packages publish .ts).

@@ -14,13 +14,14 @@
  *     which matches every real document and every fixture in this repo.
  */
 import type {
-  AllowanceCharge, Contact, Delivery, DocumentTypeCode, Invoice, Line, Note, Party,
-  PrecedingInvoice, TaxCategory, TaxRepresentative,
+  AllowanceCharge, Attachment, Contact, Delivery, DocumentTypeCode, Invoice, Line, LineAllowanceCharge, Note, Party,
+  Payee, Payment, PrecedingInvoice, TaxCategory, TaxRepresentative,
 } from '@conformo/core';
-import { CII_NS } from '@conformo/formats';
+import { computedLineNet } from '@conformo/core';
+import { CII_NS, TAX_POINT_CODE_2475_TO_2005 } from '@conformo/formats';
 import { attr, child, children, descend, text } from '../xml/query.js';
 import type { XmlElement } from '../xml/types.js';
-import { arrOrUndefined, parseDate102, parseDec, parseMoney, pickLineExemption } from '../values.js';
+import { arrOrUndefined, attachStatedVat, dropDefaultLineIds, parseDate102, parseDec, parseMoney, parsePrice, pickLineExemption } from '../values.js';
 import type { ExemptionGroup } from '../values.js';
 
 const RSM = CII_NS.rsm;
@@ -56,12 +57,18 @@ function rateOf(category: string, el: XmlElement | undefined): number {
   return s === undefined ? 0 : parseDec(s);
 }
 
+/** BT-29/BT-46 style identifiers: ram:ID (no scheme) and ram:GlobalID (with scheme), in document order IDs first. */
+function readIds(el: XmlElement | undefined): { id: string; scheme?: string }[] {
+  return [...children(el, 'ID', RAM), ...children(el, 'GlobalID', RAM)]
+    .map((e) => ({ id: text(e)!, scheme: attr(e, 'schemeID') })).filter((x) => x.id !== undefined);
+}
+
 function readParty(el: XmlElement): Party {
-  const idEl = child(el, 'ID', RAM);
+  const ids = readIds(el);
   const legalOrg = child(el, 'SpecifiedLegalOrganization', RAM);
   const legalIdEl = child(legalOrg, 'ID', RAM);
   const contactEl = child(el, 'DefinedTradeContact', RAM);
-  const contactName = text(child(contactEl, 'PersonName', RAM));
+  const contactName = text(child(contactEl, 'PersonName', RAM)) ?? text(child(contactEl, 'DepartmentName', RAM));   // BT-41 / BT-56 use either
   const contactPhone = text(descend(contactEl, 'TelephoneUniversalCommunication', 'CompleteNumber'));
   const contactEmail = text(descend(contactEl, 'EmailURIUniversalCommunication', 'URIID'));
   const contact: Contact | undefined = contactName || contactPhone || contactEmail
@@ -74,8 +81,9 @@ function readParty(el: XmlElement): Party {
   return {
     name: text(child(el, 'Name', RAM))!,
     tradingName: text(child(legalOrg, 'TradingBusinessName', RAM)),
-    id: text(idEl),
-    idScheme: attr(idEl, 'schemeID'),
+    id: ids[0]?.id,
+    idScheme: ids[0]?.scheme,
+    additionalIds: arrOrUndefined(ids.slice(1)),
     legalId: text(legalIdEl),
     legalIdScheme: attr(legalIdEl, 'schemeID'),
     vatId: text(vatIdEl),
@@ -113,6 +121,21 @@ function readAllowanceCharge(el: XmlElement, exemptionGroups: ExemptionGroup[]):
   };
 }
 
+function readLineAC(el: XmlElement): { entry: LineAllowanceCharge; isCharge: boolean } {
+  const percentText = text(child(el, 'CalculationPercent', RAM));
+  const baseText = text(child(el, 'BasisAmount', RAM));
+  return {
+    isCharge: text(descend(el, 'ChargeIndicator', 'Indicator')) === 'true',
+    entry: {
+      amountMinor: parseMoney(text(child(el, 'ActualAmount', RAM))!),
+      baseAmountMinor: baseText === undefined ? undefined : parseMoney(baseText),
+      percent: percentText === undefined ? undefined : parseDec(percentText),
+      reason: text(child(el, 'Reason', RAM)),
+      reasonCode: text(child(el, 'ReasonCode', RAM)),
+    },
+  };
+}
+
 function readLine(el: XmlElement, exemptionGroups: ExemptionGroup[]): Line {
   const product = child(el, 'SpecifiedTradeProduct', RAM)!;
   const globalIdEl = child(product, 'GlobalID', RAM);
@@ -124,23 +147,60 @@ function readLine(el: XmlElement, exemptionGroups: ExemptionGroup[]): Line {
   const qtyEl = child(delivery, 'BilledQuantity', RAM);
   const rate = rateOf(category, taxEl);
   const exemption = pickLineExemption(exemptionGroups, category, rate);
+  const netPrice = child(agreement, 'NetPriceProductTradePrice', RAM);
+  const grossPrice = child(agreement, 'GrossPriceProductTradePrice', RAM);
+  const baseQtyEl = child(netPrice, 'BasisQuantity', RAM) ?? child(grossPrice, 'BasisQuantity', RAM);
+  const discountText = text(descend(grossPrice, 'AppliedTradeAllowanceCharge', 'ActualAmount'));
+  const grossText = text(child(grossPrice, 'ChargeAmount', RAM));
+  const periodEl = child(settlement, 'BillingSpecifiedPeriod', RAM);
+  const allowances: LineAllowanceCharge[] = [];
+  const charges: LineAllowanceCharge[] = [];
+  for (const ac of children(settlement, 'SpecifiedTradeAllowanceCharge', RAM)) {
+    const { entry, isCharge } = readLineAC(ac);
+    (isCharge ? charges : allowances).push(entry);
+  }
+  const objectDoc = children(settlement, 'AdditionalReferencedDocument', RAM).find((d) => text(child(d, 'TypeCode', RAM)) === '130');
 
-  return {
+  const stated = text(descend(settlement, 'SpecifiedTradeSettlementLineMonetarySummation', 'LineTotalAmount'));
+  const line: Line = {
+    id: text(descend(el, 'AssociatedDocumentLineDocument', 'LineID')),
+    note: text(descend(el, 'AssociatedDocumentLineDocument', 'IncludedNote', 'Content')),
+    objectId: text(child(objectDoc, 'IssuerAssignedID', RAM)),
+    objectIdScheme: text(child(objectDoc, 'ReferenceTypeCode', RAM)),
+    orderLineReference: text(descend(agreement, 'BuyerOrderReferencedDocument', 'LineID')),
+    buyerAccountingReference: text(descend(settlement, 'ReceivableSpecifiedTradeAccountingAccount', 'ID')),
+    periodStart: dateTime(child(periodEl, 'StartDateTime', RAM)),
+    periodEnd: dateTime(child(periodEl, 'EndDateTime', RAM)),
     name: text(child(product, 'Name', RAM))!,
     description: text(child(product, 'Description', RAM)),
     sellerAssignedId: text(child(product, 'SellerAssignedID', RAM)),
     buyerAssignedId: text(child(product, 'BuyerAssignedID', RAM)),
     standardItemId: text(globalIdEl),
     standardItemIdScheme: attr(globalIdEl, 'schemeID'),
+    classifications: arrOrUndefined(children(product, 'DesignatedProductClassification', RAM).map((c) => {
+      const code = child(c, 'ClassCode', RAM);
+      return { code: text(code)!, scheme: attr(code, 'listID')!, schemeVersion: attr(code, 'listVersionID') };
+    })),
     originCountry: text(descend(product, 'OriginTradeCountry', 'ID')),
+    attributes: arrOrUndefined(children(product, 'ApplicableProductCharacteristic', RAM).map((a) => ({
+      name: text(child(a, 'Description', RAM))!, value: text(child(a, 'Value', RAM))!,
+    }))),
     quantity: parseDec(text(qtyEl)!),
-    unitPriceMinor: parseMoney(text(descend(agreement, 'NetPriceProductTradePrice', 'ChargeAmount'))!),
+    unitPriceMinor: parsePrice(text(child(netPrice, 'ChargeAmount', RAM))!),
+    priceDiscountMinor: discountText === undefined ? undefined : parsePrice(discountText),
+    grossPriceMinor: grossText === undefined ? undefined : parsePrice(grossText),
+    priceBaseQuantity: baseQtyEl ? parseDec(text(baseQtyEl)!) : undefined,
+    priceBaseUnitCode: attr(baseQtyEl, 'unitCode'),
     unitCode: attr(qtyEl, 'unitCode'),
+    allowances: arrOrUndefined(allowances),
+    charges: arrOrUndefined(charges),
     taxCategory: category,
     taxRate: rate,
     exemptionCode: exemption.code,
     exemptionReason: exemption.reason,
   };
+  if (stated !== undefined && parseMoney(stated) !== computedLineNet(line)) line.netAmountMinor = parseMoney(stated);
+  return line;
 }
 
 function readNote(el: XmlElement): Note {
@@ -160,7 +220,8 @@ export function readCII(root: XmlElement): Invoice {
   const agreement = child(txn, 'ApplicableHeaderTradeAgreement', RAM)!;
   const deliveryEl = child(txn, 'ApplicableHeaderTradeDelivery', RAM);
   const settlement = child(txn, 'ApplicableHeaderTradeSettlement', RAM)!;
-  const paymentMeansEl = child(settlement, 'SpecifiedTradeSettlementPaymentMeans', RAM)!;
+  const paymentMeansAll = children(settlement, 'SpecifiedTradeSettlementPaymentMeans', RAM);
+  const paymentMeansEl = paymentMeansAll[0];
   const acctEl = child(paymentMeansEl, 'PayeePartyCreditorFinancialAccount', RAM);
   const instEl = child(paymentMeansEl, 'PayeeSpecifiedCreditorFinancialInstitution', RAM);
   const monetary = child(settlement, 'SpecifiedTradeSettlementHeaderMonetarySummation', RAM)!;
@@ -174,13 +235,14 @@ export function readCII(root: XmlElement): Invoice {
 
   // BG-23 breakdown: the only place a line's or allowance/charge's own
   // exemptionCode/exemptionReason survive on the wire. See pickLineExemption().
-  const exemptionGroups: ExemptionGroup[] = children(settlement, 'ApplicableTradeTax', RAM).map((g) => {
+  const exemptionGroups: (ExemptionGroup & { amountMinor: number })[] = children(settlement, 'ApplicableTradeTax', RAM).map((g) => {
     const gCategory = text(child(g, 'CategoryCode', RAM))!;
     return {
       category: gCategory,
       rate: rateOf(gCategory, g),
       code: text(child(g, 'ExemptionReasonCode', RAM)),
       reason: text(child(g, 'ExemptionReason', RAM)),
+      amountMinor: parseMoney(text(child(g, 'CalculatedAmount', RAM)) ?? '0'),
     };
   });
 
@@ -194,14 +256,65 @@ export function readCII(root: XmlElement): Invoice {
 
   const shipTo = child(deliveryEl, 'ShipToTradeParty', RAM);
   const deliveryEvent = child(deliveryEl, 'ActualDeliverySupplyChainEvent', RAM);
+  const shipToId = child(shipTo, 'ID', RAM) ?? child(shipTo, 'GlobalID', RAM);
+  const shipAddr = readAddress(child(shipTo, 'PostalTradeAddress', RAM));
   const delivery: Delivery | undefined = shipTo || deliveryEvent ? {
     partyName: text(child(shipTo, 'Name', RAM)),
+    locationId: text(shipToId),
+    locationIdScheme: attr(shipToId, 'schemeID'),
     date: dateTime(child(deliveryEvent, 'OccurrenceDateTime', RAM)),
-    street: text(descend(shipTo, 'PostalTradeAddress', 'LineOne')),
-    city: text(descend(shipTo, 'PostalTradeAddress', 'CityName')),
-    postcode: text(descend(shipTo, 'PostalTradeAddress', 'PostcodeCode')),
-    country: text(descend(shipTo, 'PostalTradeAddress', 'CountryID')),
+    ...shipAddr,
   } : undefined;
+
+  const docs = children(agreement, 'AdditionalReferencedDocument', RAM);
+  const docType = (d: XmlElement) => text(child(d, 'TypeCode', RAM));
+  const tenderDoc = docs.find((d) => docType(d) === '50');
+  const objectDoc = docs.find((d) => docType(d) === '130');
+  const attachments: Attachment[] = docs.filter((d) => d !== tenderDoc && d !== objectDoc).map((d) => {
+    const bin = child(d, 'AttachmentBinaryObject', RAM);
+    return {
+      id: text(child(d, 'IssuerAssignedID', RAM))!,
+      description: text(child(d, 'Name', RAM)),
+      url: text(child(d, 'URIID', RAM)),
+      content: text(bin),
+      mimeCode: attr(bin, 'mimeCode'),
+      filename: attr(bin, 'filename'),
+    };
+  });
+
+  const payeeEl = child(settlement, 'PayeeTradeParty', RAM);
+  const payeeIds = readIds(payeeEl);
+  const payeeLegalId = descend(payeeEl, 'SpecifiedLegalOrganization', 'ID');
+  const payee: Payee | undefined = payeeEl ? {
+    name: text(child(payeeEl, 'Name', RAM))!,
+    id: payeeIds[0]?.id, idScheme: payeeIds[0]?.scheme,
+    legalId: text(payeeLegalId), legalIdScheme: attr(payeeLegalId, 'schemeID'),
+  } : undefined;
+
+  const mandateId = text(descend(settlement, 'SpecifiedTradePaymentTerms', 'DirectDebitMandateID'));
+  const creditorId = text(child(settlement, 'CreditorReferenceID', RAM));
+  const debitedIban = text(descend(paymentMeansEl, 'PayerPartyDebtorFinancialAccount', 'IBANID'));
+  const cardEl = child(paymentMeansEl, 'ApplicableTradeSettlementFinancialCard', RAM);
+  const meansCode = text(child(paymentMeansEl, 'TypeCode', RAM));
+  const sameMeans = paymentMeansAll.slice(1).filter((m) => text(child(m, 'TypeCode', RAM)) === meansCode);
+  const payment: Payment | undefined = paymentMeansEl || mandateId || creditorId ? {
+    meansCode: meansCode!,
+    meansText: text(child(paymentMeansEl, 'Information', RAM)),
+    reference: text(child(settlement, 'PaymentReference', RAM)),
+    iban: text(child(acctEl, 'IBANID', RAM)) ?? text(child(acctEl, 'ProprietaryID', RAM)),
+    accountName: text(child(acctEl, 'AccountName', RAM)),
+    bic: text(child(instEl, 'BICID', RAM)),
+    additionalAccounts: arrOrUndefined(sameMeans.map((m) => ({
+      iban: (text(descend(m, 'PayeePartyCreditorFinancialAccount', 'IBANID')) ?? text(descend(m, 'PayeePartyCreditorFinancialAccount', 'ProprietaryID')))!,
+      accountName: text(descend(m, 'PayeePartyCreditorFinancialAccount', 'AccountName')),
+      bic: text(descend(m, 'PayeeSpecifiedCreditorFinancialInstitution', 'BICID')),
+    }))),
+    card: cardEl ? { pan: text(child(cardEl, 'ID', RAM))!, holderName: text(child(cardEl, 'CardholderName', RAM)) } : undefined,
+    directDebit: mandateId || creditorId || debitedIban ? { mandateId, creditorId, debitedAccountIban: debitedIban } : undefined,
+  } : undefined;
+
+  const firstTax = children(settlement, 'ApplicableTradeTax', RAM)[0];
+  const taxPointText = text(descend(firstTax, 'TaxPointDate', 'DateString'));
 
   const allowances: AllowanceCharge[] = [];
   const charges: AllowanceCharge[] = [];
@@ -215,7 +328,7 @@ export function readCII(root: XmlElement): Invoice {
   const prepaidMinor = prepaidText === undefined ? undefined : parseMoney(prepaidText);
   const roundingText = text(child(monetary, 'RoundingAmount', RAM));
 
-  return {
+  return attachStatedVat({
     number: text(child(doc, 'ID', RAM))!,
     typeCode: text(child(doc, 'TypeCode', RAM)) as DocumentTypeCode,
     issueDate: dateTime(child(doc, 'IssueDateTime', RAM))!,
@@ -223,7 +336,17 @@ export function readCII(root: XmlElement): Invoice {
     currency,
     taxCurrency,
     taxTotalInTaxCurrencyMinor: taxTotalInTaxCurrency ? parseMoney(text(taxTotalInTaxCurrency)!) : undefined,
+    taxPointDate: taxPointText === undefined ? undefined : parseDate102(taxPointText),
+    taxPointDateCode: ((c) => (c === undefined ? undefined : (TAX_POINT_CODE_2475_TO_2005[c] ?? c)))(text(child(firstTax, 'DueDateTypeCode', RAM))),
     buyerReference: text(child(agreement, 'BuyerReference', RAM)),
+    projectReference: text(descend(agreement, 'SpecifiedProcuringProject', 'ID')),
+    salesOrderReference: text(descend(agreement, 'SellerOrderReferencedDocument', 'IssuerAssignedID')),
+    receivingAdviceReference: text(descend(deliveryEl, 'ReceivingAdviceReferencedDocument', 'IssuerAssignedID')),
+    despatchAdviceReference: text(descend(deliveryEl, 'DespatchAdviceReferencedDocument', 'IssuerAssignedID')),
+    tenderOrLotReference: text(child(tenderDoc, 'IssuerAssignedID', RAM)),
+    invoicedObjectId: text(child(objectDoc, 'IssuerAssignedID', RAM)),
+    invoicedObjectIdScheme: text(child(objectDoc, 'ReferenceTypeCode', RAM)),
+    buyerAccountingReference: text(descend(settlement, 'ReceivableSpecifiedTradeAccountingAccount', 'ID')),
     contractReference: text(descend(agreement, 'ContractReferencedDocument', 'IssuerAssignedID')),
     orderReference: text(descend(agreement, 'BuyerOrderReferencedDocument', 'IssuerAssignedID')),
     businessProcess: text(descend(ctx, 'BusinessProcessSpecifiedDocumentContextParameter', 'ID')),
@@ -236,18 +359,13 @@ export function readCII(root: XmlElement): Invoice {
     periodStart: dateTime(child(periodEl, 'StartDateTime', RAM)),
     periodEnd: dateTime(child(periodEl, 'EndDateTime', RAM)),
     precedingInvoices: arrOrUndefined(children(settlement, 'InvoiceReferencedDocument', RAM).map(readPrecedingInvoice)),
-    payment: {
-      meansCode: text(child(paymentMeansEl, 'TypeCode', RAM))!,
-      meansText: text(child(paymentMeansEl, 'Information', RAM)),
-      reference: text(child(settlement, 'PaymentReference', RAM)),
-      iban: text(child(acctEl, 'IBANID', RAM)),
-      accountName: text(child(acctEl, 'AccountName', RAM)),
-      bic: text(child(instEl, 'BICID', RAM)),
-    },
-    lines: children(txn, 'IncludedSupplyChainTradeLineItem', RAM).map((el) => readLine(el, exemptionGroups)),
+    payee,
+    payment,
+    attachments: arrOrUndefined(attachments),
+    lines: dropDefaultLineIds(children(txn, 'IncludedSupplyChainTradeLineItem', RAM).map((el) => readLine(el, exemptionGroups))),
     allowances: allowances.length ? allowances : undefined,
     charges: charges.length ? charges : undefined,
     prepaidMinor: prepaidMinor ? prepaidMinor : undefined,
     roundingMinor: roundingText === undefined ? undefined : parseMoney(roundingText),
-  };
+  }, exemptionGroups);
 }

@@ -38,3 +38,27 @@ await finalizePDFA(pdf, {
 });
 fs.writeFileSync('out/invoice.pdf', await pdf.save({ useObjectStreams: false }));
 console.log('out/invoice.pdf + out/factur-x.xml');
+
+// One hybrid PDF per Factur-X/ZUGFeRD profile Conformo can write. tools/validate.py checks each embedded XML against the
+// profile's XSD and the Schematron, and tools/pdfa_audit.py checks the XMP (conformance level, file name) and PDF/A structure.
+import { FACTURX_PROFILES } from '@conformo/pdf';
+import type { FacturXProfile } from '@conformo/pdf';
+const profiles: Record<FacturXProfile, string> = { en16931: 'sample-invoice.json', xrechnung: 'xrechnung-public-sector.json', extended: 'sample-invoice.json' };
+const manifest: Record<string, { file: string; xml: string; level: string }> = {};
+for (const [profile, fixture] of Object.entries(profiles) as [FacturXProfile, string][]) {
+  const inv = JSON.parse(fs.readFileSync(`fixtures/${fixture}`, 'utf8')) as Invoice;
+  const meta = FACTURX_PROFILES[profile];
+  const profileXml = buildCII(inv, { profile });
+  const doc = await PDFDocument.create();
+  doc.registerFontkit(fontkit);
+  const f = { regular: await doc.embedFont(fs.readFileSync(`${FONTS}/WorkSans-Regular.ttf`), { subset: true }), bold: await doc.embedFont(fs.readFileSync(`${FONTS}/WorkSans-Bold.ttf`), { subset: true }) };
+  await renderInvoicePage(doc, f, inv, totals(inv), TEMPLATE);
+  await finalizePDFA(doc, {
+    xml: profileXml, profile, title: `Invoice ${inv.number}`, author: inv.seller.name, producer: 'Conformo', creatorTool: 'Conformo',
+    iccProfile: fs.readFileSync(ICC), createDate: new Date(`${inv.issueDate}T00:00:00Z`),
+  });
+  fs.writeFileSync(`out/invoice-${profile}.pdf`, await doc.save({ useObjectStreams: false }));
+  manifest[profile] = { file: `out/invoice-${profile}.pdf`, xml: meta.xmlFilename, level: meta.conformanceLevel };
+}
+fs.writeFileSync('out/pdf-profiles.json', JSON.stringify(manifest, null, 2));
+console.log('out/invoice-{en16931,xrechnung,extended}.pdf');

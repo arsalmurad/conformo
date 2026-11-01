@@ -37,7 +37,7 @@ export interface LiveValidation {
 
 const EMPTY: LiveValidation = { checking: false, ready: false, byField: {}, bySection: {}, errorCount: 0 };
 
-export function useLiveValidation(invoice: Invoice, country: 'FR' | undefined): LiveValidation {
+export function useLiveValidation(invoice: Invoice, country: 'FR' | 'DE' | undefined): LiveValidation {
   const [result, setResult] = useState<LiveValidation>(EMPTY);
   const generation = useRef(0);
 
@@ -47,8 +47,8 @@ export function useLiveValidation(invoice: Invoice, country: 'FR' | undefined): 
     const timer = setTimeout(async () => {
       let outcome: LiveValidation;
       try {
-        const xml = buildCII(invoice);
-        const { results } = await validateInvoiceXml(xml, country);
+        const xml = buildCII(invoice, { profile: country === 'DE' ? 'xrechnung' : 'en16931' });
+        const { results } = await validateInvoiceXml(xml, country ? { country } : {});
         const failures = results.filter((r) => r.severity === 'error' || r.severity === 'fatal');
         const byField: Record<string, RuleResult[]> = {};
         const bySection: LiveValidation['bySection'] = {};

@@ -1,0 +1,30 @@
+{
+  "id": "evt_synthetic_0001",
+  "object": "event",
+  "type": "invoice.finalized",
+  "data": {
+    "object": {
+      "id": "in_synthetic_0001",
+      "object": "invoice",
+      "number": "ACME-0042",
+      "currency": "eur",
+      "created": 1788220800,
+      "due_date": 1790812800,
+      "customer_name": "Beispiel Handels GmbH",
+      "customer_email": "buchhaltung@beispiel-handels.example",
+      "customer_address": { "line1": "Marktplatz 2", "line2": null, "city": "Hamburg", "postal_code": "20095", "state": null, "country": "DE" },
+      "customer_tax_ids": [{ "type": "eu_vat", "value": "DE811569869" }],
+      "metadata": {},
+      "lines": {
+        "data": [
+          { "id": "il_1", "description": "Team plan, September 2026", "quantity": 5, "price": { "unit_amount": 4900 }, "tax_rates": [{ "percentage": 19 }] },
+          { "id": "il_2", "description": "Onboarding workshop", "quantity": 1, "price": { "unit_amount": 25000 }, "tax_rates": [{ "percentage": 19 }] }
+        ]
+      },
+      "total_tax_amounts": [{ "amount": 9405, "tax_rate": { "percentage": 19 } }],
+      "subtotal": 49500,
+      "total": 58905,
+      "amount_due": 58905
+    }
+  }
+}

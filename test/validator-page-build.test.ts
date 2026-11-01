@@ -12,7 +12,7 @@ describe('validator-page: builds a standalone, separately deployable bundle', ()
     expect(fs.existsSync('packages/validator-page/dist/index.html')).toBe(true);
     // The three assets browserValidator.ts fetches at runtime — a build that
     // silently forgot to copy them would still "succeed" but fail at first use.
-    for (const f of ['SaxonJS2.rt.js', 'en16931.sef.json', 'fr-ctc.sef.json']) {
+    for (const f of ['SaxonJS2.rt.js', 'en16931-cii.sef.json', 'en16931-ubl.sef.json', 'xrechnung-cii.sef.json', 'xrechnung-ubl.sef.json', 'peppol-ubl.sef.json', 'fr-ctc.sef.json', 'rulesets.json']) {
       expect(fs.existsSync(`packages/validator-page/dist/validator/${f}`)).toBe(true);
     }
   }, 30_000);

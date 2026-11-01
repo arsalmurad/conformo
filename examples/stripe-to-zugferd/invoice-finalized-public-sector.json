@@ -1,0 +1,57 @@
+{
+  "id": "evt_synthetic_0002",
+  "object": "event",
+  "type": "invoice.finalized",
+  "data": {
+    "object": {
+      "id": "in_synthetic_0002",
+      "object": "invoice",
+      "number": "ACME-0043",
+      "currency": "eur",
+      "created": 1788220800,
+      "due_date": 1790812800,
+      "customer_name": "Landesamt fuer Beispielwesen",
+      "customer_email": "rechnung@landesamt.example",
+      "customer_address": {
+        "line1": "Amtsweg 10",
+        "line2": null,
+        "city": "Dresden",
+        "postal_code": "01067",
+        "state": null,
+        "country": "DE"
+      },
+      "customer_tax_ids": [],
+      "metadata": {
+        "leitweg_id": "04011000-1234512345-06"
+      },
+      "lines": {
+        "data": [
+          {
+            "id": "il_1",
+            "description": "Annual licence 2026",
+            "quantity": 1,
+            "price": {
+              "unit_amount": 120000
+            },
+            "tax_rates": [
+              {
+                "percentage": 19
+              }
+            ]
+          }
+        ]
+      },
+      "total_tax_amounts": [
+        {
+          "amount": 22800,
+          "tax_rate": {
+            "percentage": 19
+          }
+        }
+      ],
+      "subtotal": 120000,
+      "total": 142800,
+      "amount_due": 142800
+    }
+  }
+}

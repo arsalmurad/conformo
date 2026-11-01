@@ -1,125 +1,110 @@
 # Conformo
 
-Free, client-side invoicing that produces the legally valid electronic
-invoice your country actually requires — not just a good-looking PDF.
+Legally valid e-invoices as a function call or an AI tool call. Open source, and it runs where your data is.
 
-**[Open the app](https://conformo-three.vercel.app)** · **[Validate an invoice you already have](https://conformo-validate.vercel.app)** · **[Docs: which countries require this](https://conformo-docs.vercel.app)**
+You give it an invoice as JSON. You get back XRechnung, UBL, CII or a Factur-X / ZUGFeRD PDF, and a validation result from the
+official rule sets that shows which rules ran. Nothing leaves your machine unless you send it.
 
-No signup, no account, no server — everything runs in your browser and your
-invoice data never leaves your machine unless you choose to send it
-somewhere.
+**[Web app](https://conformo-three.vercel.app)** · **[Validator](https://conformo-validate.vercel.app)** · **[Country docs](https://conformo-docs.vercel.app)** · **[Germany 2027 guide](docs/GERMANY-2027.md)**
 
-<p align="center">
-  <img src="docs/screenshots/app-1440.png" width="90%" alt="Conformo: an invoice form on the left, a live PDF preview on the right, EN 16931 validation passing above it." />
-</p>
+## Quickstart
 
-## Why this exists
-
-France, Germany, Belgium, Poland and Italy now require — or are phasing in —
-a **structured** electronic invoice, not a document that merely looks like
-one. A PDF, however good-looking, is not one of those anymore. Most
-invoicing tools stop at the PDF.
-
-Conformo builds the EN 16931 semantic model first, then serializes it to
-whatever your country actually needs, and embeds that structured data
-**inside** a PDF/A-3 so a human still gets something readable. It validates
-the result live against the official CEN Schematron and each country's own
-rules, and shows you the result instead of just asserting it.
-
-## Formats supported
-
-- **Factur-X / ZUGFeRD** (CII) — France and Germany
-- **UBL 2.1** (Invoice and Credit Note)
-- **XRechnung 3.0** — Germany's public-sector format, both CII and UBL
-- **Peppol BIS Billing 3.0** — the cross-border network used across the EU
-- **PDF/A-3b** with the structured XML embedded, for every format above
-
-Every format passes its official XSD and the EN 16931 Schematron; the
-country-specific layers (KoSIT for XRechnung, Peppol BIS for Peppol, the
-French CTC rules) are validated on top of that, never instead of it.
-
-## Get started
-
-**As an app** — see the links above, or run it yourself with Docker:
-
-    docker compose up --build   # then open http://localhost:8080
-
-**As a library (npm):**
-
-    npm install @conformo/core @conformo/formats
+```bash
+npm install @conformo/toolkit
+```
 
 ```js
-import { buildCII } from '@conformo/formats';
+import { createXml, validate } from '@conformo/toolkit';
 
 const invoice = {
-  number: 'INV-2026-0001',
-  typeCode: '380',
-  issueDate: '2026-09-20',
-  currency: 'EUR',
-  seller: { name: 'Northwind Studio SARL', vatId: 'FR32123456789', street: '12 Rue Exemple', city: 'Paris', postcode: '75004', country: 'FR' },
-  buyer: { name: 'Handelsgesellschaft Muster GmbH', vatId: 'DE123456789', street: 'Hauptstrasse 8', city: 'Berlin', postcode: '10115', country: 'DE' },
-  lines: [{ name: 'Website design', quantity: 1, unitPriceMinor: 480000, unitCode: 'C62', taxCategory: 'S', taxRate: 20 }],
+  number: 'INV-1', issueDate: '2027-01-15', currency: 'EUR', buyerReference: 'PO-77',
+  seller: { name: 'Seller GmbH', vatId: 'DE123456789', street: 'Hauptstrasse 1', postcode: '10115', city: 'Berlin', country: 'DE',
+    electronicAddress: 'billing@seller.example', electronicAddressScheme: 'EM', contact: { name: 'Ann', phone: '+49 30 1', email: 'ann@seller.example' } },
+  buyer: { name: 'Buyer GmbH', street: 'Ring 2', postcode: '50667', city: 'Koeln', country: 'DE', electronicAddress: 'ap@buyer.example', electronicAddressScheme: 'EM' },
+  payment: { meansCode: '58', iban: 'DE89370400440532013000' },
+  lines: [{ name: 'Work', quantity: 2, unitPriceMinor: 5000, taxCategory: 'S', taxRate: 19 }],   // money is integer cents
 };
 
-const xml = buildCII(invoice); // Factur-X/ZUGFeRD CII XML, ready to embed in a PDF/A-3
+const { xml } = createXml(invoice, 'xrechnung-cii');
+const result = await validate(xml);
+console.log(result.valid, result.ruleSets.map((r) => r.id));   // true [ 'en16931-cii', 'xrechnung-cii' ]
 ```
 
-Money is always integer minor units (cents) — never floats — so the totals
-never drift by the cent that gets an invoice rejected.
+Leave out a required field and you get one `InvoiceInputError` listing every problem with its EN 16931 term (`{ path, bt, severity, message }`), not a
+`TypeError`. This block is executed by [test/doctests.test.ts](test/doctests.test.ts) and against the packed npm tarballs by `npm run pack:smoke`,
+so it cannot rot.
 
-**As a CLI:**
+Other entry points: [CLI](docs/cli.md) (`npx @conformo/cli validate invoice.xml`), [MCP server](packages/mcp-server/README.md) for agents,
+the [web app](https://conformo-three.vercel.app), and `docker compose up --build` to run the app yourself.
 
-    npx @conformo/cli validate my-invoice.xml --country FR
-    npx @conformo/cli parse an-invoice.pdf --csv out.csv
+## What it does, and the test that proves each cell
 
-**As an MCP server** (for agents that need to issue or check invoices):
+"Validate" means the official rule sets and schemas, run locally; `result.ruleSets` lists what ran. Browser validation runs the Schematron rules;
+XSD validation runs in Node only ([KNOWN-GAPS](docs/KNOWN-GAPS.md)).
 
-```json
-{
-  "mcpServers": {
-    "conformo": { "command": "npx", "args": ["-y", "@conformo/mcp-server"] }
-  }
-}
-```
+| Format | Generate | Read | Validate (Node) | Validate (browser) | CLI | MCP |
+|---|---|---|---|---|---|---|
+| EN 16931 CII (Factur-X / ZUGFeRD EN 16931) | [yes](test/cii.test.ts) | [yes](test/parse-roundtrip.test.ts) | [yes, rules + XSD](test/validate.test.ts) | [rules](test/validate-browser.test.ts) | [yes](test/cli-commands.test.ts) | [yes](test/mcp-server.test.ts) |
+| EN 16931 UBL 2.1, Invoice and CreditNote | [yes](test/ubl.test.ts) | [yes](test/parse-roundtrip.test.ts) | [yes, rules + XSD](test/validate.test.ts) | [rules](test/validate-browser.test.ts) | [yes](test/cli-commands.test.ts) | [yes](test/mcp-server.test.ts) |
+| XRechnung 3.x, CII and UBL | [yes](test/xrechnung.test.ts) | [yes](test/parse-roundtrip.test.ts) | [yes, KoSIT rules + XSD](test/validate.test.ts) | [rules](test/validate-browser.test.ts) | [yes](test/cli-commands.test.ts) | [yes](test/mcp-server.test.ts) |
+| Peppol BIS Billing 3.0 (UBL), documents only | [yes](test/toolkit.test.ts) | [yes](test/parse-roundtrip.test.ts) | [yes](test/validate.test.ts) | [rules](test/validate-browser.test.ts) | [yes](test/cli-commands.test.ts) | [yes](test/mcp-server.test.ts) |
+| Factur-X / ZUGFeRD PDF: EN 16931, XRECHNUNG, EXTENDED\* | [yes](test/toolkit.test.ts) | [yes](test/parse-pdf.test.ts) | [embedded XML](test/toolkit.test.ts) | [validator page](packages/validator-page) | [yes](test/cli-commands.test.ts) | [yes](test/mcp-server.test.ts) |
+| French CTC rules (BR-FR Flux 2, CII) | partly ([fixture](test/profile-validators.test.ts)) | yes | [yes](test/validate.test.ts) | [rules](test/validate-browser.test.ts) | [yes](test/cli-commands.test.ts) | [yes](test/mcp-server.test.ts) |
+| Polish KSeF FA(3), domestic PLN invoices only | [yes](test/ksef.test.ts) | no | [XSD only](test/ksef.test.ts) | no | [yes](test/toolkit.test.ts) | [yes](test/toolkit.test.ts) |
+| FatturaPA, Facturae | no | no | no | no | no | no |
 
-Exposes `create_invoice`, `validate_invoice`, and `convert_invoice` over
-stdio.
+\* EXTENDED is written with EN 16931 content only (no EXTENDED-only fields) and only its XSD is checked. MINIMUM and BASIC WL are not offered: they are not
+EN 16931 invoices and are not accepted for German B2B from 2027.
+
+How well it agrees with the official validators, on the official sample files, is measured and published in [docs/CONFORMANCE.md](docs/CONFORMANCE.md)
+(regenerated in CI). Every EN 16931 business term and where it lives in the model: [docs/EN16931-COVERAGE.md](docs/EN16931-COVERAGE.md).
+
+## What this does not do yet
+
+- **No transmission.** It makes and checks documents. It does not send them over the Peppol network, to a French *plateforme agréée* (PA, formerly PDP),
+  to Poland's KSeF, or to Italy's SdI.
+- **No FatturaPA or Facturae** serializer, reader or validator (the Agenzia delle Entrate schema could not be fetched when v0.2 was built). **KSeF FA(3)** is limited to domestic PLN invoices at 23/8/5 %, 0 % and exempt, is checked against the Ministry of Finance XSD only, and cannot be read back. The dataset below lists all these requirements; the toolkit says what is supported.
+- **No legal advice and no archiving.** It does not decide whether you are obliged to issue an e-invoice, and it does not do retention.
+- **XSD validation in the browser** is not available; Node has it.
+- **Official ZUGFeRD / Factur-X sample PDFs** were not part of the conformance run (their sites were unreachable when v0.2 was built).
 
 ## Which countries require this
 
-Generated from a sourced, versioned dataset — every row cites a tax
-authority, ministry, or official EU source, or is marked unverified.
+Generated from a sourced, versioned dataset ([packages/compliance-data](packages/compliance-data)). Issuing and receiving are separate obligations with
+separate dates, so they are separate columns. A window marked unverified could not be traced to a primary source when it was added.
 
 <!-- COMPLIANCE-MATRIX:START -->
 <!-- Generated by tools/generate-readme-matrix.ts from packages/compliance-data. Do not hand-edit; edit the source data instead. -->
 
-| Country | B2G | B2B | Required format(s) | Last verified |
-|---|---|---|---|---|
-| Belgium | Mandatory (since 2023-11-01) | Mandatory (since 2026-01-01) | peppol-bis-3.0 | 2025-08-14, [source](https://ec.europa.eu/digital-building-blocks/sites/display/DIGITAL/eInvoicing+in+Belgium) |
-| France | Mandatory (since 2019-11-01) | Mandatory (since 2026-09-01) | cii, ubl-2.1, factur-x | 2025-08-14, [source](https://ec.europa.eu/digital-building-blocks/sites/display/DIGITAL/eInvoicing+in+France) |
-| Germany | Mandatory (since 2019-11-01) | Planned (from 2027-01-01) | xrechnung, zugferd, peppol-bis-3.0 | 2025-08-14, [source](https://ec.europa.eu/digital-building-blocks/sites/display/DIGITAL/eInvoicing+in+Germany) |
-| Italy | Mandatory (since 2015-03-31) | Mandatory (since 2019-01-01) | fatturapa | 2025-08-14, [source](https://ec.europa.eu/digital-building-blocks/sites/display/DIGITAL/eInvoicing+in+Italy) |
-| Netherlands | Mandatory (since 2019-11-01) | No mandate | peppol-bis-3.0, ubl-2.1, other | 2025-08-14, [source](https://ec.europa.eu/digital-building-blocks/sites/display/DIGITAL/eInvoicing+in+the+Netherlands) |
-| Poland | Mandatory (since 2019-08-01) | Mandatory (since 2026-02-01) | peppol-bis-3.0, ksef-fa | 2025-08-14, [source](https://ec.europa.eu/digital-building-blocks/sites/spaces/einvoicingCFS/pages/881983593/2025+Poland+2025+eInvoicing+Country+Sheet) |
-| Spain | Mandatory (since 2015-01-15) | Planned | facturae | 2025-02-04, [source](https://ec.europa.eu/digital-building-blocks/sites/pages/viewpage.action?pageId=892470070) |
+| Country | B2G issuing | B2B issuing | B2B receiving | Thresholds and phasing | Format(s) | Last verified |
+|---|---|---|---|---|---|---|
+| Belgium | Mandatory since 2023-11-01 | Mandatory since 2026-01-01 | Mandatory since 2026-01-01 | B2G send 2023-11-01: Phased in by contract value: contracts >= EUR 215,000 from 2022-11-01, >= EUR 30,000 from 2023-05-01, < EUR 30,000 from 2023-11-01. | peppol-bis-3.0 | 2025-08-14, [source](https://ec.europa.eu/digital-building-blocks/sites/display/DIGITAL/eInvoicing+in+Belgium) |
+| France | Mandatory since 2019-11-01 | Mandatory since 2026-09-01<br>Planned from 2027-09-01 | Mandatory since 2026-09-01 | B2B send 2026-09-01: Large and medium-sized enterprises must issue e-invoices from this date.<br>B2B send 2027-09-01: Small and micro-enterprises must issue e-invoices from this date.<br>B2B receive 2026-09-01: All VAT-registered businesses must be able to receive structured e-invoices from this date. | cii, ubl-2.1, factur-x | 2025-08-14, [source](https://ec.europa.eu/digital-building-blocks/sites/display/DIGITAL/eInvoicing+in+France) |
+| Germany | Mandatory since 2019-11-01 | Planned from 2027-01-01<br>Planned from 2028-01-01 | Mandatory since 2025-01-01 | B2B receive 2025-01-01: All companies must be able to accept EN 16931-compliant e-invoices from this date.<br>B2B send 2027-01-01: Businesses with turnover above EUR 800,000 must issue e-invoices from this date.<br>B2B send 2028-01-01: All businesses must issue e-invoices from this date. | xrechnung, zugferd, peppol-bis-3.0 | 2025-08-14, [source](https://ec.europa.eu/digital-building-blocks/sites/display/DIGITAL/eInvoicing+in+Germany) |
+| Italy | Mandatory since 2015-03-31 | Mandatory since 2019-01-01 | Mandatory since 2019-01-01 | B2B both 2019-01-01: Universal since January 2024: flat-rate ('forfettario') taxpayers were originally excluded below EUR 65,000 turnover, the threshold was reduced to EUR 25,000 in July 2022, and the exclusion was fully removed as of January 2024. | fatturapa | 2025-08-14, [source](https://ec.europa.eu/digital-building-blocks/sites/display/DIGITAL/eInvoicing+in+Italy) |
+| Netherlands | Mandatory since 2019-11-01 | Voluntary | Voluntary | B2G send 2019-11-01: Applies to public procurement contracts above EU procurement thresholds. | peppol-bis-3.0, ubl-2.1, other | 2025-08-14, [source](https://ec.europa.eu/digital-building-blocks/sites/display/DIGITAL/eInvoicing+in+the+Netherlands) |
+| Poland | — | Mandatory since 2026-02-01<br>Mandatory since 2026-04-01<br>Unverified from 2027-01-01 | Mandatory since 2026-02-01<br>Mandatory since 2026-04-01<br>Unverified from 2027-01-01 | B2G receive 2019-08-01: Contracts >= EUR 30,000 from 2019-04-18; all contracting authorities from 2019-08-01.<br>B2B both 2026-02-01: Large taxpayers (annual revenue above PLN 200 million) from 2026-02-01.<br>B2B both 2026-04-01: All other VAT taxpayers from 2026-04-01, except the smallest taxpayers below.<br>B2B both 2027-01-01: The smallest taxpayers join from 2027-01-01 (the exact size criterion is not recorded here). | peppol-bis-3.0, ksef-fa | 2025-08-14, [source](https://ec.europa.eu/digital-building-blocks/sites/spaces/einvoicingCFS/pages/881983593/2025+Poland+2025+eInvoicing+Country+Sheet), some windows unverified |
+| Spain | Mandatory since 2015-01-15 | Planned | Planned | B2G send 2015-01-15: Invoices over EUR 5,000 to public administration suppliers.<br>B2B both : Under Law 18/2022 ('Crea y Crece'): once the implementing technical regulations are enacted, companies with EUR 8 million+ annual revenue get a 1-year compliance deadline, other businesses a 2-year deadline. | facturae | 2025-02-04, [source](https://ec.europa.eu/digital-building-blocks/sites/pages/viewpage.action?pageId=892470070) |
 
 <!-- COMPLIANCE-MATRIX:END -->
 
-Full detail per country, generated from the same dataset, is at
-[conformo-docs.vercel.app](https://conformo-docs.vercel.app).
+Detail per country: [conformo-docs.vercel.app](https://conformo-docs.vercel.app), or `npx @conformo/cli requirements DE`.
+
+## Principles
+
+Money is integer minor units, with exact-decimal helpers for quantities, prices and rates. Output is deterministic (the same invoice gives the same
+bytes). No headless browser anywhere in the PDF path. `@conformo/core` and `@conformo/formats` have no runtime dependencies. Compliance is shown, not
+claimed: the validator reports the rule sets it ran.
 
 ## Anti-goals
 
-This is not, and will not become, accounting, payroll, expense, inventory,
-CRM, or project/time-tracking software, and it will never require an account
-or a server. If that's what you need, [Akaunting](https://akaunting.com) and
-[Dolibarr](https://www.dolibarr.org) already do it well.
+Not accounting, payroll, expenses, inventory, CRM or time tracking. The open-source core and the web app never require an account or a server.
+An optional, stateless HTTP API and remote MCP server may exist; they hold no data and are self-hostable, so you can run them where your data is.
 
 ## Contributing / building from source
 
-See [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) to build, test, or run this
-repo yourself, and [`CONTRIBUTING.md`](CONTRIBUTING.md) for the project's
-non-negotiable invariants.
+[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) to build, test or run this repo, [CONTRIBUTING.md](CONTRIBUTING.md) for the invariants,
+[docs/DECISIONS.md](docs/DECISIONS.md) for decisions and [docs/KNOWN-GAPS.md](docs/KNOWN-GAPS.md) for what is missing and why.
 
 ## License
 

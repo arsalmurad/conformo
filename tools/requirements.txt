@@ -1,0 +1,17 @@
+# Exact Python versions for the dev/CI harness (tools/validate.py, tools/pdfa_audit.py, tools/conformance/oracle.py).
+# The product itself needs no Python. factur-x 7.x renamed the Schematron files, so it is pinned at 6.8; the
+# runtime artefacts are fetched by tools/fetch-artefacts.mjs (tools/artefacts.manifest.json), not from this package.
+# Install:  pip install -r tools/requirements.txt     (Windows: py -m pip install -r tools\requirements.txt)
+factur-x==6.8
+lxml==6.1.3
+packaging==26.3
+pikepdf==10.17.0
+pillow==12.3.0
+pypdf==6.17.0
+python-stdnum==2.2
+saxonche==13.1.1
+certifi==2026.10.18
+charset-normalizer==3.5.1
+idna==3.20
+requests==2.34.2
+urllib3==2.8.0

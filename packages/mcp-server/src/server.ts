@@ -1,52 +1,60 @@
 #!/usr/bin/env node
 /**
- * MCP server exposing create/validate/convert
- * so an agent can issue an EN 16931 electronic invoice, check one against the
- * official Schematron, or convert between syntaxes — without shelling out to
- * the CLI or importing this project's packages directly. Stdio transport,
- * the standard for a locally-spawned MCP server.
+ * conformo-mcp: MCP server for EN 16931 e-invoicing. Default: stdio. `--http` serves stateless Streamable HTTP.
  *
- * Every tool wraps an existing, independently-tested library function
- * (packages/formats, packages/validate, packages/parse) rather than
- * reimplementing anything: this file is glue, not logic.
+ *   conformo-mcp                                  stdio
+ *   conformo-mcp --http --port 8787 [--host 127.0.0.1] [--max-body-bytes 8388608]
+ *
+ * Env: CONFORMO_MCP_PORT, CONFORMO_MCP_HOST, CONFORMO_MCP_MAX_BODY_BYTES, CONFORMO_MCP_ALLOW_ANY_PATH=1.
  */
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { createInvoice, createInvoiceSchema } from './tools/createInvoice.js';
-import { validateInvoice, validateInvoiceSchema } from './tools/validateInvoice.js';
-import { convertInvoice, convertInvoiceSchema } from './tools/convertInvoice.js';
+import { createMcpServer } from './createServer.js';
+import { DEFAULT_MAX_BODY_BYTES, startHttpServer } from './http.js';
+import { SERVER_VERSION } from './version.js';
 
-const server = new McpServer({ name: 'conformo', version: '0.1.0' });
+const USAGE = `conformo-mcp ${SERVER_VERSION}
+Usage: conformo-mcp [--http] [--port N] [--host H] [--max-body-bytes N]
+  (no flags)           stdio transport (for Claude Desktop, Claude Code, Cursor)
+  --http               stateless Streamable HTTP on POST /mcp (GET /healthz for liveness)
+  --port N             default 8787 (0 = pick a free port)
+  --host H             default 127.0.0.1. The server has NO authentication: front it with a TLS+auth proxy before exposing it.
+  --max-body-bytes N   request body limit, default ${DEFAULT_MAX_BODY_BYTES}
+  --version, --help`;
 
-server.registerTool(
-  'create_invoice',
-  {
-    title: 'Create an electronic invoice',
-    description: 'Serializes an EN 16931 Invoice (as JSON) into CII, UBL, XRechnung or Peppol BIS XML.',
-    inputSchema: createInvoiceSchema,
-  },
-  createInvoice,
-);
+function numberArg(name: string, raw: string | undefined): number {
+  const n = Number(raw);
+  if (raw === undefined || raw === '' || !Number.isInteger(n) || n < 0) {
+    console.error(`conformo-mcp: ${name} needs a non-negative integer`);
+    process.exit(2);
+  }
+  return n;
+}
 
-server.registerTool(
-  'validate_invoice',
-  {
-    title: 'Validate an electronic invoice',
-    description: "Validates CII XML against the official EN 16931 Schematron (and a country's CIUS layer, if given).",
-    inputSchema: validateInvoiceSchema,
-  },
-  validateInvoice,
-);
+const argv = process.argv.slice(2);
+const flag = (n: string): boolean => argv.includes(n);
+const value = (n: string): string | undefined => {
+  const eq = argv.find((a) => a.startsWith(`${n}=`));
+  if (eq) return eq.slice(n.length + 1);
+  const i = argv.indexOf(n);
+  return i >= 0 ? argv[i + 1] : undefined;
+};
 
-server.registerTool(
-  'convert_invoice',
-  {
-    title: 'Convert an electronic invoice between syntaxes',
-    description: 'Reads a CII/UBL/XRechnung XML file or a Factur-X/ZUGFeRD PDF and re-serializes it into a different target syntax.',
-    inputSchema: convertInvoiceSchema,
-  },
-  convertInvoice,
-);
+if (flag('--help') || flag('-h')) { console.log(USAGE); process.exit(0); }
+if (flag('--version') || flag('-v')) { console.log(SERVER_VERSION); process.exit(0); }
 
-const transport = new StdioServerTransport();
-await server.connect(transport);
+if (flag('--http')) {
+  const port = value('--port') ?? process.env.CONFORMO_MCP_PORT ?? '8787';
+  const max = value('--max-body-bytes') ?? process.env.CONFORMO_MCP_MAX_BODY_BYTES;
+  const running = await startHttpServer({
+    port: numberArg('--port', port),
+    host: value('--host') ?? process.env.CONFORMO_MCP_HOST ?? '127.0.0.1',
+    maxBodyBytes: max === undefined ? DEFAULT_MAX_BODY_BYTES : numberArg('--max-body-bytes', max),
+  });
+  // stderr, so the line never mixes with protocol output; the e2e test parses it to learn the port.
+  console.error(`conformo-mcp ${SERVER_VERSION} listening on ${running.url}`);
+  const stop = (): void => { void running.close().then(() => process.exit(0)); };
+  process.on('SIGINT', stop);
+  process.on('SIGTERM', stop);
+} else {
+  await createMcpServer().connect(new StdioServerTransport());
+}
