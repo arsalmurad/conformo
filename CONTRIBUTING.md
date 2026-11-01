@@ -2,7 +2,8 @@
 
 Thanks for considering it. This project has a narrow, deliberately-guarded
 mission, and a short list of non-negotiable invariants: integer money, zero
-runtime dependencies in `core`/`formats`, deterministic output, no headless
+runtime dependencies in `core`/`formats`, deterministic output, everything
+runs in a browser (a server is only ever an optional adapter), no headless
 browser in the PDF path, "never claim compliance, show it." Those are
 enforced in review, and a PR that violates one will be asked to change
 regardless of how good the rest of it is.

@@ -9,7 +9,7 @@ import { useI18n } from '../i18n/I18n.js';
 // Small on purpose: the live preview must reflect an edit within 500ms end
 // to end. This still coalesces a fast burst of keystrokes into one rebuild;
 // it just doesn't make the user wait for it.
-const DEBOUNCE_MS = 80;
+const DEBOUNCE_MS = 30;
 
 interface Props {
   invoice: Invoice;

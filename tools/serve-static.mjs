@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const [dir, port] = [path.resolve(process.argv[2] ?? '.'), Number(process.argv[3] ?? 5185)];
-const TYPES = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.json': 'application/json', '.ttf': 'font/ttf', '.png': 'image/png', '.svg': 'image/svg+xml' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.mjs': 'text/javascript', '.webmanifest': 'application/manifest+json', '.wasm': 'application/wasm', '.json': 'application/json', '.ttf': 'font/ttf', '.png': 'image/png', '.svg': 'image/svg+xml' };
 http.createServer((req, res) => {
   let p = decodeURIComponent(new URL(req.url ?? '/', 'http://x').pathname);
   if (p.endsWith('/')) p += 'index.html';

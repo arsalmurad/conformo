@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 import { useI18n } from '../i18n/I18n.js';
 import { countryName, countryOptions, resolveCountry } from '../countries.js';
 
@@ -17,6 +17,9 @@ export function CountryInput({ value, onValue, onBlur, onFocus, ...rest }: Props
   const listId = useId();
   const [text, setText] = useState(() => (value ? countryName(value, lang) : ''));
   const [focused, setFocused] = useState(false);
+  // ~250 options, rendered once per language: the same element is returned on every edit, so React skips the subtree
+  // instead of diffing it on each keystroke (two of these sit on the form, and the live preview has a 500ms budget).
+  const options = useMemo(() => countryOptions(lang).map((c) => <option key={c.code} value={c.name}>{c.code}</option>), [lang]);
 
   useEffect(() => {
     if (!focused) setText(value ? countryName(value, lang) : '');
@@ -43,11 +46,7 @@ export function CountryInput({ value, onValue, onBlur, onFocus, ...rest }: Props
           onBlur?.(e);
         }}
       />
-      <datalist id={listId}>
-        {countryOptions(lang).map((c) => (
-          <option key={c.code} value={c.name}>{c.code}</option>
-        ))}
-      </datalist>
+      <datalist id={listId}>{options}</datalist>
     </>
   );
 }
