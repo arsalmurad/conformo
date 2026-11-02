@@ -8,5 +8,6 @@ export const PAGES: { src: string; out: string; key: string; description: string
   { src: 'docs/site/http.md', out: 'http.html', key: 'http', description: 'The Conformo HTTP API and its OpenAPI description.' },
   { src: 'docs/GERMANY-2027.md', out: 'germany-2027.html', key: 'germany', description: 'Germany 2027 e-invoicing in 10 minutes, with code.' },
   { src: 'docs/CONFORMANCE.md', out: 'conformance.html', key: 'conformance', description: 'How Conformo agrees with the official validators.' },
+  { src: 'docs/UPDATES.md', out: 'updates.html', key: 'updates', description: 'How Conformo keeps up with official rule changes.' },
   { src: 'docs/site/limits.md', out: 'limits.html', key: 'limits', description: 'What Conformo does not do yet.' },
 ];

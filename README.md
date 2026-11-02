@@ -57,7 +57,8 @@ XSD validation runs in Node only ([KNOWN-GAPS](docs/KNOWN-GAPS.md)).
 EN 16931 invoices and are not accepted for German B2B from 2027.
 
 How well it agrees with the official validators, on the official sample files, is measured and published in [docs/CONFORMANCE.md](docs/CONFORMANCE.md)
-(regenerated in CI). Every EN 16931 business term and where it lives in the model: [docs/EN16931-COVERAGE.md](docs/EN16931-COVERAGE.md).
+(regenerated in CI). How new KoSIT, CEN and Peppol releases are picked up: [docs/UPDATES.md](docs/UPDATES.md) ([Deutsch](docs/UPDATES.de.md)).
+Every EN 16931 business term and where it lives in the model: [docs/EN16931-COVERAGE.md](docs/EN16931-COVERAGE.md).
 
 ## What this does not do yet
 

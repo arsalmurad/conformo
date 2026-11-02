@@ -22,6 +22,7 @@ export const DOC_NAV: { key: string; href: string; label: string }[] = [
   { key: 'http', href: 'http.html', label: 'HTTP API' },
   { key: 'germany', href: 'germany-2027.html', label: 'Germany 2027' },
   { key: 'conformance', href: 'conformance.html', label: 'Conformance' },
+  { key: 'updates', href: 'updates.html', label: 'Rule updates' },
   { key: 'countries', href: 'countries/index.html', label: 'Countries' },
   { key: 'limits', href: 'limits.html', label: 'Not done yet' },
 ];

@@ -5,15 +5,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: '22', cache: npm }
-      - uses: actions/setup-python@v5
-        with: { python-version: '3.12', cache: pip, cache-dependency-path: tools/requirements.txt }
-      # Java only for the official KoSIT validator in the conformance run.
-      - uses: actions/setup-java@v4
-        with: { distribution: temurin, java-version: '17' }
-      - run: npm ci
-      - run: pip install -r tools/requirements.txt
+      - uses: ./.github/actions/setup
       - run: npm run typecheck
       - name: Fetch pinned third-party artefacts (tools/artefacts.manifest.json; versions + SHA-256 / commit pins)
         run: npm run artefacts:fetch -- --group build,corpora,java
