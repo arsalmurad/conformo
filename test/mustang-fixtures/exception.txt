@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<validation filename="CII_example5.xml" datetime="2026-11-02 21:08:12">
+  <xml>
+    <info>
+      <version>2</version>
+      <profile>urn:cen.eu:en16931:2017</profile>
+      <validator version="2.26.0"/>
+    </info>
+    <messages>
+      <warning type="27" location="/*:CrossIndustryInvoice" criterion="...">[PEPPOL-EN16931-R001]-Business process MUST be provided. [ID PEPPOL-EN16931-R001] from /xslt/ZF_250/FACTUR-X_EN16931.xslt)</warning>
+      <exception type="22">Cannot invoke "String.equals(Object)" because the return value of "org.mustangproject.ReferencedDocument.getTypeCode()" is null&lt;stacktrace&gt;java.lang.NullPointerException: ...&lt;/stacktrace&gt;</exception>
+    </messages>
+    <summary status="invalid"/>
+  </xml>
+  <messages></messages>
+  <summary status="invalid"/>
+</validation>

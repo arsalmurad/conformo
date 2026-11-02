@@ -17,6 +17,7 @@ Our runtime validator (the code `validate()` runs in Node and, minus XSD, in a b
 | xrechnung-testsuite | v2026-08-31 | `44c3905c69ca` |
 | saxonjs-runtime | 2.7 | `13cbd2e6eb0a` |
 | ksef-docs | main@ce3670e (FA(3) schema v1-0E) | `ce3670ea042d` |
+| mustang-cli | 2.26.0 | `42d7868cb682` |
 
 ## How to read this
 
@@ -44,6 +45,70 @@ Sources:
 - CEN EN 16931 rule unit tests (one failing document per rule): ConnectingEurope/eInvoicing-EN16931 validation-1.3.17
 
 Not covered, and why: the official FeRD/ZUGFeRD sample set and the Factur-X samples are published on sites this build environment could not reach (see KNOWN-GAPS.md), so PDF samples are not part of this report.
+
+## Comparison with Mustangproject (informative)
+
+Mustangproject is a widely used Java library for ZUGFeRD/Factur-X and XRechnung. Mustang-CLI 2.26.0 (`--action validate`) was run on the same official files as Conformo's `validate()` with full rule sets including XSD. Mustang ships its own copies of the rules, which can be older or newer than the pins above, and adds checks of its own (for example a recalculation of totals). Where the two verdicts differ, the official KoSIT validator decides. This is informative, not a CI gate: it is recorded with `npm run compare:mustang -- --corpora --record` and rendered here by the conformance run.
+
+| Corpus | Files | Same verdict | Both valid | Both invalid | Same failed rule ids |
+|---|---|---|---|---|---|
+| KoSIT XRechnung test suite (v2026-08-31) | 86 | 82/86 | 82 | 0 | 82/86 |
+| CEN EN 16931 example files (validation-1.3.17) | 63 | 29/63 | 29 | 0 | 29/63 |
+
+Different verdicts on 38 file(s). The official KoSIT validator had a scenario for 7 of them and agreed with Conformo on 7, with Mustang on 0.
+
+**Mustang reports rule failures that the rules Conformo runs for this document (CEN's release and the KoSIT configuration) do not raise as errors.** (3 files)
+
+- `kosit-testsuite/src/test/business-cases/extension/04.05a-INVOICE_uncefact.xml`: Conformo valid, Mustang invalid, Mustang only: BR-CL-10, BR-CL-21 (KoSIT: agrees with Conformo)
+- `kosit-testsuite/src/test/business-cases/extension/05.01a-INVOICE_ubl.xml`: Conformo valid, Mustang invalid, Mustang only: BR-CO-16 (KoSIT: agrees with Conformo)
+- `kosit-testsuite/src/test/technical-cases/cvd/02.01a-cvd_INVOICE_uncefact.xml`: Conformo valid, Mustang invalid, Mustang only: BR-CL-13 (KoSIT: agrees with Conformo)
+
+**Mustang stopped with an internal Java exception while checking the file, and reports it invalid.** (3 files)
+
+- `kosit-testsuite/src/test/technical-cases/cvd/02.01a-cvd_INVOICE_ubl.xml`: Conformo valid, Mustang invalid, Mustang only: BR-CL-13, mustang-exception-22 (KoSIT: agrees with Conformo)
+- `cen-examples/cii/examples/CII_example5.xml`: Conformo valid, Mustang invalid, Mustang only: mustang-exception-22 (KoSIT: agrees with Conformo)
+- `cen-examples/cii/examples/huf_example_cii.xml`: Conformo valid, Mustang invalid, Mustang only: mustang-exception-22 (KoSIT: agrees with Conformo)
+
+**The document declares Peppol BIS Billing 3.0 in BT-24, so Conformo also applies the OpenPeppol rules, which the document fails; Mustang does not apply the Peppol BIS rules.** (28 files)
+
+- `cen-examples/ubl/examples/issue116.xml`: Conformo invalid, Mustang valid, Conformo only: PEPPOL-COMMON-R049 (no KoSIT scenario; the publisher's own rule files agree with Conformo)
+- `cen-examples/test/testfiles/BIS_Billing_30-DataIT.xml`: Conformo invalid, Mustang valid, Conformo only: PEPPOL-COMMON-R049, SE-R-013 (no KoSIT scenario; the publisher's own rule files agree with Conformo)
+- `cen-examples/test/testfiles/BIS_Billing_30-Elhandel.xml`: Conformo invalid, Mustang valid, Conformo only: PEPPOL-COMMON-R040, PEPPOL-COMMON-R049 (no KoSIT scenario; the publisher's own rule files agree with Conformo)
+- `cen-examples/test/testfiles/BIS_Billing_30-Elnat.xml`: Conformo invalid, Mustang valid, Conformo only: PEPPOL-COMMON-R049 (no KoSIT scenario; the publisher's own rule files agree with Conformo)
+- `cen-examples/test/testfiles/BIS_Billing_30-Factoring.xml`: Conformo invalid, Mustang valid, Conformo only: PEPPOL-COMMON-R049, SE-R-013 (no KoSIT scenario; the publisher's own rule files agree with Conformo)
+- `cen-examples/test/testfiles/BIS_Billing_30-Forskott_(ej moms).xml`: Conformo invalid, Mustang valid, Conformo only: PEPPOL-COMMON-R049, SE-R-013 (no KoSIT scenario; the publisher's own rule files agree with Conformo)
+- `cen-examples/test/testfiles/BIS_Billing_30-Forskott_slutreglering.xml`: Conformo invalid, Mustang valid, Conformo only: PEPPOL-COMMON-R049, SE-R-013 (no KoSIT scenario; the publisher's own rule files agree with Conformo)
+- `cen-examples/test/testfiles/BIS_Billing_30-Hyrbil.xml`: Conformo invalid, Mustang valid, Conformo only: PEPPOL-COMMON-R049, SE-R-013 (no KoSIT scenario; the publisher's own rule files agree with Conformo)
+- `cen-examples/test/testfiles/BIS_Billing_30-Inkopskort.xml`: Conformo invalid, Mustang valid, Conformo only: PEPPOL-COMMON-R049, SE-R-013 (no KoSIT scenario; the publisher's own rule files agree with Conformo)
+- `cen-examples/test/testfiles/BIS_Billing_30-Kreditering_(urspr_faktura).xml`: Conformo invalid, Mustang valid, Conformo only: PEPPOL-COMMON-R040, PEPPOL-COMMON-R049, SE-R-013 (no KoSIT scenario; the publisher's own rule files agree with Conformo)
+- `cen-examples/test/testfiles/BIS_Billing_30-Kreditering_med_kreditnota.xml`: Conformo invalid, Mustang valid, Conformo only: PEPPOL-COMMON-R040, PEPPOL-COMMON-R049, SE-R-013 (no KoSIT scenario; the publisher's own rule files agree with Conformo)
+- `cen-examples/test/testfiles/BIS_Billing_30-Kreditering_med_negativ_faktura.xml`: Conformo invalid, Mustang valid, Conformo only: PEPPOL-COMMON-R040, PEPPOL-COMMON-R049, SE-R-013 (no KoSIT scenario; the publisher's own rule files agree with Conformo)
+- `cen-examples/test/testfiles/BIS_Billing_30-OmvandSkattskyldighet.xml`: Conformo invalid, Mustang valid, Conformo only: PEPPOL-COMMON-R049, SE-R-013 (no KoSIT scenario; the publisher's own rule files agree with Conformo)
+- `cen-examples/test/testfiles/BIS_Billing_30-Rabatter_och_avgifter.xml`: Conformo invalid, Mustang valid, Conformo only: PEPPOL-COMMON-R040, PEPPOL-COMMON-R049, SE-R-013 (no KoSIT scenario; the publisher's own rule files agree with Conformo)
+- `cen-examples/test/testfiles/BIS_Billing_30-Rantefaktura_Enkel.xml`: Conformo invalid, Mustang valid, Conformo only: PEPPOL-COMMON-R049, SE-R-013 (no KoSIT scenario; the publisher's own rule files agree with Conformo)
+- `cen-examples/test/testfiles/BIS_Billing_30-Rantefaktura_Saml.xml`: Conformo invalid, Mustang valid, Conformo only: PEPPOL-COMMON-R049, SE-R-013 (no KoSIT scenario; the publisher's own rule files agree with Conformo)
+- `cen-examples/test/testfiles/BIS_Billing_30-Resor_Bokning.xml`: Conformo invalid, Mustang valid, Conformo only: PEPPOL-COMMON-R049, SE-R-013 (no KoSIT scenario; the publisher's own rule files agree with Conformo)
+- `cen-examples/test/testfiles/BIS_Billing_30-Resor_Taxi.xml`: Conformo invalid, Mustang valid, Conformo only: PEPPOL-COMMON-R049 (no KoSIT scenario; the publisher's own rule files agree with Conformo)
+- `cen-examples/test/testfiles/BIS_Billing_30-Telefoni.xml`: Conformo invalid, Mustang valid, Conformo only: PEPPOL-COMMON-R049 (no KoSIT scenario; the publisher's own rule files agree with Conformo)
+- `cen-examples/test/testfiles/BIS_Billing_30-Tjanster_Bevakning.xml`: Conformo invalid, Mustang valid, Conformo only: PEPPOL-COMMON-R040, PEPPOL-COMMON-R049, SE-R-013 (no KoSIT scenario; the publisher's own rule files agree with Conformo)
+- `cen-examples/test/testfiles/BIS_Billing_30-Tjanster_Kopiering.xml`: Conformo invalid, Mustang valid, Conformo only: PEPPOL-COMMON-R049 (no KoSIT scenario; the publisher's own rule files agree with Conformo)
+- `cen-examples/test/testfiles/BIS_Billing_30-Valutor i faktura.xml`: Conformo invalid, Mustang valid, Conformo only: PEPPOL-COMMON-R049, SE-R-013 (no KoSIT scenario; the publisher's own rule files agree with Conformo)
+- `cen-examples/test/testfiles/CreditNote-Max_content.xml`: Conformo invalid, Mustang valid, Conformo only: PEPPOL-COMMON-R049, SE-R-013 (no KoSIT scenario; the publisher's own rule files agree with Conformo)
+- `cen-examples/test/testfiles/CreditNote-Min_content_with_VAT.xml`: Conformo invalid, Mustang valid, Conformo only: PEPPOL-COMMON-R049 (no KoSIT scenario; the publisher's own rule files agree with Conformo)
+- `cen-examples/test/testfiles/CreditNote-Min_content_without_VAT.xml`: Conformo invalid, Mustang valid, Conformo only: PEPPOL-COMMON-R049, SE-R-013 (no KoSIT scenario; the publisher's own rule files agree with Conformo)
+- `cen-examples/test/testfiles/Invoice-Max_content.xml`: Conformo invalid, Mustang valid, Conformo only: PEPPOL-COMMON-R049, SE-R-013 (no KoSIT scenario; the publisher's own rule files agree with Conformo)
+- `cen-examples/test/testfiles/Invoice-Min_content_with_VAT.xml`: Conformo invalid, Mustang valid, Conformo only: PEPPOL-COMMON-R049 (no KoSIT scenario; the publisher's own rule files agree with Conformo)
+- `cen-examples/test/testfiles/Invoice-Min_content_without_VAT.xml`: Conformo invalid, Mustang valid, Conformo only: PEPPOL-COMMON-R049, SE-R-013 (no KoSIT scenario; the publisher's own rule files agree with Conformo)
+
+**Mustang does not support the profile the document declares (ZUGFeRD 1.0), and reports it invalid.** (3 files)
+
+- `cen-examples/cii/examples/CII-BR-CO-10-RoundingIssue.xml`: Conformo valid, Mustang invalid, Mustang only: mustang-type-25 (no KoSIT scenario; the publisher's own rule files agree with Conformo)
+- `cen-examples/cii/examples/CII_business_example_02.xml`: Conformo valid, Mustang invalid, Mustang only: mustang-type-25 (no KoSIT scenario; the publisher's own rule files agree with Conformo)
+- `cen-examples/cii/examples/CII_business_example_Z.xml`: Conformo valid, Mustang invalid, Mustang only: mustang-type-25 (no KoSIT scenario; the publisher's own rule files agree with Conformo)
+
+**Mustang also applies its own Factur-X Schematron (FX-SCH-*) to a plain CII document.** (1 file)
+
+- `cen-examples/cii/examples/XRechnung-O.xml`: Conformo valid, Mustang invalid, Mustang only: FX-SCH-A-000589, FX-SCH-A-000616 (KoSIT: agrees with Conformo)
 
 ## Mismatches and failures
 

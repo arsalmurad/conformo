@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<validation filename="CII_business_example_02.xml" datetime="2026-11-02 21:08:40">
+  <xml>
+    <messages>
+      <error type="25">Unsupported profile type urn:ferd:CrossIndustryDocument:invoice:1p0:comfort</error> 
+    </messages>
+    <summary status="invalid"/>
+  </xml>
+  <summary status="invalid"/>
+</validation>

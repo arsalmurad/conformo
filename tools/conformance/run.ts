@@ -305,6 +305,39 @@ for (const r of records) {
     }
   }
 }
+
+// Informative, recorded by `npm run compare:mustang -- --corpora --record` (needs Java and a long run, so it is not part
+// of this run or of CI). Rendered from the committed summary so that this file stays fully generated.
+const mustangFile = path.join(root, 'tools/conformance/mustang-comparison.json');
+if (existsSync(mustangFile)) {
+  type Disagreement = { file: string; reason: string; conformo: string; mustang: string; kosit: string; kositSidesWith: string; onlyConformo: string[]; onlyMustang: string[] };
+  type MC = { mustangVersion: string; disagreements: Disagreement[];
+    corpora: { title: string; files: number; sameVerdict: number; bothValid: number; bothInvalid: number; sameFailedRules: number }[] };
+  const mc = JSON.parse(readFileSync(mustangFile, 'utf-8')) as MC;
+  lines.push('## Comparison with Mustangproject (informative)', '',
+    `Mustangproject is a widely used Java library for ZUGFeRD/Factur-X and XRechnung. Mustang-CLI ${mc.mustangVersion} (\`--action validate\`) was run on the same official files as Conformo's \`validate()\` with full rule sets including XSD. Mustang ships its own copies of the rules, which can be older or newer than the pins above, and adds checks of its own (for example a recalculation of totals). Where the two verdicts differ, the official KoSIT validator decides. This is informative, not a CI gate: it is recorded with \`npm run compare:mustang -- --corpora --record\` and rendered here by the conformance run.`, '',
+    '| Corpus | Files | Same verdict | Both valid | Both invalid | Same failed rule ids |', '|---|---|---|---|---|---|',
+    ...mc.corpora.map((c) => `| ${c.title} | ${c.files} | ${c.sameVerdict}/${c.files} | ${c.bothValid} | ${c.bothInvalid} | ${c.sameFailedRules}/${c.files} |`), '');
+  // Who is right: the KoSIT validator where it has a scenario; otherwise the publisher's own rule files, which this
+  // run executed on the same file above (reference agreement), if they gave Conformo's result.
+  const byFile = new Map(records.map((r) => [`${r.corpus}/${r.rel}`, r]));
+  const referee = (d: Disagreement) => {
+    if (d.kositSidesWith === 'conformo') return 'KoSIT: agrees with Conformo';
+    if (d.kositSidesWith === 'mustang') return 'KoSIT: agrees with Mustang';
+    const rec = byFile.get(d.file);
+    return rec?.ours && !rec.oracleMismatch?.length ? 'no KoSIT scenario; the publisher\'s own rule files agree with Conformo' : 'no KoSIT scenario; not decided';
+  };
+  const only = (who: string, ids: string[]) => (ids.length ? `, ${who} only: ${ids.join(', ')}` : '');
+  const groups = new Map<string, Disagreement[]>();
+  for (const d of mc.disagreements) groups.set(d.reason, [...(groups.get(d.reason) ?? []), d]);
+  const kositFor = mc.disagreements.filter((d) => d.kositSidesWith !== 'unknown');
+  lines.push(...(mc.disagreements.length
+    ? [`Different verdicts on ${mc.disagreements.length} file(s). The official KoSIT validator had a scenario for ${kositFor.length} of them and agreed with Conformo on ${kositFor.filter((d) => d.kositSidesWith === 'conformo').length}, with Mustang on ${kositFor.filter((d) => d.kositSidesWith === 'mustang').length}.`, '',
+      ...[...groups].flatMap(([reason, ds]) => [`**${reason}** (${ds.length} file${ds.length === 1 ? '' : 's'})`, '',
+        ...ds.map((d) => `- \`${d.file}\`: Conformo ${d.conformo}, Mustang ${d.mustang}${only('Mustang', d.onlyMustang)}${only('Conformo', d.onlyConformo)} (${referee(d)})`), ''])]
+    : ['Conformo and Mustang reach the same verdict on every file.', '']));
+}
+
 lines.push('## Mismatches and failures', '', failures.length ? `${failures.length} finding(s); ${unexplained} unexplained.` : 'None.', '', ...failures, '');
 lines.push('## Files not processed', '');
 const unsup = records.filter((r) => r.unsupported);

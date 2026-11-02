@@ -79,6 +79,9 @@ describe('per-source parsers on recorded responses', () => {
   it('SchXslt2: highest version in maven-metadata.xml, despite the stray "v1.3.4"', () => {
     expect(up.latestMaven(fx('schxslt2-maven-metadata.xml')).version).toBe('1.11.3');
   });
+  it('Mustang-CLI: highest stable version, ignoring 2.0.0-alpha3', () => {
+    expect(up.latestMaven(fx('mustang-cli-maven-metadata.xml')).version).toBe('2.26.0');
+  });
   it('factur-x: highest stable PyPI release', () => {
     expect(up.latestPypi(json('factur-x-pypi.json')).version).toBe('7.9');
     expect(up.latestPypi({ releases: { '7.9': [{ yanked: false }], '8.0': [{ yanked: true }], '8.1b1': [{ yanked: false }] } }).version).toBe('7.9');
@@ -100,6 +103,7 @@ function recordedGetters(overrides: Record<string, unknown> = {}) {
     '/repos/OpenPEPPOL/peppol-bis-invoice-3/tags': json('peppol-tags.json'),
     '/repos/CIRFMF/ksef-docs/commits/main': json('ksef-commit.json'),
     '/maven2/name/dmaus/schxslt/schxslt2/maven-metadata.xml': fx('schxslt2-maven-metadata.xml'),
+    '/maven2/org/mustangproject/Mustang-CLI/maven-metadata.xml': fx('mustang-cli-maven-metadata.xml'),
     '/pypi/factur-x/json': json('factur-x-pypi.json'),
     ...overrides,
   };
@@ -128,6 +132,7 @@ describe('checkAll', () => {
     expect(by['factur-x-wheel'].note).toMatch(/renamed the Schematron files/);
     expect(by['saxonjs-runtime'].status).toBe('manual');
     expect(by['ksef-docs']).toMatchObject({ status: 'current', reportOnly: true });
+    expect(by['mustang-cli'].status).toBe('current');
     expect(up.bumpUnits(results)).toEqual([]);
     expect(up.toMarkdown(results)).toMatch(/^\| Artefact \| Pinned \| Latest \| Status \|/);
   });

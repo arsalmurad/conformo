@@ -144,6 +144,11 @@ export const SOURCES = {
     pinned: (a) => a.version,
     fetch: async (get) => latestMaven(await get.text('https://repo1.maven.org/maven2/name/dmaus/schxslt/schxslt2/maven-metadata.xml')),
   },
+  'mustang-cli': {
+    feed: 'Maven Central maven-metadata.xml (org.mustangproject:Mustang-CLI)',
+    pinned: (a) => a.version,
+    fetch: async (get) => latestMaven(await get.text('https://repo1.maven.org/maven2/org/mustangproject/Mustang-CLI/maven-metadata.xml')),
+  },
   'factur-x-wheel': {
     feed: 'PyPI JSON API (factur-x)',
     pinned: (a) => a.version,

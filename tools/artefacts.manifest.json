@@ -92,6 +92,16 @@
       "commit": "ce3670ea042de380039de4c5849fd6455811b292",
       "licence": "MIT, Copyright (c) 2025 Ministerstwo Finansow (CIRFMF is the Ministry of Finance's IT centre); not redistributed, fetched at build time",
       "note": "Official KSeF documentation repository; faktury/schemy/FA/schemat_FA(3)_v1-0E.xsd is the FA(3) schema."
+    },
+    "mustang-cli": {
+      "kind": "http",
+      "group": "java",
+      "version": "2.26.0",
+      "source": "https://repo1.maven.org/maven2/org/mustangproject/Mustang-CLI/2.26.0/",
+      "url": "https://repo1.maven.org/maven2/org/mustangproject/Mustang-CLI/2.26.0/Mustang-CLI-2.26.0.jar",
+      "sha256": "42d7868cb68264874a7b8cab4c3587b03b23ccc7cd72373da917f66758bb9736",
+      "extract": "none",
+      "note": "Mustangproject command-line tool (Apache-2.0). Only used by the informative comparison tools/compare-mustang.mjs, never by validate(). Maven Central publishes SHA-1 only; the SHA-1 it publishes (8755fc333032f802ad7dcf3930201edfe64014e2) matched the download pinned here."
     }
   }
 }

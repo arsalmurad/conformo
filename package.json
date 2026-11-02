@@ -25,6 +25,7 @@
     "e2e": "playwright test",
     "artefacts:fetch": "node tools/fetch-artefacts.mjs",
     "conformance": "tsx tools/conformance/run.ts",
+    "compare:mustang": "node tools/compare-mustang.mjs",
     "coverage:generate": "tsx tools/generate-coverage.ts",
     "pack:smoke": "node tools/pack-smoke.mjs"
   },
