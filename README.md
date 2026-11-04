@@ -1,8 +1,17 @@
 # Conformo
 
+[![CI](https://github.com/arsalmurad/conformo/actions/workflows/ci.yml/badge.svg)](https://github.com/arsalmurad/conformo/actions/workflows/ci.yml)
+[![KoSIT agreement 100%](https://img.shields.io/badge/KoSIT%20agreement-100%25-0e6a4e)](docs/CONFORMANCE.md)
+[![npm](https://img.shields.io/npm/v/@conformo/toolkit?label=%40conformo%2Ftoolkit&color=0e6a4e)](https://www.npmjs.com/package/@conformo/toolkit)
+[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-0e6a4e)](LICENSE)
+
 Free, open-source tools to create and check e-invoices for Germany, France and the rest of the EU: XRechnung, ZUGFeRD,
 Factur-X, UBL and Peppol BIS. Everything runs on your own computer or in your browser. No Java, no server, no account,
 and your invoice data never goes to us or anyone else.
+
+![An XRechnung for a German public authority, filled in the Conformo web app. A typo in the Leitweg-ID is caught as it is typed, then fixed, the official rules accept the invoice, and the PDF downloads.](docs/media/app-demo.gif)
+
+<sub>The [web app](https://conformo-three.vercel.app), unedited: a typo in the authority's Leitweg-ID is caught as you type, the official XRechnung rules accept the finished invoice, and the PDF with the XML inside downloads. Recorded by [tools/readme-media.mjs](tools/readme-media.mjs).</sub>
 
 **Proof, not promises.** Conformo checks invoices with the official rule files, unmodified, and agrees 100% with the
 official KoSIT validator on the official test invoices. CI measures this on every change ([conformance report](docs/CONFORMANCE.md)).
@@ -18,6 +27,59 @@ A daily job watches KoSIT, CEN and OpenPeppol for new rule releases, and a new v
 
 Why now: German businesses must be able to receive e-invoices since 2025 and must send them from 2027 (turnover above
 EUR 800,000) or 2028 (everyone else). France started in September 2026. Short version with code: [Germany 2027 guide](docs/GERMANY-2027.md).
+
+## How it works
+
+```mermaid
+flowchart LR
+  A["Your invoice data<br/>JSON, the web form,<br/>or an AI agent via MCP"] --> B["Conformo<br/>one EN 16931 model"]
+  B --> C["XRechnung<br/>CII or UBL"]
+  B --> D["ZUGFeRD / Factur-X<br/>PDF with XML inside"]
+  B --> E["UBL 2.1<br/>Peppol BIS 3.0"]
+  C & D & E --> F{"Official rule files,<br/>run on your machine<br/>KoSIT · CEN · Peppol · French CTC"}
+  F -->|passes| G["Accepted:<br/>ready to send"]
+  F -->|fails| H["What to fix, in plain words,<br/>with the official rule id"]
+  classDef base fill:#ffffff,stroke:#8a9691,color:#17211d
+  classDef core fill:#0e6a4e,stroke:#0e6a4e,color:#ffffff
+  classDef ok fill:#e1f0ea,stroke:#0e6a4e,color:#0b4f3a
+  classDef bad fill:#fbe9e6,stroke:#b42318,color:#8a1a12
+  class A,C,D,E,F base
+  class B core
+  class G ok
+  class H bad
+```
+
+It also works the other way: drop in an e-invoice you received (PDF or XML) and Conformo reads it back into the same
+model and checks it.
+
+## What a failed check looks like
+
+The official validators answer with rule ids, German messages and XPath locations. Conformo runs the same rules and
+then says which field is wrong and how to fix it, with the rule id kept next to it.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/media/validator-dark.png">
+  <img alt="The Conformo validator on an XRechnung with two mistakes. It says 2 problems will get this invoice rejected, then lists: your customer's Leitweg-ID is missing, you find it on the order from the authority (rule BR-DE-15), and the contact phone number is missing (rule BR-DE-6)." src="docs/media/validator-light.png">
+</picture>
+
+Same check from the command line (exit code 1, so it fails a CI pipeline):
+
+```text
+$ npx @conformo/cli validate rechnung.xml
+Document: ubl-invoice, profile xrechnung, urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0
+Rule sets run:
+  en16931-ubl: EN 16931 (UBL) [CEN eInvoicing-EN16931 validation-1.3.17] — 72 rules checked, 0 failed, 0 advisory
+  xrechnung-ubl: XRechnung 3.0 CIUS (UBL) [KoSIT validator-configuration-xrechnung 2026-08-31 (XRechnung 3.0.2)] — 19 rules checked, 1 failed, 1 advisory
+XSD: passed (UBL 2.1 Invoice)
+
+[FATAL] BR-DE-15 (BT-10)
+  Das Element "Buyer reference" (BT-10) muss übermittelt werden.
+  Location: /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]
+
+INVALID — 91 rules checked, 1 failed, 1 advisory.
+```
+
+<sub>Output trimmed only by removing the advisory block. Every rule set names its publisher and version, so a result can be reproduced.</sub>
 
 ## Quickstart
 

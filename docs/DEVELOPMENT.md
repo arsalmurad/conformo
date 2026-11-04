@@ -76,6 +76,16 @@ To run the standalone validator page or the docs site on their own:
 
 <!-- MESSAGE-COVERAGE:END -->
 
+## README pictures
+
+The GIF and screenshots in the README (`docs/media/`) are recorded from the real built app and validator, never drawn
+by hand. After a UI change, regenerate them (needs ffmpeg and Playwright's Chromium):
+
+    npm run readme:media
+
+This also writes `docs/media/social-preview.png` (1280x640), the image for the repository's Settings > General >
+Social preview, which is what link previews on LinkedIn, Slack and X show.
+
 ## Definition of done for any change
 
 - `npm run typecheck` clean, strict mode, no `any` added to public APIs

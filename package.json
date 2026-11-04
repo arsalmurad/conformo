@@ -27,7 +27,8 @@
     "conformance": "tsx tools/conformance/run.ts",
     "compare:mustang": "node tools/compare-mustang.mjs",
     "coverage:generate": "tsx tools/generate-coverage.ts",
-    "pack:smoke": "node tools/pack-smoke.mjs"
+    "pack:smoke": "node tools/pack-smoke.mjs",
+    "readme:media": "npm run build --workspace=packages/ui && npm run validator-page:build && node tools/readme-media.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
