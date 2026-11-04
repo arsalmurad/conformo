@@ -76,6 +76,17 @@ To run the standalone validator page or the docs site on their own:
 
 <!-- MESSAGE-COVERAGE:END -->
 
+## Deploying the three sites
+
+The web app, the validator page and the docs site are static files on three Vercel projects that are not connected
+to Git. `.github/workflows/deploy.yml` builds them and uploads them to production after the `ci` workflow passes on
+`main`, then checks each live site serves exactly the `index.html` it built. To redeploy without a new commit, run the
+`deploy` workflow from the Actions tab.
+
+It needs five repository secrets: `VERCEL_TOKEN` (create it at vercel.com/account/tokens), `VERCEL_ORG_ID`, and
+`VERCEL_PROJECT_ID_APP`, `VERCEL_PROJECT_ID_VALIDATOR`, `VERCEL_PROJECT_ID_DOCS` (each project's `.vercel/project.json`
+after `vercel link`). Without them the workflow skips the upload with a warning instead of failing.
+
 ## README pictures
 
 The GIF and screenshots in the README (`docs/media/`) are recorded from the real built app and validator, never drawn

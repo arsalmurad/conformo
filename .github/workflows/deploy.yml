@@ -1,0 +1,116 @@
+name: deploy
+# Puts main live on the three Vercel sites, but only after the ci workflow has passed for that exact commit:
+#   packages/ui/dist             -> Vercel project of conformo-three.vercel.app    (secret VERCEL_PROJECT_ID_APP)
+#   packages/validator-page/dist -> Vercel project of conformo-validate.vercel.app (secret VERCEL_PROJECT_ID_VALIDATOR)
+#   packages/docs-site/dist      -> Vercel project of conformo-docs.vercel.app     (secret VERCEL_PROJECT_ID_DOCS)
+#
+# The sites are built here and uploaded as finished static files; Vercel never builds them. The projects have no
+# framework, build or output settings and are not connected to Git, so nothing else deploys them. Run it by hand from
+# the Actions tab (workflow_dispatch) to redeploy main without a new commit.
+#
+# Secrets: VERCEL_TOKEN (vercel.com/account/tokens), VERCEL_ORG_ID and the three project IDs above (all in each
+# project's .vercel/project.json after `vercel link`). Until VERCEL_TOKEN is set the workflow skips the upload and says
+# so, instead of failing.
+
+on:
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # A ci run on main that passed, and was a push to this repository (not a pull request from a fork).
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_CLI: vercel@65.11.0
+    steps:
+      - name: Check the Vercel secrets are set
+        id: secrets
+        run: |
+          missing=""
+          for name in VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID_APP VERCEL_PROJECT_ID_VALIDATOR VERCEL_PROJECT_ID_DOCS; do
+            [ -n "${!name}" ] || missing="$missing $name"
+          done
+          if [ -n "$missing" ]; then
+            echo "::warning::Not deploying: missing repository secrets:$missing"
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          VERCEL_PROJECT_ID_APP: ${{ secrets.VERCEL_PROJECT_ID_APP }}
+          VERCEL_PROJECT_ID_VALIDATOR: ${{ secrets.VERCEL_PROJECT_ID_VALIDATOR }}
+          VERCEL_PROJECT_ID_DOCS: ${{ secrets.VERCEL_PROJECT_ID_DOCS }}
+
+      - uses: actions/checkout@v4
+        if: steps.secrets.outputs.ready == 'true'
+        with:
+          # The commit ci just passed, not whatever main points at by now.
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - uses: ./.github/actions/setup
+        if: steps.secrets.outputs.ready == 'true'
+
+      - name: Build the three sites
+        if: steps.secrets.outputs.ready == 'true'
+        run: |
+          npm run artefacts:fetch -- --group build
+          npm run schematron:compile
+          npm run saxonjs:fetch
+          npm run build:compliance-data
+          npm run build --workspace=packages/ui
+          npm run validator-page:build
+          npm run docs:build
+
+      - name: Deploy the web app
+        if: steps.secrets.outputs.ready == 'true'
+        env:
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_APP }}
+        run: npx --yes "$VERCEL_CLI" deploy packages/ui/dist --prod --yes --token "$VERCEL_TOKEN"
+
+      - name: Deploy the validator page
+        if: steps.secrets.outputs.ready == 'true'
+        env:
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_VALIDATOR }}
+        run: npx --yes "$VERCEL_CLI" deploy packages/validator-page/dist --prod --yes --token "$VERCEL_TOKEN"
+
+      - name: Deploy the docs site
+        if: steps.secrets.outputs.ready == 'true'
+        env:
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_DOCS }}
+        run: npx --yes "$VERCEL_CLI" deploy packages/docs-site/dist --prod --yes --token "$VERCEL_TOKEN"
+
+      - name: Check the live sites serve this build
+        if: steps.secrets.outputs.ready == 'true'
+        run: |
+          # Each site's live index.html must be byte-identical to the one this run built (it names this build's
+          # hashed scripts), retried while Vercel's edge picks up the new deployment.
+          check() {
+            want=$(sha256sum "$2" | cut -d' ' -f1)
+            for i in $(seq 1 24); do
+              got=$(curl -fsSL "$1" | sha256sum | cut -d' ' -f1 || true)
+              if [ "$got" = "$want" ]; then echo "ok   $1"; return 0; fi
+              sleep 5
+            done
+            echo "::error::$1 is not serving this build's $2"; return 1
+          }
+          check https://conformo-three.vercel.app/ packages/ui/dist/index.html
+          check https://conformo-validate.vercel.app/ packages/validator-page/dist/index.html
+          check https://conformo-docs.vercel.app/ packages/docs-site/dist/index.html
