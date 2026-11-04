@@ -47,7 +47,7 @@ The container holds no data: no volume is needed and nothing is written inside i
 | Method and path | Body | Returns |
 | --- | --- | --- |
 | `POST /v1/invoices/xml` | `{invoice, format}` | `{xml, format, warnings}` |
-| `POST /v1/invoices/pdf` | `{invoice, profile?, template?}` | `application/pdf` bytes; with `Accept: application/json`: `{pdfBase64, xml, xmlFilename, conformanceLevel}` |
+| `POST /v1/invoices/pdf` | `{invoice, profile?, template?, language?}` | `application/pdf` bytes; with `Accept: application/json`: `{pdfBase64, xml, xmlFilename, conformanceLevel}` |
 | `POST /v1/validate` | `{xml}` or `{pdfBase64}`, plus `options?: {country?, profile?, xsd?}` | the full validation result; HTTP 200 whether valid or not |
 | `POST /v1/convert` | `{source}` or `{sourcePdfBase64}`, plus `to` | `{xml, from, to, warnings, totalsCheck}` |
 | `POST /v1/parse` | `{xml}` or `{pdfBase64}` | `{invoice, format, origin, totalsCheck, ...}` |

@@ -14,7 +14,8 @@ import type { CreatedXml, FormatId } from './formats.js';
 
 export { createXml, serialize, FORMAT_IDS, FORMAT_DESCRIPTIONS } from './formats.js';
 export type { CreatedXml, FormatId } from './formats.js';
-export { createPdf, PDF_PROFILES } from './pdf.js';
+export { createPdf, PDF_PROFILES, PDF_LANGUAGES } from './pdf.js';
+export type { PdfLanguage } from './pdf.js';
 export type { CreatedPdf, CreatePdfOptions } from './pdf.js';
 export { explainRule } from './rules.js';
 export type { RuleExplanation } from './rules.js';

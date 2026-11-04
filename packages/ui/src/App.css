@@ -181,9 +181,10 @@
 
 /* ---------------------------------------------------------------- preview: the paper on the desk */
 .preview-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; margin-bottom: var(--space-2); }
-.preview-tools { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); }
+.preview-tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); font-size: var(--text-sm); }
+.preview-tools label + select + label { margin-left: var(--space-2); }
 .seal-more { margin-top: var(--space-1); padding-left: 0; font-size: var(--text-sm); }
-.preview-tools select { width: auto; min-width: 160px; min-height: 40px; padding: 6px 10px; }
+.preview-tools select { width: auto; min-width: 120px; min-height: 40px; padding: 6px 10px; }
 .preview-panel { background: transparent; }
 .preview-status { margin: 0; font-size: var(--text-sm); color: var(--graphite); }
 .preview-panel canvas { display: block; width: 100%; height: auto; background: #fff; box-shadow: var(--shadow-paper); }

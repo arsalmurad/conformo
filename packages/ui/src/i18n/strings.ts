@@ -74,6 +74,7 @@ const en = {
     paymentLink: 'Payment link (optional)',
     logo: 'Logo (optional)',
     template: 'Layout',
+    pdfLanguage: 'PDF language',
     prepaid: 'Already paid (deposit)',
   },
   hints: {
@@ -263,6 +264,7 @@ const de: Strings = {
     paymentLink: 'Zahlungslink (optional)',
     logo: 'Logo (optional)',
     template: 'Layout',
+    pdfLanguage: 'PDF-Sprache',
     prepaid: 'Bereits bezahlt (Anzahlung)',
   },
   hints: {

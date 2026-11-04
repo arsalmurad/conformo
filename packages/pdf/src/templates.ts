@@ -16,7 +16,8 @@
 import { rgb, type PDFDocument, type PDFFont, type PDFPage } from 'pdf-lib';
 import type { Invoice, Totals } from '@conformo/core';
 import { lineNet } from '@conformo/core';
-import { formatInvoiceAmount, formatInvoiceDate, localeForInvoice } from './locale.js';
+import { formatInvoiceAmount, formatInvoiceDate, formatInvoiceQuantity, localeForInvoice } from './locale.js';
+import { PDF_LABELS, type PdfLanguage } from './labels.js';
 
 export type TemplateId = 'classic' | 'modern' | 'compact';
 
@@ -83,6 +84,9 @@ export interface RenderOptions {
    * PNG or JPEG; pdf-lib has no WebP embedder. */
   logo?: { bytes: Uint8Array; kind: 'png' | 'jpeg' };
   paymentLink?: string;
+  /** Language of the printed labels (labels.ts). Default 'en'. Presentation only: the embedded XML is the same in
+   * every language, and dates and amounts keep following the buyer's country (locale.ts). */
+  language?: PdfLanguage;
 }
 
 export async function renderInvoicePage(
@@ -104,6 +108,8 @@ export async function renderInvoicePage(
   const locale = localeForInvoice(invoice.buyer.country, invoice.seller.country);
   const fmtDate = (iso: string) => formatInvoiceDate(iso, locale);
   const fmtAmount = (minor: number) => formatInvoiceAmount(minor, locale);
+  const L = PDF_LABELS[options.language ?? 'en'];
+  const dates = `${L.issued} ${fmtDate(invoice.issueDate)}${invoice.dueDate ? `   ${L.due} ${fmtDate(invoice.dueDate)}` : ''}`;
 
   const page = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
   const W = PAGE_WIDTH, M = MARGIN;
@@ -145,17 +151,17 @@ export async function renderInvoicePage(
 
   if (theme.headerBand) {
     page.drawRectangle({ x: 0, y: PAGE_HEIGHT - bandHeight, width: W, height: bandHeight, color: accent });
-    draw('INVOICE', M, y, { f: bold, size: 22, color: rgb(1, 1, 1) });
+    draw(L.title, M, y, { f: bold, size: 22, color: rgb(1, 1, 1) });
     right(invoice.number, W - M, y + 4, { f: bold, size: 11, color: rgb(1, 1, 1) });
-    right(`Issued ${fmtDate(invoice.issueDate)}${invoice.dueDate ? `   Due ${fmtDate(invoice.dueDate)}` : ''}`, W - M, y - 10, {
+    right(dates, W - M, y - 10, {
       size: 8.5,
       color: rgb(0.85, 0.9, 1),
     });
     y = PAGE_HEIGHT - bandHeight - 24;
   } else {
-    draw('INVOICE', M, y, { f: bold, size: 22 });
+    draw(L.title, M, y, { f: bold, size: 22 });
     right(invoice.number, W - M, y + 4, { f: bold, size: 11 });
-    right(`Issued ${fmtDate(invoice.issueDate)}${invoice.dueDate ? `   Due ${fmtDate(invoice.dueDate)}` : ''}`, W - M, y - 10, {
+    right(dates, W - M, y - 10, {
       size: 8.5,
       color: mute,
     });
@@ -168,19 +174,19 @@ export async function renderInvoicePage(
     draw(label.toUpperCase(), x, y, { size: 7.5, color: mute, f: bold });
     let yy = y - 14;
     const addr = [p.street, [p.postcode, p.city].filter(Boolean).join(' ')].filter(Boolean);
-    for (const l of [p.name, ...addr, p.country, p.vatId ? `VAT ${p.vatId}` : undefined].filter(Boolean)) {
+    for (const l of [p.name, ...addr, p.country, p.vatId ? `${L.vatId} ${p.vatId}` : undefined].filter(Boolean)) {
       draw(l, x, yy, { size: 9 });
       yy -= 12;
     }
   };
-  block('From', invoice.seller, M);
-  block('Bill to', invoice.buyer, 320);
+  block(L.from, invoice.seller, M);
+  block(L.billTo, invoice.buyer, 320);
   y -= 92;
 
-  draw('DESCRIPTION', M, y, { size: 7.5, color: mute, f: bold });
-  right('QTY', 360, y, { size: 7.5, color: mute, f: bold });
-  right('UNIT PRICE', 450, y, { size: 7.5, color: mute, f: bold });
-  right('AMOUNT', W - M, y, { size: 7.5, color: mute, f: bold });
+  draw(L.description, M, y, { size: 7.5, color: mute, f: bold });
+  right(L.quantity, 360, y, { size: 7.5, color: mute, f: bold });
+  right(L.unitPrice, 450, y, { size: 7.5, color: mute, f: bold });
+  right(L.amount, W - M, y, { size: 7.5, color: mute, f: bold });
   y -= 8;
   hr(y);
   y -= theme.compact ? 14 : 18;
@@ -191,7 +197,7 @@ export async function renderInvoicePage(
     }
     draw(l.name, M, y, { f: bold, size: baseSize });
     if (l.description && !theme.compact) draw(l.description, M, y - 11, { size: 8, color: mute });
-    right(String(l.quantity), 360, y, { size: baseSize });
+    right(formatInvoiceQuantity(l.quantity, locale), 360, y, { size: baseSize });
     right(fmtAmount(l.unitPriceMinor), 450, y, { size: baseSize });
     right(fmtAmount(lineNet(l)), W - M, y, { size: baseSize });
     y -= rowHeight;
@@ -210,21 +216,21 @@ export async function renderInvoicePage(
     page.drawRectangle({ x: 320, y: y - totals.groups.length * 16 - 26, width: W - M - 320, height: totals.groups.length * 16 + 44, color: accent, opacity: 0.06 });
   }
 
-  row('Subtotal', fmtAmount(totals.lineTotal), { mute: true });
-  for (const g of totals.groups) row(`VAT ${g.rate}%`, fmtAmount(g.amount), { mute: true });
-  row('Total', fmtAmount(totals.grand), { f: bold });
-  if (totals.prepaid) row('Paid', `-${fmtAmount(totals.prepaid)}`, { mute: true });
+  row(L.subtotal, fmtAmount(totals.lineTotal), { mute: true });
+  for (const g of totals.groups) row(L.vatRow(g.rate), fmtAmount(g.amount), { mute: true });
+  row(L.total, fmtAmount(totals.grand), { f: bold });
+  if (totals.prepaid) row(L.paid, `-${fmtAmount(totals.prepaid)}`, { mute: true });
   y -= 4;
-  right('Amount due', 470, y, { size: 11, f: bold, color: theme.totalHighlight ? accent : ink });
+  right(L.amountDue, 470, y, { size: 11, f: bold, color: theme.totalHighlight ? accent : ink });
   right(`${fmtAmount(totals.due)} ${invoice.currency}`, W - M, y, { size: 11, f: bold, color: theme.totalHighlight ? accent : ink });
   y -= 26;
 
-  draw('PAYMENT', M, y, { size: 7.5, color: mute, f: bold });
-  if (invoice.payment?.iban) draw(`Bank transfer to IBAN ${invoice.payment.iban}`, M, y - 14, { size: 9 });
-  draw(`Reference ${invoice.number}.${invoice.paymentTerms ? ` ${invoice.paymentTerms}.` : ''}`, M, y - 26, { size: 9, color: mute });
+  draw(L.payment, M, y, { size: 7.5, color: mute, f: bold });
+  if (invoice.payment?.iban) draw(L.bankTransfer(invoice.payment.iban), M, y - 14, { size: 9 });
+  draw(`${L.reference} ${invoice.number}.${invoice.paymentTerms ? ` ${invoice.paymentTerms}.` : ''}`, M, y - 26, { size: 9, color: mute });
   y -= 26;
   if (options.paymentLink) {
-    draw(`Pay online: ${options.paymentLink}`, M, y - 12, { size: 9, color: accent });
+    draw(`${L.payOnline} ${options.paymentLink}`, M, y - 12, { size: 9, color: accent });
     y -= 12;
   }
 
@@ -233,7 +239,7 @@ export async function renderInvoicePage(
     draw(note, M, y - 24, { size: 8, color: mute });
   }
 
-  draw('This PDF contains a Factur-X / EN 16931 electronic invoice embedded as XML.', M, 56, { size: 7.5, color: mute });
+  draw(L.footer, M, 56, { size: 7.5, color: mute });
 
   return page;
 }

@@ -9,7 +9,7 @@ import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import {
   checkInvoice, convert, createPdf, createXml, explainRule, getRequirements, parse, validate,
-  FORMAT_DESCRIPTIONS, FORMAT_IDS, InvoiceInputError, PDF_PROFILES, SUPPORTED_COUNTRIES, ValidationInputError,
+  FORMAT_DESCRIPTIONS, FORMAT_IDS, InvoiceInputError, PDF_LANGUAGES, PDF_PROFILES, SUPPORTED_COUNTRIES, ValidationInputError,
 } from '@conformo/toolkit';
 import type { Invoice } from '@conformo/toolkit';
 import { invoiceSchema } from '@conformo/schema';
@@ -106,7 +106,7 @@ export function registerTools(server: McpServer): void {
     title: 'Create a Factur-X / ZUGFeRD PDF',
     description:
       'Creates a human-readable PDF/A-3b invoice with the machine-readable XML embedded (Factur-X / ZUGFeRD hybrid). Same invoice input as create_invoice. '
-      + '`profile`: "en16931" (default; Factur-X/ZUGFeRD EN 16931), "xrechnung" (ZUGFeRD XRECHNUNG, for German public sector) or "extended". `template` picks the page layout. '
+      + '`profile`: "en16931" (default; Factur-X/ZUGFeRD EN 16931), "xrechnung" (ZUGFeRD XRECHNUNG, for German public sector) or "extended". `template` picks the page layout and `language` the language of the printed labels ("en" default, "de" German, "fr" French; the embedded XML is the same in every language). '
       + 'Without `outputPath` the PDF comes back base64-encoded in structuredContent.pdfBase64 (it can be large). With `outputPath` the file is written instead (nothing is returned inline): '
       + 'the path must end in .pdf and stay inside the server\'s working directory, and an existing file is refused unless `overwrite` is true. '
       + 'The output is deterministic: the same invoice gives the same bytes. Check it with validate_invoice (pass pdfBase64). ' + NOT_SUPPORTED,
@@ -114,6 +114,7 @@ export function registerTools(server: McpServer): void {
       invoice: invoiceSchema.describe('The invoice. Required: number, issueDate, currency, seller, buyer, lines.'),
       profile: z.enum(PDF_PROFILES).optional().describe('Factur-X / ZUGFeRD profile. Default en16931.'),
       template: z.enum(['classic', 'modern', 'compact']).optional().describe('Page layout. Default classic.'),
+      language: z.enum(PDF_LANGUAGES).optional().describe('Language of the printed labels: en, de or fr. Default en. Presentation only; the XML does not change.'),
       outputPath: z.string().optional().describe('Write the PDF here instead of returning base64. Relative to the server working directory; must end in .pdf.'),
       overwrite: z.boolean().optional().describe('Allow replacing an existing file at outputPath. Default false.'),
     },
@@ -128,7 +129,7 @@ export function registerTools(server: McpServer): void {
     // Resolve the path first so a refused path costs nothing and nothing is rendered.
     const target = a.outputPath !== undefined ? resolveOutputPath(a.outputPath) : undefined;
     const warnings = warningsOf(a.invoice);
-    const r = await createPdf(a.invoice as Invoice, { ...(a.profile ? { profile: a.profile } : {}), ...(a.template ? { template: a.template } : {}) });
+    const r = await createPdf(a.invoice as Invoice, { ...(a.profile ? { profile: a.profile } : {}), ...(a.template ? { template: a.template } : {}), ...(a.language ? { language: a.language } : {}) });
     const meta = {
       profile: r.profile, xmlFilename: r.xmlFilename, conformanceLevel: r.conformanceLevel,
       byteLength: r.pdf.length, sha256: createHash('sha256').update(r.pdf).digest('hex'), warnings,

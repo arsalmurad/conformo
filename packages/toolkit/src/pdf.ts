@@ -4,8 +4,12 @@ import { assertInvoice, totals } from '@conformo/core';
 import type { Invoice } from '@conformo/core';
 import { buildCII, buildXRechnungCII } from '@conformo/formats';
 import { FACTURX_PROFILES, finalizePDFA, renderInvoicePage } from '@conformo/pdf';
-import type { FacturXProfile, RenderOptions, TemplateId } from '@conformo/pdf';
+import type { FacturXProfile, PdfLanguage, RenderOptions, TemplateId } from '@conformo/pdf';
 import { loadPdfAssets } from './assets.js';
+
+/** Page label languages createPdf accepts (re-exported from @conformo/pdf). */
+export { PDF_LANGUAGES } from '@conformo/pdf';
+export type { PdfLanguage } from '@conformo/pdf';
 
 export const PDF_PROFILES = ['en16931', 'xrechnung', 'extended'] as const satisfies readonly FacturXProfile[];
 
@@ -25,6 +29,8 @@ export interface CreatePdfOptions {
   profile?: FacturXProfile;
   template?: TemplateId;
   logo?: RenderOptions['logo'];
+  /** Language of the printed labels: 'en' (default), 'de' or 'fr'. The embedded XML is identical in every language. */
+  language?: PdfLanguage;
 }
 
 /**
@@ -40,7 +46,10 @@ export async function createPdf(invoice: Invoice, options: CreatePdfOptions = {}
   doc.registerFontkit(fontkit);
   const regular = await doc.embedFont(assets.regular, { subset: true });
   const bold = await doc.embedFont(assets.bold, { subset: true });
-  await renderInvoicePage(doc, { regular, bold }, invoice, totals(invoice), options.template ?? 'classic', options.logo ? { logo: options.logo } : {});
+  await renderInvoicePage(doc, { regular, bold }, invoice, totals(invoice), options.template ?? 'classic', {
+    ...(options.logo ? { logo: options.logo } : {}),
+    ...(options.language ? { language: options.language } : {}),
+  });
   await finalizePDFA(doc, {
     xml, profile,
     title: `Invoice ${invoice.number}`, author: invoice.seller.name, producer: 'Conformo', creatorTool: 'Conformo',

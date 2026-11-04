@@ -35,7 +35,7 @@ curl -s http://127.0.0.1:8788/healthz
 | Method and path | Body | Returns |
 | --- | --- | --- |
 | `POST /v1/invoices/xml` | `{invoice, format}` | `{xml, format, warnings}` |
-| `POST /v1/invoices/pdf` | `{invoice, profile?, template?}` | the PDF, or JSON with `Accept: application/json` |
+| `POST /v1/invoices/pdf` | `{invoice, profile?, template?, language?}` | the PDF, or JSON with `Accept: application/json` |
 | `POST /v1/validate` | `{xml}` or `{pdfBase64}`, `options?` | the full validation result (HTTP 200 whether valid or not) |
 | `POST /v1/convert` | `{source}` or `{sourcePdfBase64}`, `to` | `{xml, from, to, warnings, totalsCheck}` |
 | `POST /v1/parse` | `{xml}` or `{pdfBase64}` | `{invoice, format, origin, totalsCheck}` |

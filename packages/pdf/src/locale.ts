@@ -69,3 +69,10 @@ export function formatInvoiceDate(iso: string, locale: string): string {
 export function formatInvoiceAmount(minor: number, locale: string): string {
   return new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false }).format(minor / 100);
 }
+
+/** A line quantity (BT-129) as the buyer's country writes it, e.g. "24,5" for de-DE, "24.5" for en-GB. Up to six
+ * decimals, the precision the model allows, and no grouping, for the same reason as `formatInvoiceAmount`. Quantities
+ * are not read back by the visible-totals check, so this only changes how the page looks. */
+export function formatInvoiceQuantity(quantity: number, locale: string): string {
+  return new Intl.NumberFormat(locale, { maximumFractionDigits: 6, useGrouping: false }).format(quantity);
+}

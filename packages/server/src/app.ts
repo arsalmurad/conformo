@@ -153,7 +153,7 @@ export function createApp(options: AppOptions = {}): Hono {
 
   app.post('/v1/invoices/pdf', async (c) => {
     const b = await readBody(c, s.pdfRequest);
-    const r = await onInvoice(() => createPdf(b.invoice as Invoice, { ...(b.profile ? { profile: b.profile } : {}), ...(b.template ? { template: b.template } : {}) }));
+    const r = await onInvoice(() => createPdf(b.invoice as Invoice, { ...(b.profile ? { profile: b.profile } : {}), ...(b.template ? { template: b.template } : {}), ...(b.language ? { language: b.language } : {}) }));
     if ((c.req.header('accept') ?? '').includes('application/json')) {
       return c.json({ pdfBase64: Buffer.from(r.pdf).toString('base64'), xml: r.xml, xmlFilename: r.xmlFilename, conformanceLevel: r.conformanceLevel });
     }

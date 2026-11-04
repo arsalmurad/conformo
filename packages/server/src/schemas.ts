@@ -4,7 +4,7 @@
  * server does not enforce.
  */
 import { z } from 'zod';
-import { FORMAT_IDS, PDF_PROFILES } from '@conformo/toolkit';
+import { FORMAT_IDS, PDF_LANGUAGES, PDF_PROFILES } from '@conformo/toolkit';
 import { invoiceSchema } from '@conformo/schema';
 
 export const TEMPLATES = ['classic', 'modern', 'compact'] as const;
@@ -32,6 +32,7 @@ export const pdfRequest = z.object({
   invoice: invoiceSchema,
   profile: z.enum(PDF_PROFILES).optional().describe('Factur-X / ZUGFeRD profile. Default en16931.'),
   template: z.enum(TEMPLATES).optional().describe('Page layout. Default classic.'),
+  language: z.enum(PDF_LANGUAGES).optional().describe('Language of the printed labels: en, de or fr. Default en. The embedded XML is the same in every language.'),
 }).strict();
 export const validateRequest = z.object({
   xml: xmlText.optional(),

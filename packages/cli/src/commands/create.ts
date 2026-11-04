@@ -1,5 +1,5 @@
 import { writeFile } from "node:fs/promises";
-import { createPdf, createXml, FORMAT_IDS, InvoiceInputError, PDF_PROFILES } from "@conformo/toolkit";
+import { createPdf, createXml, FORMAT_IDS, InvoiceInputError, PDF_LANGUAGES, PDF_PROFILES } from "@conformo/toolkit";
 import type { FormatId } from "@conformo/toolkit";
 import { bool, parseArgs, str, UsageError } from "../args.js";
 import { line, readInput } from "../io.js";
@@ -11,13 +11,14 @@ export const CREATE_HELP = `conformo create: write an invoice (JSON) as e-invoic
 
 Usage:
   conformo create <invoice.json|-> --format <format> [-o out.xml]
-  conformo create <invoice.json|-> --pdf [--profile <profile>] [--template <template>] -o out.pdf
+  conformo create <invoice.json|-> --pdf [--profile <profile>] [--template <template>] [--language <lang>] -o out.pdf
 
 Options:
   --format <format>    ${FORMAT_IDS.join(" | ")}
   --pdf                Create a hybrid PDF/A-3 with the XML embedded (requires -o)
   --profile <profile>  PDF only: ${PDF_PROFILES.join(" | ")} (default en16931)
   --template <name>    PDF only: ${TEMPLATES.join(" | ")} (default classic)
+  --language <lang>    PDF only: language of the printed labels, ${PDF_LANGUAGES.join(" | ")} (default en)
   -o, --output <file>  Output file. Without it, XML goes to stdout.
   -h, --help           Show this help
 
@@ -29,13 +30,14 @@ problem is printed as "path [BT-x]: message" on stderr).
 Examples:
   conformo create fixtures/xrechnung-public-sector.json --format xrechnung-cii -o invoice.xml
   conformo create invoice.json --pdf --profile xrechnung --template modern -o invoice.pdf
+  conformo create invoice.json --pdf --language de -o rechnung.pdf
   cat invoice.json | conformo create - --format ubl > invoice.xml
 `;
 
 export async function createCommand(argv: string[], io: Io): Promise<number> {
   const a = parseArgs(argv, {
     format: { type: "string" }, pdf: { type: "boolean" }, profile: { type: "string" },
-    template: { type: "string" }, output: { type: "string", short: "o" },
+    template: { type: "string" }, language: { type: "string" }, output: { type: "string", short: "o" },
   }, 1);
   if (a.help) { io.out(CREATE_HELP); return 0; }
 
@@ -46,7 +48,9 @@ export async function createCommand(argv: string[], io: Io): Promise<number> {
   const out = str(a, "output");
   if (pdf && format) throw new UsageError("--pdf and --format cannot be combined; --pdf writes a PDF with its own embedded XML (choose it with --profile).");
   if (!pdf && !format) throw new UsageError(`Missing --format (${FORMAT_IDS.join(", ")}) or --pdf.`);
-  if (!pdf && (str(a, "profile") || str(a, "template"))) throw new UsageError("--profile and --template only apply with --pdf.");
+  if (!pdf && (str(a, "profile") || str(a, "template") || str(a, "language"))) {
+    throw new UsageError("--profile, --template and --language only apply with --pdf.");
+  }
   if (format && !(FORMAT_IDS as readonly string[]).includes(format)) {
     throw new UsageError(`Unknown format "${format}". Use one of: ${FORMAT_IDS.join(", ")}.`);
   }
@@ -57,6 +61,10 @@ export async function createCommand(argv: string[], io: Io): Promise<number> {
   const template = str(a, "template");
   if (template && !(TEMPLATES as readonly string[]).includes(template)) {
     throw new UsageError(`Unknown template "${template}". Use one of: ${TEMPLATES.join(", ")}.`);
+  }
+  const language = str(a, "language");
+  if (language && !(PDF_LANGUAGES as readonly string[]).includes(language)) {
+    throw new UsageError(`Unknown language "${language}". Use one of: ${PDF_LANGUAGES.join(", ")}.`);
   }
   if (pdf && !out) throw new UsageError("--pdf needs -o <out.pdf>: a PDF is not written to stdout.");
 
@@ -73,6 +81,7 @@ export async function createCommand(argv: string[], io: Io): Promise<number> {
       const r = await createPdf(invoice as Parameters<typeof createPdf>[0], {
         ...(profile ? { profile: profile as (typeof PDF_PROFILES)[number] } : {}),
         ...(template ? { template: template as (typeof TEMPLATES)[number] } : {}),
+        ...(language ? { language: language as (typeof PDF_LANGUAGES)[number] } : {}),
       });
       await writeFile(out!, r.pdf);
       io.err(line(`Wrote ${out} (PDF/A-3b, embedded ${r.xmlFilename}, profile ${r.profile}, ${r.conformanceLevel}). Run "conformo validate ${out}" to check it.`));

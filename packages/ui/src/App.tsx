@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Invoice } from '@conformo/core';
 import type { TemplateId } from '@conformo/pdf';
-import { TEMPLATES } from '@conformo/pdf';
+import { TEMPLATES, isPdfLanguage, type PdfLanguage } from '@conformo/pdf';
 import { AUDIENCES, applyAudience, defaultAudience, isAudienceId, type AudienceId } from './audience.js';
 import { useI18n } from './i18n/I18n.js';
 import { labelFor } from './validation/labels.js';
@@ -31,6 +31,17 @@ import './chrome/site-header.css';
 import './App.css';
 
 const AUDIENCE_KEY = 'conformo.audience';
+const PDF_LANGUAGE_KEY = 'conformo.pdfLanguage';
+
+/** Names of the page languages, each in its own language, so they read the same whatever the app language is. */
+const PDF_LANGUAGE_NAMES: Record<PdfLanguage, string> = { de: 'Deutsch', en: 'English', fr: 'Français' };
+
+function savedPdfLanguage(): PdfLanguage | undefined {
+  try {
+    const saved = localStorage.getItem(PDF_LANGUAGE_KEY);
+    return isPdfLanguage(saved) ? saved : undefined;
+  } catch { return undefined; /* private mode */ }
+}
 
 function initialAudience(): AudienceId {
   try {
@@ -47,6 +58,9 @@ export default function App() {
   const draft = useInvoiceDraft(() => applyAudience(emptyInvoice(AUDIENCES[audienceId].defaultSellerCountry, AUDIENCES[audienceId].defaultBuyerCountry), AUDIENCES[audienceId]));
   const { invoice, setInvoice, profiles, saveProfile, deleteProfile, lock, protectedSince, protect, unlock, discardLockedDraft } = draft;
   const [template, setTemplate] = useState<TemplateId>('classic');
+  // The printed labels follow the app language until the user picks one; that choice is remembered on this device.
+  const [pdfLanguageChoice, setPdfLanguageChoice] = useState<PdfLanguage | undefined>(savedPdfLanguage);
+  const pdfLanguage: PdfLanguage = pdfLanguageChoice ?? lang;
   const [busy, setBusy] = useState<'pdf' | 'draft' | undefined>();
   const [paymentLink, setPaymentLink] = useState('');
   const [logo, setLogo] = useState<EmbeddableLogo | undefined>(undefined);
@@ -102,7 +116,7 @@ export default function App() {
   const problems = validation.problems;
   const allMissingAll = problems.every((p) => p.kind === 'missing');
   const draftLabel = t.actions.downloadDraft(audience.standard);
-  const options = { logo, paymentLink: paymentLink || undefined };
+  const options = { logo, paymentLink: paymentLink || undefined, language: pdfLanguage };
 
   async function downloadEInvoice() {
     setBusy('pdf');
@@ -118,12 +132,23 @@ export default function App() {
   async function downloadDraft() {
     setBusy('draft');
     try {
-      const bytes = await buildDraftPdf(invoice, template, options, lang === 'de' ? 'ENTWURF' : 'DRAFT',
-        lang === 'de' ? `Entwurf: keine gültige E-Rechnung (${audience.standard})` : `Draft: not a valid e-invoice (${audience.standard})`);
+      const stamp = { de: 'ENTWURF', en: 'DRAFT', fr: 'BROUILLON' }[pdfLanguage];
+      const notice = {
+        de: `Entwurf: keine gültige E-Rechnung (${audience.standard})`,
+        en: `Draft: not a valid e-invoice (${audience.standard})`,
+        fr: `Brouillon : pas une facture électronique valide (${audience.standard})`,
+      }[pdfLanguage];
+      const bytes = await buildDraftPdf(invoice, template, options, stamp, notice);
       downloadPdf(bytes, `${invoice.number || 'invoice'}-draft.pdf`);
     } finally {
       setBusy(undefined);
     }
+  }
+
+  function chooseLanguage(value: string) {
+    if (!isPdfLanguage(value)) return;
+    setPdfLanguageChoice(value);
+    try { localStorage.setItem(PDF_LANGUAGE_KEY, value); } catch { /* private mode */ }
   }
 
   function fixFirst() {
@@ -199,11 +224,15 @@ export default function App() {
         </div>
         <div className="preview-col">
           <Verdict audience={audience} validation={validation} visible={visible} labelFor={(k) => labelFor(k, t, isB2G)} onGo={goTo} />
-          <InvoicePreview invoice={invoice} template={template} logo={logo} paymentLink={paymentLink}>
+          <InvoicePreview invoice={invoice} template={template} logo={logo} paymentLink={paymentLink} language={pdfLanguage}>
             <div className="preview-tools">
               <label htmlFor="template-select">{t.fields.template}</label>
               <select id="template-select" value={template} onChange={(e) => setTemplate(e.target.value as TemplateId)}>
                 {Object.entries(TEMPLATES).map(([id, tpl]) => <option key={id} value={id}>{tpl.label}</option>)}
+              </select>
+              <label htmlFor="pdf-language-select">{t.fields.pdfLanguage}</label>
+              <select id="pdf-language-select" value={pdfLanguage} onChange={(e) => chooseLanguage(e.target.value)}>
+                {(Object.keys(PDF_LANGUAGE_NAMES) as PdfLanguage[]).map((l) => <option key={l} value={l} lang={l}>{PDF_LANGUAGE_NAMES[l]}</option>)}
               </select>
             </div>
           </InvoicePreview>

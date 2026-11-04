@@ -37,7 +37,7 @@ if (!checked.valid) throw new Error('library sample: XRechnung not valid');
 A PDF/A-3 with the XML embedded. Byte-for-byte deterministic: the same invoice always gives the same file.
 
 ```js
-const { pdf, xmlFilename, conformanceLevel } = await createPdf(invoice, { profile: 'xrechnung', template: 'modern' });
+const { pdf, xmlFilename, conformanceLevel } = await createPdf(invoice, { profile: 'xrechnung', template: 'modern', language: 'de' });
 console.log(xmlFilename, conformanceLevel, (await validate(pdf)).valid);   // xrechnung.xml XRECHNUNG true
 ```
 

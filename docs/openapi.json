@@ -211,6 +211,15 @@
                       "compact"
                     ],
                     "description": "Page layout. Default classic."
+                  },
+                  "language": {
+                    "type": "string",
+                    "enum": [
+                      "en",
+                      "de",
+                      "fr"
+                    ],
+                    "description": "Language of the printed labels: en, de or fr. Default en. The embedded XML is the same in every language."
                   }
                 },
                 "required": [

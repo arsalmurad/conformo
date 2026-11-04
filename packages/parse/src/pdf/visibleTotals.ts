@@ -9,10 +9,11 @@
  * silently.
  *
  * Deliberately not exhaustive: it checks the four money lines every template
- * in packages/pdf/src/templates.ts renders unconditionally (Subtotal, Total,
- * Amount due, and Paid when there was a prepayment). It does not attempt to
+ * in packages/pdf/src/templates.ts renders unconditionally (subtotal, total,
+ * amount due, and paid when there was a prepayment), in each page language
+ * packages/pdf offers (English, German, French). It does not attempt to
  * OCR or lay out arbitrary third-party PDFs — a PDF from a different generator
- * that doesn't say "Amount due" simply reports checked: false, which the
+ * that prints none of those labels simply reports checked: false, which the
  * caller should treat as "unverified", not "clean".
  */
 import { totals } from '@conformo/core';
@@ -47,13 +48,27 @@ async function pageText(pdfBytes: Uint8Array): Promise<string> {
   return parts.join(' ').replace(/\s+/g, ' ');
 }
 
+/** The money labels packages/pdf prints, in every page language it offers (packages/pdf/src/labels.ts, PDF_LABELS).
+ * Kept here as a copy so this package needs no dependency on @conformo/pdf; test/pdf-labels.test.ts fails if the two
+ * drift apart. Order inside each list does not matter: a label only matches when the amount follows it directly. */
+export const MONEY_LABELS = {
+  subtotal: ['Subtotal', 'Nettobetrag', 'Total HT'],
+  total: ['Total', 'Gesamtbetrag', 'Total TTC'],
+  paid: ['Paid', 'Bereits bezahlt', 'Déjà payé'],
+  amountDue: ['Amount due', 'Zahlbetrag', 'Net à payer'],
+} as const;
+
+const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 /** The decimal mark is `.` or `,` depending on the invoice's locale
  * (packages/pdf/src/locale.ts's `formatInvoiceAmount` — grouping is off
  * there specifically so this regex never has to deal with a thousands
  * separator, which pdfjs's own whitespace collapsing would make ambiguous
  * against ordinary word spacing). */
 function findMoney(text: string, label: string): { raw: string; minor: number } | undefined {
-  const m = new RegExp(`\\b${label}\\s+(-?\\d+[.,]\\d{2})\\s+([A-Z]{3})\\b`).exec(text);
+  // (?<![\p{L}\p{N}]) instead of \b: \b is ASCII-only in JavaScript, so it would misplace boundaries around labels
+  // that start with an accented letter such as "Déjà payé".
+  const m = new RegExp(`(?<![\\p{L}\\p{N}])${escapeRegExp(label)}\\s+(-?\\d+[.,]\\d{2})\\s+([A-Z]{3})\\b`, 'u').exec(text);
   if (!m) return undefined;
   const [, amount, currency] = m as unknown as [string, string, string];
   const minor = parseMoney(amount.replace(',', '.'));
@@ -64,18 +79,23 @@ export async function verifyVisibleTotals(pdfBytes: Uint8Array, invoice: Invoice
   const text = await pageText(pdfBytes);
   const t = totals(invoice);
 
-  const checks: [string, string, number][] = [
-    ['Subtotal', 'Subtotal', t.lineTotal],
-    ['Total', 'Total', t.grand],
-    ['Amount due', 'Amount due', t.due],
+  const checks: [readonly string[], number][] = [
+    [MONEY_LABELS.subtotal, t.lineTotal],
+    [MONEY_LABELS.total, t.grand],
+    [MONEY_LABELS.amountDue, t.due],
   ];
-  if (t.prepaid) checks.push(['Paid', 'Paid', -t.prepaid]);
+  if (t.prepaid) checks.push([MONEY_LABELS.paid, -t.prepaid]);
 
   const mismatches: TotalMismatch[] = [];
   let checked = false;
-  for (const [regexLabel, label, expectedMinor] of checks) {
-    const found = findMoney(text, regexLabel);
-    if (!found) continue;
+  for (const [labels, expectedMinor] of checks) {
+    let label: string | undefined;
+    let found: { raw: string; minor: number } | undefined;
+    for (const candidate of labels) {
+      found = findMoney(text, candidate);
+      if (found) { label = candidate; break; }
+    }
+    if (!found || !label) continue;
     checked = true;
     if (found.minor !== expectedMinor) {
       mismatches.push({ label, visibleText: found.raw, visibleMinor: found.minor, expectedMinor });

@@ -20,7 +20,7 @@ Writes an invoice (JSON, money as integer minor units) as XML, or as a Factur-X/
 
 Formats: `cii`, `cii-extended`, `ubl`, `xrechnung-cii`, `xrechnung-ubl`, `peppol-ubl`.
 Without `-o`, XML goes to stdout (messages go to stderr). A PDF requires `-o`.
-PDF options: `--profile en16931|xrechnung|extended` (default `en16931`), `--template classic|modern|compact` (default `classic`).
+PDF options: `--profile en16931|xrechnung|extended` (default `en16931`), `--template classic|modern|compact` (default `classic`), `--language en|de|fr` for the printed labels (default `en`; the embedded XML is the same in every language).
 With `--profile xrechnung` the embedded file is `xrechnung.xml`, otherwise `factur-x.xml`.
 
 If the invoice cannot be written, every problem is printed to stderr as `path [BT-x]: message` and the exit code is 2.

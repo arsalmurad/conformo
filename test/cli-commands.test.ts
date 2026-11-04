@@ -101,6 +101,25 @@ describe('conformo create --pdf', () => {
     expect(r.code).toBe(2);
     expect(r.err).toMatch(/-o/);
   });
+
+  it('--language de prints German labels and the PDF still validates', async () => {
+    const out = path.join(dir, 'rechnung.pdf');
+    const created = await run(['create', fx('xrechnung-public-sector.json'), '--pdf', '--profile', 'xrechnung', '--language', 'de', '-o', out]);
+    expect(created.code).toBe(0);
+    const v = await run(['validate', out, '--json']);
+    expect((JSON.parse(v.out) as { valid: boolean }).valid).toBe(true);
+    const parsed = await run(['parse', out, '--json']);
+    expect(parsed.code).toBe(0);
+  }, 120_000);
+
+  it('rejects an unknown --language and --language without --pdf', async () => {
+    const bad = await run(['create', fx('xrechnung-public-sector.json'), '--pdf', '--language', 'it', '-o', path.join(dir, 'x.pdf')]);
+    expect(bad.code).toBe(2);
+    expect(bad.err).toMatch(/Unknown language "it"/);
+    const xml = await run(['create', fx('xrechnung-public-sector.json'), '--format', 'cii', '--language', 'de']);
+    expect(xml.code).toBe(2);
+    expect(xml.err).toMatch(/only apply with --pdf/);
+  });
 });
 
 describe('conformo validate', () => {

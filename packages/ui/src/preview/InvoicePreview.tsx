@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Invoice } from '@conformo/core';
-import type { TemplateId } from '@conformo/pdf';
+import type { PdfLanguage, TemplateId } from '@conformo/pdf';
 import { InvoiceInputError } from '@conformo/formats';
 import { buildPreviewPdf, type EmbeddableLogo } from '../pdf/exportPdf.js';
 import { pdfjsReady, sharedWorker } from '../pdfjsWorker.js';
@@ -16,6 +16,8 @@ interface Props {
   template: TemplateId;
   logo: EmbeddableLogo | undefined;
   paymentLink: string;
+  /** Language of the printed labels on the page. */
+  language: PdfLanguage;
   /** Controls shown on the status line (the layout picker). */
   children?: React.ReactNode;
 }
@@ -53,7 +55,7 @@ interface Props {
  * screen, unchanged, for the entire rebuild, so a slow edit never flashes a
  * blank or half-drawn page.
  */
-export function InvoicePreview({ invoice, template, logo, paymentLink, children }: Props) {
+export function InvoicePreview({ invoice, template, logo, paymentLink, language, children }: Props) {
   const { t } = useI18n();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [status, setStatus] = useState<'rendering' | 'ready' | 'error'>('rendering');
@@ -92,7 +94,7 @@ export function InvoicePreview({ invoice, template, logo, paymentLink, children 
     setStatus((s) => (s === 'ready' ? 'rendering' : s)); // keep showing the last good frame while a new one renders
     const timer = setTimeout(async () => {
       try {
-        const bytes = await buildPreviewPdf(invoice, template, { logo, paymentLink: paymentLink || undefined });
+        const bytes = await buildPreviewPdf(invoice, template, { logo, paymentLink: paymentLink || undefined, language });
         if (myGeneration !== generation.current) return;
 
         const [pdfjs, worker] = await Promise.all([pdfjsReady, sharedWorker]);
@@ -156,7 +158,7 @@ export function InvoicePreview({ invoice, template, logo, paymentLink, children 
     }, DEBOUNCE_MS);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- rebuild on any input that changes what buildInvoicePdf produces
-  }, [invoice, template, logo, paymentLink, panelWidth]);
+  }, [invoice, template, logo, paymentLink, language, panelWidth]);
 
   // Only on unmount — the effect above already destroys the PREVIOUS doc
   // each time it loads a new one, so this just cleans up the very last one.
