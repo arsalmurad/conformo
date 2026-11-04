@@ -1,7 +1,7 @@
 /** Kept apart from generate.ts (which builds the site when imported) so tests can read the page list. */
 /** Markdown source (repo-relative) -> page on the site. test/docs-site-samples.test.ts runs every sample in these. */
 export const PAGES: { src: string; out: string; key: string; description: string }[] = [
-  { src: 'docs/site/index.md', out: 'index.html', key: 'home', description: 'Conformo for developers: e-invoices as an npm library, CLI, MCP server and HTTP API.' },
+  { src: 'docs/site/index.md', out: 'index.html', key: 'home', description: 'Create and check XRechnung, ZUGFeRD and Factur-X e-invoices in JavaScript: npm library, CLI, MCP server and HTTP API. Free, open source, no Java.' },
   { src: 'docs/site/library.md', out: 'library.html', key: 'library', description: 'The @conformo/toolkit npm library.' },
   { src: 'docs/site/cli.md', out: 'cli.html', key: 'cli', description: 'The conformo command-line tool.' },
   { src: 'docs/site/mcp.md', out: 'mcp.html', key: 'mcp', description: 'The Conformo MCP server for Claude Desktop, Claude Code and Cursor.' },

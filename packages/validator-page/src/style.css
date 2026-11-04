@@ -3,6 +3,9 @@
 .vp-intro { max-width: 720px; margin-bottom: var(--space-5); }
 .vp-intro h1 { font-size: 30px; margin-bottom: var(--space-2); }
 .vp-lede { margin: 0; color: var(--graphite); font-size: var(--text-lg); }
+.vp-trust { margin: var(--space-3) 0 0; font-size: var(--text-sm); color: var(--graphite); }
+.vp-trust a { color: var(--ink); }
+.vp-trust-sep { margin: 0 var(--space-1); }
 .vp-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: var(--space-6); align-items: start; }
 .dropzone {
   border: 2px dashed var(--field-border); border-radius: var(--radius); background: var(--paper);

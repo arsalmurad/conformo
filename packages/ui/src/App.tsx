@@ -23,7 +23,7 @@ import { fieldId } from './editor/Field.js';
 import { InvoicePreview } from './preview/InvoicePreview.js';
 import { buildDraftPdf, buildInvoicePdf, downloadPdf, type EmbeddableLogo } from './pdf/exportPdf.js';
 import { UnlockScreen } from './UnlockScreen.js';
-import { SiteHeader } from './chrome/SiteHeader.js';
+import { LINKS, SiteHeader } from './chrome/SiteHeader.js';
 import { AudiencePicker } from './chrome/AudiencePicker.js';
 import { MoreMenu } from './chrome/MoreMenu.js';
 import { Verdict } from './chrome/Verdict.js';
@@ -168,6 +168,12 @@ export default function App() {
       </div>
       <main className={`workspace view-${mobileView}`}>
         <div className="form-col" id="editor-start">
+          <div className="intro">
+            <h1 className="intro-title">{t.intro.title}</h1>
+            <p className="intro-lede">
+              {t.intro.lede} <a href={`${LINKS.docs}conformance.html`}>{t.intro.proof}</a>
+            </p>
+          </div>
           <div className="form-top">
             <AudiencePicker value={audienceId} onChange={chooseAudience} countries={countries} />
             <MoreMenu invoice={invoice} onImport={setInvoice} onExportJson={exportJson} protectedSince={protectedSince} onProtect={protect} numbering={numbering} />

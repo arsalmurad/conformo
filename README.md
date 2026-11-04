@@ -1,11 +1,23 @@
 # Conformo
 
-Legally valid e-invoices as a function call or an AI tool call. Open source, and it runs where your data is.
+Free, open-source tools to create and check e-invoices for Germany, France and the rest of the EU: XRechnung, ZUGFeRD,
+Factur-X, UBL and Peppol BIS. Everything runs on your own computer or in your browser. No Java, no server, no account,
+and your invoice data never goes to us or anyone else.
 
-You give it an invoice as JSON. You get back XRechnung, UBL, CII or a Factur-X / ZUGFeRD PDF, and a validation result from the
-official rule sets that shows which rules ran. Nothing leaves your machine unless you send it.
+**Proof, not promises.** Conformo checks invoices with the official rule files, unmodified, and agrees 100% with the
+official KoSIT validator on the official test invoices. CI measures this on every change ([conformance report](docs/CONFORMANCE.md)).
+A daily job watches KoSIT, CEN and OpenPeppol for new rule releases, and a new version only ships if agreement is still
+100% ([how updates work](docs/UPDATES.md)).
 
-**[Web app](https://conformo-three.vercel.app)** · **[Validator](https://conformo-validate.vercel.app)** · **[Developer docs](https://conformo-docs.vercel.app)** · **[Germany 2027 guide](docs/GERMANY-2027.md)**
+| You are | Start here |
+|---|---|
+| A freelancer or small business that has to send e-invoices | **[Make one in your browser](https://conformo-three.vercel.app)**. Free, no signup, nothing uploaded. |
+| Someone who received an e-invoice or wants to test one | **[Check it in your browser](https://conformo-validate.vercel.app)**. Drop the PDF or XML, see what to fix. |
+| A developer adding e-invoices to your software | `npm install @conformo/toolkit`, then the [Quickstart](#quickstart) below or the [developer docs](https://conformo-docs.vercel.app). |
+| Building with AI agents (Claude, Cursor and others) | The [MCP server](packages/mcp-server/README.md) lets an agent create and check e-invoices locally. |
+
+Why now: German businesses must be able to receive e-invoices since 2025 and must send them from 2027 (turnover above
+EUR 800,000) or 2028 (everyone else). France started in September 2026. Short version with code: [Germany 2027 guide](docs/GERMANY-2027.md).
 
 ## Quickstart
 

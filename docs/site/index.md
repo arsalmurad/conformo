@@ -1,6 +1,23 @@
 # Conformo
 
-Conformo turns invoice data into e-invoices (XRechnung, ZUGFeRD, Factur-X, UBL, Peppol BIS) and checks them against the official rules, locally, as a free npm library, a CLI, an MCP server and an HTTP API.
+Create and check German, French and EU e-invoices in JavaScript. No Java, no server, and the same verdict as the official KoSIT validator.
+
+You pass one invoice as JSON. Conformo writes XRechnung, ZUGFeRD / Factur-X (PDF or XML), UBL or Peppol BIS, and validates the result with the official KoSIT, CEN, Peppol and French rule files, run on your machine. Free and open source (Apache-2.0).
+
+## Pick your entry point
+
+- **[Library](library.md)**: `npm install @conformo/toolkit`. Works in Node and in the browser.
+- **[CLI](cli.md)**: `npx @conformo/cli validate invoice.xml`, for scripts and CI pipelines.
+- **[MCP server](mcp.md)**: lets Claude, Cursor or another AI agent create and check e-invoices locally.
+- **[HTTP API](http.md)**: a stateless server you host yourself, described in OpenAPI.
+
+Not a developer? The free [web app](https://conformo-three.vercel.app) makes an e-invoice in your browser, and the [validator](https://conformo-validate.vercel.app) checks one you received. No signup for either.
+
+## Why you can trust the output
+
+- It runs the official rule files unmodified and agrees 100% with the official KoSIT validator on the official test invoices. CI measures this on every change: [conformance report](../CONFORMANCE.md).
+- A daily job watches KoSIT, CEN and OpenPeppol for new rule releases. A new version only ships if agreement is still 100%: [how updates work](../UPDATES.md).
+- What it does not do yet is written down, not hidden: [limits](limits.md).
 
 ## Quickstart
 

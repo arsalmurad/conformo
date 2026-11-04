@@ -10,6 +10,18 @@
 .form-col { min-width: 0; }
 .preview-col { min-width: 0; position: sticky; top: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); }
 
+/* One-line answer to "what is this, what does it cost, can I trust it?" for a first-time visitor. Kept to two short
+ * lines so the first field stays where docs/DESIGN.md put it. */
+.intro { margin-bottom: var(--space-4); padding-bottom: var(--space-4); border-bottom: 1px solid var(--rule); }
+.intro-title { margin: 0 0 var(--space-1); font-size: 24px; line-height: 1.2; font-weight: 700; letter-spacing: -0.01em; }
+.intro-lede { margin: 0; color: var(--graphite); font-size: var(--text-sm); max-width: 60ch; }
+.intro-lede a { color: var(--ink); white-space: nowrap; }
+@media (max-width: 640px) {
+  .intro-title { font-size: 20px; }
+  /* The intro already says what the header tagline says; on a phone, show it once. */
+  .app .site-tagline { display: none; }
+}
+
 .form-top { display: flex; align-items: flex-start; gap: var(--space-3); margin-bottom: var(--space-5); }
 .form-top .audience { flex: 1; min-width: 0; }
 

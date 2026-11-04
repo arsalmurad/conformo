@@ -6,8 +6,13 @@ export type Lang = 'en' | 'de';
 
 const en = {
   appName: 'Conformo',
-  tagline: 'Free, private e-invoices that pass the official checks. Nothing leaves your browser.',
+  tagline: 'Free e-invoices for Germany, France and the EU. No signup. Your data stays with you.',
   nav: { app: 'App', validator: 'Validator', docs: 'Docs', github: 'GitHub', main: 'Main' },
+  intro: {
+    title: 'Make an e-invoice your customer will accept',
+    lede: 'Free, no signup. Every field is checked against the official rules as you type, and nothing is uploaded.',
+    proof: 'How we test this',
+  },
   language: 'Language',
   audience: {
     question: 'Who is this invoice for?',
@@ -190,8 +195,13 @@ export type Strings = typeof en;
 
 const de: Strings = {
   appName: 'Conformo',
-  tagline: 'Kostenlose, private E-Rechnungen, die die offizielle Prüfung bestehen. Nichts verlässt Ihren Browser.',
+  tagline: 'Kostenlose E-Rechnungen für Deutschland, Frankreich und die EU. Ohne Anmeldung. Ihre Daten bleiben bei Ihnen.',
   nav: { app: 'App', validator: 'Prüfen', docs: 'Doku', github: 'GitHub', main: 'Hauptmenü' },
+  intro: {
+    title: 'E-Rechnung erstellen, die Ihr Kunde annimmt',
+    lede: 'Kostenlos, ohne Anmeldung. Jedes Feld wird schon beim Tippen gegen die offiziellen Regeln geprüft, und nichts wird hochgeladen.',
+    proof: 'So testen wir das',
+  },
   language: 'Sprache',
   audience: {
     question: 'An wen geht diese Rechnung?',

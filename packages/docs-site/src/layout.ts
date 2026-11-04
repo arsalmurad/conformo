@@ -105,7 +105,7 @@ export function page(opts: PageOptions, body: string): string {
 <header class="site-header">
   <div class="site-header-inner">
     <a class="brand" href="${SITE.app}"><span class="brand-mark" aria-hidden="true"></span><span class="brand-name">Conformo</span></a>
-    <p class="site-tagline">Free, private e-invoices that pass the official checks. Nothing leaves your browser.</p>
+    <p class="site-tagline">Free e-invoices for Germany, France and the EU. No signup. Your data stays with you.</p>
     <nav class="site-nav" aria-label="Main">
       <a href="${SITE.app}">App</a>
       <a href="${SITE.validator}">Validator</a>
