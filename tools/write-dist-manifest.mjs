@@ -41,6 +41,9 @@ const manifest = {
   type: pkg.type,
 };
 
+// The official MCP Registry checks that the npm package names the registry entry it belongs to (packages/mcp-server/server.json).
+if (pkg.mcpName) manifest.mcpName = pkg.mcpName;
+
 if (pkg.main) {
   manifest.main = toDist(pkg.main);
   manifest.types = manifest.main.replace(/\.js$/, '.d.ts');

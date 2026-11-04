@@ -156,3 +156,30 @@ The app and the validator page need `schematron:compile` and `saxonjs:fetch` to 
 
 HTTP API: `docker build -f Dockerfile.server -t conformo-server .` (never built in the preparation sandbox: no Docker daemon there), then `docker run -p 8788:8788 conformo-server`;
 check `curl localhost:8788/healthz` and `/openapi.json`. Put it behind TLS and authentication; it has none. Remote MCP: `conformo-mcp --http --port 8787`, same advice.
+
+## 4. List the MCP server in the official MCP Registry
+
+The registry ([quickstart](https://modelcontextprotocol.io/registry/quickstart)) only stores metadata and points at the npm package, so this runs after
+`@conformo/mcp-server` is on npm. `packages/mcp-server/server.json` is the listing; `test/mcp-registry.test.ts` keeps its versions equal to
+`packages/mcp-server/package.json`, whose `mcpName` (copied into the published manifest) proves the npm package belongs to the listing.
+On every MCP server release, bump `version` and `packages[0].version` in `server.json` together with `package.json`.
+
+Install `mcp-publisher` once (`brew install mcp-publisher`, or the binary from github.com/modelcontextprotocol/registry/releases), then:
+
+```bash
+npm view @conformo/mcp-server@$(node -p "require('./packages/mcp-server/package.json').version") mcpName
+```
+
+**Check:** it prints `io.github.arsalmurad/conformo`. If it prints nothing, the npm release predates the `mcpName` field; publish a new version first.
+
+```bash
+cd packages/mcp-server && mcp-publisher login github && mcp-publisher publish
+```
+
+`login github` shows a code to enter at github.com/login/device; sign in as `arsalmurad` (the `io.github.arsalmurad/` prefix only works for that account).
+
+```bash
+curl "https://registry.modelcontextprotocol.io/v0.1/servers?search=io.github.arsalmurad/conformo"
+```
+
+**Check:** the result lists the version you just published.

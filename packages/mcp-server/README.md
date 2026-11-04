@@ -1,10 +1,29 @@
 # @conformo/mcp-server
 
-An MCP server that lets an AI agent create, validate, convert and parse EN 16931 e-invoices:
-XRechnung, Peppol BIS Billing 3.0, plain CII and UBL, and Factur-X / ZUGFeRD PDF/A-3. Every tool is a thin wrapper over
-[`@conformo/toolkit`](../toolkit); the validation is the official Schematron and XSD, run locally.
+Let Claude, Cursor or any MCP client make and check European e-invoices: XRechnung, ZUGFeRD / Factur-X PDF, Peppol BIS
+Billing 3.0, plain CII and UBL.
 
-Two transports: **stdio** (default, for desktop clients) and **stateless Streamable HTTP** (for a shared deployment).
+- **Runs on your machine.** No account, no API key, no usage limits. Invoices never leave your computer; no tool makes a network call.
+- **Same verdict as the official validator.** `validate_invoice` runs the official KoSIT, CEN and Peppol rules plus the XSDs. Its verdicts
+  match the official KoSIT validator 100% on the official test invoices, and the full comparison is
+  [public](https://github.com/arsalmurad/conformo/blob/main/docs/CONFORMANCE.md).
+- **Explains what to fix.** Every failed rule comes back with the publisher's message, and the common ones also with a plain-language
+  explanation and fix.
+- **Free and open source** (Apache-2.0). Rule sets are pinned and a daily job tracks KoSIT, CEN and Peppol releases
+  ([how](https://github.com/arsalmurad/conformo/blob/main/docs/UPDATES.md)).
+
+Quick start for Claude Code: `claude mcp add conformo -- npx -y @conformo/mcp-server`. Other clients are [below](#install-and-configure).
+Needs Node.js 20 or newer. MCP Registry name: `io.github.arsalmurad/conformo`.
+
+Then ask your agent things like:
+
+- "Make an XRechnung for Stadt Musterstadt, Leitweg-ID 04011000-1234512345-06, 10 hours of consulting at 95 EUR, and check it."
+- "Is this invoice valid? Explain every error and fix it." (paste the XML, or give a ZUGFeRD PDF)
+- "Turn this UBL invoice into a ZUGFeRD PDF."
+- "What does BR-DE-15 mean?"
+
+Every tool is a thin wrapper over [`@conformo/toolkit`](../toolkit). Two transports: **stdio** (default, for desktop clients) and
+**stateless Streamable HTTP** (for a shared deployment).
 
 ## Tools
 

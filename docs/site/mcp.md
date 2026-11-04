@@ -2,6 +2,8 @@
 
 `@conformo/mcp-server` gives an AI agent seven tools: `create_invoice`, `create_invoice_pdf`, `validate_invoice`, `convert_invoice`, `parse_invoice`, `get_country_requirements` and `explain_validation_rule`. Validation is the official Schematron and XSD, run on your machine. Money is always integer minor units. The full reference, including HTTP mode and remote deployment, is in [the package README](../../packages/mcp-server/README.md).
 
+It is free, needs no account or API key, and no tool makes a network call, so invoices stay on your computer. Once it is added, ask your agent things like "Make an XRechnung for Stadt Musterstadt, Leitweg-ID 04011000-1234512345-06, 10 hours of consulting at 95 EUR, and check it", "Is this invoice valid? Explain every error and fix it" or "What does BR-DE-15 mean?".
+
 ## Claude Desktop
 
 Settings, Developer, Edit Config, then add to `claude_desktop_config.json`:

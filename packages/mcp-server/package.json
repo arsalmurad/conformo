@@ -1,7 +1,8 @@
 {
   "name": "@conformo/mcp-server",
-  "version": "0.2.0",
-  "description": "MCP server for EN 16931 e-invoicing: create (XML and Factur-X/ZUGFeRD PDF), validate, convert, parse, explain rules, country requirements. Stdio and stateless Streamable HTTP.",
+  "version": "0.2.1",
+  "mcpName": "io.github.arsalmurad/conformo",
+  "description": "MCP server for EU e-invoices (XRechnung, ZUGFeRD / Factur-X, Peppol BIS, UBL, CII): create, validate against the official KoSIT and CEN rules, convert and parse. Runs locally, free, no API key.",
   "author": "Muhammad Arsal Murad",
   "license": "Apache-2.0",
   "repository": {
@@ -12,10 +13,17 @@
   "homepage": "https://github.com/arsalmurad/conformo/tree/main/packages/mcp-server#readme",
   "keywords": [
     "mcp",
+    "mcp-server",
     "model-context-protocol",
-    "invoice",
-    "en16931",
     "e-invoicing",
+    "e-rechnung",
+    "xrechnung",
+    "zugferd",
+    "factur-x",
+    "peppol",
+    "en16931",
+    "kosit",
+    "invoice",
     "agent"
   ],
   "type": "module",

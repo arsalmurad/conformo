@@ -1,6 +1,6 @@
 {
   "name": "@conformo/pdf",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "PDF/A-3 writer that embeds a structured invoice XML (Factur-X/ZUGFeRD) inside a readable, deterministic PDF.",
   "author": "Muhammad Arsal Murad",
   "license": "Apache-2.0",

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.arsalmurad/conformo",
+  "title": "Conformo e-invoicing",
+  "description": "Create and check EU e-invoices (XRechnung, ZUGFeRD, Factur-X, Peppol) locally. Free, no API key.",
+  "repository": {
+    "url": "https://github.com/arsalmurad/conformo",
+    "source": "github",
+    "subfolder": "packages/mcp-server"
+  },
+  "websiteUrl": "https://conformo-docs.vercel.app/",
+  "icons": [
+    {
+      "src": "https://conformo-three.vercel.app/icon-512.png",
+      "mimeType": "image/png",
+      "sizes": ["512x512"]
+    }
+  ],
+  "version": "0.2.1",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@conformo/mcp-server",
+      "version": "0.2.1",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}

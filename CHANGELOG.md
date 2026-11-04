@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.1: @conformo/pdf, parse, toolkit, cli, mcp-server, server (2026-11-05)
+
+- PDF labels in English, German and French: `createPdf({ language: "en" | "de" | "fr" })`, CLI `--language`, MCP `create_invoice_pdf` `language`,
+  HTTP API `language`. The default (English) PDF is byte-identical to 0.2.0 and the embedded XML is identical in every language. The visible-totals check in
+  `@conformo/parse` reads the money labels in all three languages.
+- `@conformo/mcp-server` carries `mcpName: io.github.arsalmurad/conformo` and ships `server.json` for the official MCP Registry. Its README now opens with
+  what it does and example prompts. Tools and their schemas are unchanged.
+
 ## @conformo/core 0.2.1 (2026-11-01)
 
 - `checkInvoice()` type-checks every optional text field, contact field and list at runtime. A wrongly typed field from plain
