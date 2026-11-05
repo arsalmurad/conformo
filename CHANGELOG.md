@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.2.3 (2026-11-06)
+
+Packages: @conformo/validate 0.2.1, @conformo/parse 0.2.2, @conformo/toolkit 0.2.2, @conformo/cli 0.2.2, @conformo/mcp-server 0.2.3, @conformo/server 0.2.3.
+
+- **No more false IBAN warnings (BR-DE-19, BR-DE-20).** The KoSIT XRechnung rules check an IBAN by turning it into a number of up to 34 digits and taking it
+  modulo 97. SaxonJS, which runs the rules in Node and in the browser, computes whole numbers with floating point and loses precision above about 16 digits, so
+  almost every valid IBAN in an XRechnung with payment means 58 or 59 got a false warning (the verdict stayed valid). The build now makes that one calculation
+  exact, and fails if a new KoSIT release changes the function. The conformance report lists the patch, still compares against the publisher's unpatched rules in
+  Saxon-HE, and has a new generated corpus (valid and invalid IBANs, payment means 58 and 59, CII and UBL) that the official test invoices did not cover.
+- **No local paths in the published rule sets.** The compiled rule sets in @conformo/validate 0.2.0 contained the absolute path of the machine that built them
+  (a user name and a temporary folder). They now carry a fixed public name, and `npm run pack:smoke` scans every file of every package, including what is
+  inside the compressed files, and the built sites for local paths.
+- **Readable results for syntax rules.** The rules that generators trip over (CII-DT-*, CII-SR-*, UBL-CR-*, UBL-DT-*, UBL-SR-*) now come with a plain-language
+  explanation, built from the rule's family or written by hand (1,327 of 1,346 rules). The leading "- " the publisher's text left behind is removed. Every
+  result also has `element`, `path` (for example "line 1 > NetPriceProductTradePrice > ChargeAmount") and `line`, and `fields` carries the business terms
+  for amounts; `xpath` is unchanged. The CLI, the MCP tool and the validator page group repeated hits of one rule ("CII-DT-031, 12 places: ..."); the JSON
+  `results` stay one entry per hit.
+- **PDF container notice.** Validating a ZUGFeRD / Factur-X PDF now adds an informational notice naming the embedded file and the XMP schema and version found
+  (ZUGFeRD 2.0 files use `zugferd-invoice.xml` and the `zf` schema; ZUGFeRD 2.1 and later and Factur-X use `factur-x.xml`, or `xrechnung.xml`, and the `fx`
+  schema). It also warns when the XMP conformance level or the embedded file name does not fit the profile in the XML. None of this changes the verdict.
+
 ## 0.2.2: @conformo/mcp-server and @conformo/server (2026-11-05)
 
 - MCP tool descriptions rewritten for agents: each now says what the tool does, when to use it and which sibling to use instead, and what it does

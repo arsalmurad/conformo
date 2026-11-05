@@ -1,6 +1,6 @@
 {
   "name": "@conformo/toolkit",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "One-call API for EN 16931 e-invoices in Node: create (XML, Factur-X/ZUGFeRD PDF), validate, convert, parse, explain rules, country requirements. The layer the CLI, MCP server and HTTP API share.",
   "author": "Muhammad Arsal Murad",
   "license": "Apache-2.0",
@@ -31,9 +31,9 @@
     "@conformo/compliance-data": "^0.2.0",
     "@conformo/core": "^0.2.0",
     "@conformo/formats": "^0.2.0",
-    "@conformo/parse": "^0.2.0",
+    "@conformo/parse": "^0.2.2",
     "@conformo/pdf": "^0.2.0",
-    "@conformo/validate": "^0.2.0",
+    "@conformo/validate": "^0.2.1",
     "@pdf-lib/fontkit": "^1.1.1",
     "pdf-lib": "^1.17.1"
   }
