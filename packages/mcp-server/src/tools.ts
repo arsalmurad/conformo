@@ -171,7 +171,7 @@ export function registerTools(server: McpServer): void {
       + 'Use it before sending an invoice you created and when you receive one. To read the invoice\'s data use parse_invoice; to explain one failed rule in depth use explain_validation_rule. '
       + 'Accepts XML or a Factur-X / ZUGFeRD PDF, whose embedded XML is checked; syntax and profile are detected from the document. '
       + 'A `valid` result means the listed `ruleSets` passed, not that a tax authority or buyer will accept the invoice, so report which rule sets ran and never claim more. '
-      + 'Each failure carries the publisher\'s message and, for common rules, a plain-language fix. The check runs offline; nothing is uploaded.',
+      + 'Each failure carries the publisher\'s message and, for common rules, a plain-language fix. Input that is not an invoice comes back as an error result, not as invalid. The check runs offline; nothing is uploaded.',
     inputSchema: {
       ...xmlOrPdfInput,
       country: z.enum(['FR', 'DE']).optional().describe('Add a country layer: "FR" runs the French CTC rules (CII only); "DE" reports whether the profile is acceptable for German B2B (MINIMUM and BASIC WL are not).'),
@@ -235,7 +235,7 @@ export function registerTools(server: McpServer): void {
       'Rewrites an existing e-invoice in another syntax, for example CII to UBL, or plain EN 16931 to XRechnung or Peppol BIS. '
       + 'Use it when you already hold an invoice document. To build one from data use create_invoice; to get a PDF from XML use parse_invoice, then create_invoice_pdf. '
       + 'Accepts XML or a Factur-X / ZUGFeRD PDF. Nothing is invented: a target such as XRechnung may need data the source lacks, so read `warnings` and run validate_invoice on the result. '
-      + 'Runs locally; nothing is sent anywhere.',
+      + 'A document it cannot read comes back as an error result with the reason. Runs locally; nothing is sent anywhere.',
     inputSchema: { ...xmlOrPdfInput, to: formatEnum },
     outputSchema: {
       xml: z.string().describe('The invoice in the target syntax.'),
@@ -257,7 +257,7 @@ export function registerTools(server: McpServer): void {
     description:
       'Reads an e-invoice (CII, UBL, XRechnung or Peppol XML, or a Factur-X / ZUGFeRD PDF) into the structured invoice object that create_invoice accepts, with money in integer minor units. '
       + 'Use it to answer questions about a received invoice, to edit one, or to re-issue it with create_invoice. It does not check any rules, so use validate_invoice for that, and convert_invoice to change syntax directly. '
-      + 'For a PDF, `visibleTotals` shows whether the totals printed on the page match the embedded XML, which exposes a tampered or mismatched PDF. Runs locally.',
+      + 'For a PDF, `visibleTotals` shows whether the totals printed on the page match the embedded XML, which exposes a tampered or mismatched PDF. A document it cannot read comes back as an error result with the reason. Runs locally.',
     inputSchema: xmlOrPdfInput,
     outputSchema: {
       invoice: z.object({}).passthrough().describe('The Invoice object, in the shape of the create_invoice input schema.'),
@@ -305,7 +305,7 @@ export function registerTools(server: McpServer): void {
     description:
       'Explains one validation rule id, such as BR-CO-15, BR-DE-15, PEPPOL-EN16931-R003 or BR-FR-05: the publisher\'s official wording from the compiled rule sets and, where available, a plain-language summary, the reason for the rule and how to fix it. '
       + 'Use it after validate_invoice reports a rule you need to explain or fix, or when a user asks what a rule means. It does not check an invoice; call validate_invoice for that. '
-      + 'If `found` is false the id is unknown to these rule sets: say so and do not guess. Reads the bundled rule sets; no network.',
+      + 'An unknown id is not an error: the result has `found` false and an empty `official` list; say so and do not guess. Reads the bundled rule sets; no network.',
     inputSchema: { ruleId: z.string().min(1).describe('The rule id, e.g. BR-CO-15.') },
     outputSchema: {
       ruleId: z.string().describe('The rule id as looked up.'),
