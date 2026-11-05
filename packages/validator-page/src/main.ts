@@ -126,7 +126,7 @@ let last: { kind: 'idle' } | { kind: 'busy'; text: string } | { kind: 'error'; m
 function applyStatic(): void {
   const t = S[lang] as Record<string, unknown>;
   document.documentElement.lang = lang;
-  document.title = lang === 'de' ? 'Conformo: E-Rechnung prüfen' : 'Conformo: check an e-invoice';
+  document.title = lang === 'de' ? 'XRechnung und ZUGFeRD kostenlos prüfen | Conformo' : 'Free XRechnung and ZUGFeRD validator | Conformo';
   for (const el of Array.from(document.querySelectorAll<HTMLElement>('[data-i18n]'))) {
     const v = t[el.dataset.i18n!];
     if (typeof v === 'string') el.textContent = v;

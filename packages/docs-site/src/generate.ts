@@ -12,6 +12,7 @@ import type { CountryCompliance, Mandate, MandateStatus } from '@conformo/compli
 import { DOCS_CSS, page, SITE } from './layout.js';
 import { esc, renderMarkdown } from './markdown.js';
 import { PAGES } from './pages.js';
+import { SITES, writeBrandFiles } from '../../ui/brand/brand.mjs';
 
 // Resolved from this file's location, not process.cwd(): `npm run build` (cwd: this package) and the test that imports
 // this module (cwd: repo root) must produce the same output.
@@ -126,7 +127,7 @@ ${c.extraFieldsBeyondEN16931?.length ? `<h2>Beyond EN 16931</h2><ul>${c.extraFie
   Last verified: ${esc(c.lastVerified)} ·
   <span class="badge badge-${c.status === 'verified' ? 'mandatory' : 'unverified'}">${c.status === 'verified' ? 'Verified' : 'Unverified'}</span>
 </div>`;
-  return page({ title: c.name, description: `E-invoicing mandate status for ${c.name}.`, active: 'countries', depth: 1 }, body);
+  return page({ title: `E-invoicing in ${c.name}`, description: `E-invoicing rules in ${c.name}: B2G and B2B mandates for issuing and receiving, start dates, thresholds and required formats, with official sources.`, path: `countries/${c.country.toLowerCase()}.html`, active: 'countries', depth: 1 }, body);
 }
 
 function countriesIndexPage(): string {
@@ -138,7 +139,7 @@ function countriesIndexPage(): string {
 <ul class="country-grid">${items}</ul>
 <h2>At a glance</h2>
 ${countryTable(1)}`;
-  return page({ title: 'Countries', description: 'E-invoicing mandate status by country.', active: 'countries', depth: 1 }, body);
+  return page({ title: 'E-invoicing mandates by country', description: 'Who must send and receive e-invoices in each EU country, from when, and in which formats, with official sources.', path: 'countries/index.html', active: 'countries', depth: 1 }, body);
 }
 
 // ------------------------------------------------------------------ write
@@ -167,8 +168,23 @@ for (const p of PAGES) {
   let body = r.html;
   if (p.key === 'home') body += homeExtras();
   if (p.key === 'conformance') body = body.replace(/<\/h1>/, `</h1>\n${conformanceFigures(0)}`);
-  write(p.out, page({ title: p.key === 'home' ? 'Developers' : r.title, description: p.description, active: p.key, depth: 0 }, body));
+  const jsonLd = p.key === 'home' ? {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareSourceCode',
+    name: 'Conformo',
+    description: p.description,
+    url: SITE.docs,
+    codeRepository: SITE.github,
+    programmingLanguage: ['TypeScript', 'JavaScript'],
+    runtimePlatform: 'Node.js 20 or newer, or a web browser',
+    license: 'https://www.apache.org/licenses/LICENSE-2.0',
+    author: { '@type': 'Person', name: 'Muhammad Arsal Murad', url: 'https://github.com/arsalmurad' },
+  } : undefined;
+  write(p.out, page({ title: p.key === 'home' ? 'XRechnung and ZUGFeRD for JavaScript developers' : r.title, description: p.description, path: p.out, active: p.key, depth: 0, ...(jsonLd ? { jsonLd } : {}) }, body));
 }
 write('countries/index.html', countriesIndexPage());
 for (const c of countries) write(`countries/${c.country.toLowerCase()}.html`, countryPage(c));
+// Icons, the social card, robots.txt and a sitemap of every page written above (packages/ui/brand/brand.mjs).
+const sitemapPages = [...PAGES.map((p) => (p.out === 'index.html' ? '' : p.out)), 'countries/index.html', ...countries.map((c) => `countries/${c.country.toLowerCase()}.html`)];
+writeBrandFiles(OUT, { siteUrl: SITES.docs, pages: sitemapPages });
 console.log(`docs-site: wrote ${PAGES.length + countries.length + 1} pages to ${OUT}/`);

@@ -47,14 +47,15 @@ export default defineConfig({
       manifest: {
         name: 'Conformo',
         short_name: 'Conformo',
-        description: 'Free, client-side legally valid e-invoices. No account, no server.',
-        theme_color: '#1554d9',
+        description: 'Free XRechnung, ZUGFeRD and Factur-X e-invoices, made and checked in your browser. No account, nothing uploaded.',
+        theme_color: '#0e6a4e',
         background_color: '#fafafb',
         display: 'standalone',
         start_url: base,
         icons: [
           { src: `${base}icon-192.png`, sizes: '192x192', type: 'image/png' },
-          { src: `${base}icon-512.png`, sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
+          { src: `${base}icon-512.png`, sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: `${base}icon-maskable-512.png`, sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
     }),

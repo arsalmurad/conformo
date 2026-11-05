@@ -6,6 +6,7 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
 import { fileURLToPath } from 'node:url';
+import { SITES, writeBrandFiles } from '../../ui/brand/brand.mjs';
 
 const repoRoot = fileURLToPath(new URL('../../..', import.meta.url));
 const destDir = fileURLToPath(new URL('../public/validator', import.meta.url));
@@ -40,3 +41,6 @@ const fontDir = fileURLToPath(new URL('../public/assets/fonts', import.meta.url)
 mkdirSync(fontDir, { recursive: true });
 for (const f of ['WorkSans-Regular.ttf', 'WorkSans-Bold.ttf']) copyFileSync(`${repoRoot}/packages/ui/public/assets/fonts/${f}`, `${fontDir}/${f}`);
 console.log(`copied ${files.length} validator assets into public/validator/ and the fonts into public/assets/fonts/`);
+
+// Brand icons, the social card, robots.txt and sitemap.xml, shared with the app and the docs (packages/ui/brand/brand.mjs).
+writeBrandFiles(fileURLToPath(new URL('../public', import.meta.url)), { siteUrl: SITES.validator });

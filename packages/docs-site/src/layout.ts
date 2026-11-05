@@ -8,6 +8,10 @@
 export interface PageOptions {
   title: string;
   description: string;
+  /** The page's path from the site root, e.g. "cli.html" or "countries/de.html"; "index.html" is the home page. */
+  path: string;
+  /** JSON-LD for this page, if any (the home page describes the project). */
+  jsonLd?: Record<string, unknown>;
   /** The nav entry to mark as current (a key of DOC_NAV). */
   active?: string;
   depth: 0 | 1;
@@ -26,6 +30,10 @@ export const DOC_NAV: { key: string; href: string; label: string }[] = [
   { key: 'countries', href: 'countries/index.html', label: 'Countries' },
   { key: 'limits', href: 'limits.html', label: 'Not done yet' },
 ];
+
+import { OG_IMAGE } from '../../ui/brand/brand.mjs';
+
+const attr = (s: string) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
 export const SITE = {
   app: 'https://conformo-three.vercel.app/',
@@ -90,15 +98,33 @@ export const DOCS_CSS = `
 
 export function page(opts: PageOptions, body: string): string {
   const root = opts.depth === 0 ? '.' : '..';
+  const canonical = opts.path === 'index.html' ? SITE.docs : `${SITE.docs}${opts.path}`;
   const nav = DOC_NAV.map((n) => `<li><a href="${root}/${n.href}"${opts.active === n.key ? ' aria-current="page"' : ''}>${n.label}</a></li>`).join('');
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${opts.title} · Conformo docs</title>
-<meta name="description" content="${opts.description}">
-<link rel="stylesheet" href="${root}/assets/site.css">
+<title>${attr(opts.title)} · Conformo docs</title>
+<meta name="description" content="${attr(opts.description)}">
+<link rel="canonical" href="${canonical}">
+<link rel="icon" href="${root}/favicon.ico" sizes="48x48">
+<link rel="icon" href="${root}/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="${root}/apple-touch-icon.png">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#18201e" media="(prefers-color-scheme: dark)">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Conformo">
+<meta property="og:url" content="${canonical}">
+<meta property="og:title" content="${attr(opts.title)} · Conformo docs">
+<meta property="og:description" content="${attr(opts.description)}">
+<meta property="og:image" content="${SITE.docs}${OG_IMAGE.file}">
+<meta property="og:image:width" content="${OG_IMAGE.width}">
+<meta property="og:image:height" content="${OG_IMAGE.height}">
+<meta property="og:image:alt" content="${attr(OG_IMAGE.alt)}">
+<meta property="og:locale" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+${opts.jsonLd ? `<script type="application/ld+json">${JSON.stringify(opts.jsonLd).replace(/</g, '\\u003c')}</script>\n` : ''}<link rel="stylesheet" href="${root}/assets/site.css">
 </head>
 <body>
 <a class="skip-link" href="#content">Skip to the content</a>

@@ -105,7 +105,7 @@ export default function App() {
   }, [touched]);
 
   useEffect(() => {
-    if (lock.status === 'unlocked') document.title = lang === 'de' ? 'Conformo: E-Rechnung erstellen' : 'Conformo: make an e-invoice';
+    if (lock.status === 'unlocked') document.title = lang === 'de' ? 'Conformo: XRechnung, ZUGFeRD und Factur-X kostenlos erstellen' : 'Conformo: free XRechnung, ZUGFeRD and Factur-X e-invoices';
   }, [lang, lock.status]);
 
   if (lock.status === 'checking') return null;
