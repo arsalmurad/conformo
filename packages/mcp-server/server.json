@@ -11,17 +11,19 @@
   "websiteUrl": "https://conformo-docs.vercel.app/",
   "icons": [
     {
-      "src": "https://conformo-three.vercel.app/icon-512.png",
+      "src": "https://raw.githubusercontent.com/arsalmurad/conformo/main/docs/media/conformo-icon.png",
       "mimeType": "image/png",
-      "sizes": ["512x512"]
+      "sizes": [
+        "512x512"
+      ]
     }
   ],
-  "version": "0.2.1",
+  "version": "0.2.2",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "@conformo/mcp-server",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "transport": {
         "type": "stdio"
       }

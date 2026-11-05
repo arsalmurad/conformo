@@ -84,7 +84,7 @@ export const parseResponse = z.object({
 export const requirementsListResponse = z.object({ countries: z.array(z.object({ country: z.string(), name: z.string() })) });
 export const requirementsResponse = z.object({
   country: z.string(), name: z.string(),
-  conformoSupport: z.record(z.object({ generate: z.boolean(), read: z.boolean(), validate: z.boolean(), note: z.string() })).describe('Per required format: can this toolkit generate, read, validate it? FatturaPA, KSeF and Facturae: no.'),
+  conformoSupport: z.record(z.object({ generate: z.boolean(), read: z.boolean(), validate: z.boolean(), note: z.string() })).describe('Per required format: can this toolkit generate, read, validate it? FatturaPA and Facturae: no. KSeF FA(3): generate and XSD-validate domestic PLN invoices, no reading.'),
 }).passthrough().describe('The sourced country record (mandates, dates, thresholds, sources) plus conformoSupport. This is information, not legal advice.');
 export const ruleResponse = z.object({
   ruleId: z.string(), found: z.boolean(), official: z.array(z.object({ ruleSet: z.string(), text: z.string() })),

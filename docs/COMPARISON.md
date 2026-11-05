@@ -85,7 +85,7 @@ formats, Peppol access-point role, pricing, accounts and APIs are all **not veri
 
 - **Fits**: you want one local call that builds and validates XRechnung / UBL / CII / Factur-X PDF with a report of which official rule sets ran, an MCP server
   for agents, and a published comparison against KoSIT and CEN files ([CONFORMANCE](CONFORMANCE.md)).
-- **Does not fit**: you must send invoices (no Peppol, PA, KSeF or SdI transmission), you need FatturaPA, KSeF FA(3) or Facturae, you need MINIMUM / BASIC WL
+- **Does not fit**: you must send invoices (no Peppol, PA, KSeF or SdI transmission), you need FatturaPA, Facturae, or KSeF FA(3) beyond writing domestic PLN invoices, you need MINIMUM / BASIC WL
   profiles, or you need PDF/A conformance checking by veraPDF ([README](../README.md)).
 - **Open gaps** ([README](../README.md), [KNOWN-GAPS](KNOWN-GAPS.md), [CONFORMANCE](CONFORMANCE.md)): XSD validation does not run in the browser; the official ZUGFeRD /
   Factur-X sample PDFs were not part of the conformance run; the report lists 6 unexplained round-trip findings; v0.2 is not yet published, so the

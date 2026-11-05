@@ -145,7 +145,7 @@ and you carry the usual obligations for the traffic your proxy logs.
 ## What it does not do
 
 - It does **not transmit** invoices: no Peppol access point, no French PA/PDP, no KSeF, no SdI. It produces and checks documents only.
-- It does **not** support FatturaPA, KSeF FA(3) or Facturae (no serializer, reader or validator).
+- It does **not** support FatturaPA or Facturae (no serializer, reader or validator). KSeF FA(3) is limited to writing domestic PLN invoices and checking them against the Ministry of Finance XSD; it cannot read them.
 - A `valid: true` means the rule sets listed in `ruleSets` and the XSD passed. It is not a statement that any tax authority, buyer or network will accept the invoice.
 - It does not compute anything you did not supply beyond totals and the VAT breakdown; exchange rates (BT-111) and exemption reasons are your input.
 - `get_country_requirements` reports a sourced dataset; entries marked `unverified` are not confirmed from an official source. It is not legal advice.

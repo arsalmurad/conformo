@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>Conformo</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1D63EB"/>
+      <stop offset="1" stop-color="#1240B3"/>
+    </linearGradient>
+  </defs>
+  <!-- Full-bleed square: directories crop and round the thumbnail themselves. -->
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <!-- The invoice, with a folded corner. -->
+  <path d="M132 84h176l72 72v252a24 24 0 0 1-24 24H132a24 24 0 0 1-24-24V108a24 24 0 0 1 24-24z" fill="#FFFFFF"/>
+  <path d="M308 84v52a20 20 0 0 0 20 20h52z" fill="#C9D8FB"/>
+  <!-- Lines of the invoice. -->
+  <rect x="148" y="172" width="128" height="18" rx="9" fill="#1554D9"/>
+  <rect x="148" y="216" width="184" height="14" rx="7" fill="#B9CCF7"/>
+  <rect x="148" y="250" width="184" height="14" rx="7" fill="#B9CCF7"/>
+  <rect x="148" y="284" width="120" height="14" rx="7" fill="#B9CCF7"/>
+  <!-- The check: it passed the official rules. -->
+  <circle cx="356" cy="372" r="92" fill="#1240B3"/>
+  <circle cx="356" cy="372" r="76" fill="#22C55E"/>
+  <path d="M320 374l26 26 50-56" fill="none" stroke="#FFFFFF" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

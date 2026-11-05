@@ -183,3 +183,9 @@ curl "https://registry.modelcontextprotocol.io/v0.1/servers?search=io.github.ars
 ```
 
 **Check:** the result lists the version you just published.
+
+## 5. Update the Glama listing
+
+Glama (glama.ai/mcp/servers/arsalmurad/conformo) runs the published npm package. After an MCP server release: in Admin, Dockerfile, change the build
+step to the new version (`["npm install -g @conformo/mcp-server@<version>"]`, CMD stays `["conformo-mcp"]`), press Build, and when the test succeeds
+use Create Release with the same version. Glama then re-rates the tool descriptions on its own.

@@ -13,7 +13,7 @@ import { SERVER_VERSION } from './version.js';
 type Json = Record<string, unknown>;
 
 const NOT_SUPPORTED =
-  'Conformo only produces, reads and checks documents. It does not transmit anything (no Peppol access point, no French PA/PDP, no KSeF, no SdI) and does not support FatturaPA, KSeF FA(3) or Facturae. '
+  'Conformo only produces, reads and checks documents. It does not transmit anything (no Peppol access point, no French PA/PDP, no KSeF, no SdI) and does not support FatturaPA or Facturae; it handles KSeF FA(3) only as domestic PLN invoices it writes and schema-checks (it cannot read them). '
   + 'A valid result means the rule sets listed in `ruleSets` passed, not that a tax authority accepts the invoice. The server stores nothing.';
 
 /** A small, real invoice used in request examples (integer minor units: 10000 = EUR 100.00). */

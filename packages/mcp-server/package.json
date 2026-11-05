@@ -1,6 +1,6 @@
 {
   "name": "@conformo/mcp-server",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "mcpName": "io.github.arsalmurad/conformo",
   "description": "MCP server for EU e-invoices (XRechnung, ZUGFeRD / Factur-X, Peppol BIS, UBL, CII): create, validate against the official KoSIT and CEN rules, convert and parse. Runs locally, free, no API key.",
   "author": "Muhammad Arsal Murad",

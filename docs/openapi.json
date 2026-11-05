@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Conformo HTTP API",
-    "version": "0.2.1",
-    "description": "Stateless HTTP API over @conformo/toolkit: create, validate, convert and parse EN 16931 e-invoices. No accounts, no sessions, nothing written to disk. There is no authentication: put it behind a TLS reverse proxy with auth before exposing it. Conformo only produces, reads and checks documents. It does not transmit anything (no Peppol access point, no French PA/PDP, no KSeF, no SdI) and does not support FatturaPA, KSeF FA(3) or Facturae. A valid result means the rule sets listed in `ruleSets` passed, not that a tax authority accepts the invoice. The server stores nothing.",
+    "version": "0.2.2",
+    "description": "Stateless HTTP API over @conformo/toolkit: create, validate, convert and parse EN 16931 e-invoices. No accounts, no sessions, nothing written to disk. There is no authentication: put it behind a TLS reverse proxy with auth before exposing it. Conformo only produces, reads and checks documents. It does not transmit anything (no Peppol access point, no French PA/PDP, no KSeF, no SdI) and does not support FatturaPA or Facturae; it handles KSeF FA(3) only as domestic PLN invoices it writes and schema-checks (it cannot read them). A valid result means the rule sets listed in `ruleSets` passed, not that a tax authority accepts the invoice. The server stores nothing.",
     "license": {
       "name": "Apache-2.0",
       "identifier": "Apache-2.0"
@@ -39,7 +39,7 @@
           "create"
         ],
         "summary": "Create e-invoice XML",
-        "description": "Serializes a structured invoice to CII, UBL, XRechnung or Peppol BIS XML. Money fields end in \"Minor\" and are integers in minor units; totals and the VAT breakdown are computed, never sent. Conformo only produces, reads and checks documents. It does not transmit anything (no Peppol access point, no French PA/PDP, no KSeF, no SdI) and does not support FatturaPA, KSeF FA(3) or Facturae. A valid result means the rule sets listed in `ruleSets` passed, not that a tax authority accepts the invoice. The server stores nothing.",
+        "description": "Serializes a structured invoice to CII, UBL, XRechnung or Peppol BIS XML. Money fields end in \"Minor\" and are integers in minor units; totals and the VAT breakdown are computed, never sent. Conformo only produces, reads and checks documents. It does not transmit anything (no Peppol access point, no French PA/PDP, no KSeF, no SdI) and does not support FatturaPA or Facturae; it handles KSeF FA(3) only as domestic PLN invoices it writes and schema-checks (it cannot read them). A valid result means the rule sets listed in `ruleSets` passed, not that a tax authority accepts the invoice. The server stores nothing.",
         "requestBody": {
           "required": true,
           "content": {
@@ -183,7 +183,7 @@
           "create"
         ],
         "summary": "Create a Factur-X / ZUGFeRD PDF",
-        "description": "Creates a PDF/A-3b with the XML embedded. Returns the PDF bytes (application/pdf) by default; send `Accept: application/json` to get {pdfBase64, xml, xmlFilename, conformanceLevel} instead. Deterministic: the same invoice gives the same bytes. Conformo only produces, reads and checks documents. It does not transmit anything (no Peppol access point, no French PA/PDP, no KSeF, no SdI) and does not support FatturaPA, KSeF FA(3) or Facturae. A valid result means the rule sets listed in `ruleSets` passed, not that a tax authority accepts the invoice. The server stores nothing.",
+        "description": "Creates a PDF/A-3b with the XML embedded. Returns the PDF bytes (application/pdf) by default; send `Accept: application/json` to get {pdfBase64, xml, xmlFilename, conformanceLevel} instead. Deterministic: the same invoice gives the same bytes. Conformo only produces, reads and checks documents. It does not transmit anything (no Peppol access point, no French PA/PDP, no KSeF, no SdI) and does not support FatturaPA or Facturae; it handles KSeF FA(3) only as domestic PLN invoices it writes and schema-checks (it cannot read them). A valid result means the rule sets listed in `ruleSets` passed, not that a tax authority accepts the invoice. The server stores nothing.",
         "requestBody": {
           "required": true,
           "content": {
@@ -357,7 +357,7 @@
           "validate"
         ],
         "summary": "Validate an e-invoice",
-        "description": "Checks XML (or the XML embedded in a Factur-X/ZUGFeRD PDF) against XSD and the official Schematron rule sets. The HTTP status is 200 whether the document is valid or not: validity is `valid` in the body. A non-2xx status means the request or document could not be processed at all. Conformo only produces, reads and checks documents. It does not transmit anything (no Peppol access point, no French PA/PDP, no KSeF, no SdI) and does not support FatturaPA, KSeF FA(3) or Facturae. A valid result means the rule sets listed in `ruleSets` passed, not that a tax authority accepts the invoice. The server stores nothing.",
+        "description": "Checks XML (or the XML embedded in a Factur-X/ZUGFeRD PDF) against XSD and the official Schematron rule sets. The HTTP status is 200 whether the document is valid or not: validity is `valid` in the body. A non-2xx status means the request or document could not be processed at all. Conformo only produces, reads and checks documents. It does not transmit anything (no Peppol access point, no French PA/PDP, no KSeF, no SdI) and does not support FatturaPA or Facturae; it handles KSeF FA(3) only as domestic PLN invoices it writes and schema-checks (it cannot read them). A valid result means the rule sets listed in `ruleSets` passed, not that a tax authority accepts the invoice. The server stores nothing.",
         "requestBody": {
           "required": true,
           "description": "Exactly one of `xml` or `pdfBase64`.",
@@ -496,7 +496,7 @@
           "convert"
         ],
         "summary": "Convert an e-invoice between syntaxes",
-        "description": "Reads an existing e-invoice and writes it in another syntax. Fields the target cannot carry are not invented; validate the result. Conformo only produces, reads and checks documents. It does not transmit anything (no Peppol access point, no French PA/PDP, no KSeF, no SdI) and does not support FatturaPA, KSeF FA(3) or Facturae. A valid result means the rule sets listed in `ruleSets` passed, not that a tax authority accepts the invoice. The server stores nothing.",
+        "description": "Reads an existing e-invoice and writes it in another syntax. Fields the target cannot carry are not invented; validate the result. Conformo only produces, reads and checks documents. It does not transmit anything (no Peppol access point, no French PA/PDP, no KSeF, no SdI) and does not support FatturaPA or Facturae; it handles KSeF FA(3) only as domestic PLN invoices it writes and schema-checks (it cannot read them). A valid result means the rule sets listed in `ruleSets` passed, not that a tax authority accepts the invoice. The server stores nothing.",
         "requestBody": {
           "required": true,
           "description": "Exactly one of `source` or `sourcePdfBase64`.",
@@ -843,7 +843,7 @@
                 },
                 "example": {
                   "status": "ok",
-                  "version": "0.2.1"
+                  "version": "0.2.2"
                 }
               }
             }
@@ -2282,7 +2282,7 @@
               ],
               "additionalProperties": false
             },
-            "description": "Per required format: can this toolkit generate, read, validate it? FatturaPA, KSeF and Facturae: no."
+            "description": "Per required format: can this toolkit generate, read, validate it? FatturaPA and Facturae: no. KSeF FA(3): generate and XSD-validate domestic PLN invoices, no reading."
           }
         },
         "required": [

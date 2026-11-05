@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.2: @conformo/mcp-server and @conformo/server (2026-11-05)
+
+- MCP tool descriptions rewritten for agents: each now says what the tool does, when to use it and which sibling to use instead, and what it does
+  beyond its annotations (runs locally, writes files only on request). The shared disclaimer is no longer repeated in every tool; it stays in the
+  server instructions. Every output field now has a description. Tool names, inputs, outputs and behaviour are unchanged.
+- KSeF wording corrected in the MCP server, the HTTP API and the docs: FatturaPA and Facturae are not supported; KSeF FA(3) is written and
+  schema-checked for domestic PLN invoices but cannot be read. It was previously described as not supported at all, which undersold what the
+  toolkit does.
+- `glama.json` names the maintainer for the Glama directory; the MCP Registry listing uses the new Conformo icon (`docs/media/conformo-icon.png`).
+
 ## 0.2.1: @conformo/pdf, parse, toolkit, cli, mcp-server, server (2026-11-05)
 
 - PDF labels in English, German and French: `createPdf({ language: "en" | "de" | "fr" })`, CLI `--language`, MCP `create_invoice_pdf` `language`,

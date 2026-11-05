@@ -1,6 +1,6 @@
 {
   "name": "@conformo/server",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Optional stateless HTTP API for EN 16931 e-invoicing: create (XML, Factur-X/ZUGFeRD PDF), validate, convert, parse, explain rules, country requirements. No accounts, no storage; OpenAPI 3.1 generated from the schemas.",
   "author": "Muhammad Arsal Murad",
   "license": "Apache-2.0",

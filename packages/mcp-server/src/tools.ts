@@ -53,10 +53,6 @@ const warningsOf = (invoice: unknown): string[] =>
 
 const FORMAT_LIST = FORMAT_IDS.map((f) => `"${f}" = ${FORMAT_DESCRIPTIONS[f]}`).join('; ');
 
-const NOT_SUPPORTED =
-  'Conformo only produces, reads and checks documents. It does NOT transmit anything (no Peppol access point, no French PA/PDP, no KSeF, no SdI), '
-  + 'and it does not support FatturaPA, KSeF FA(3) or Facturae. A valid result means the rule sets listed in `ruleSets` passed, not that a tax authority accepts the invoice.';
-
 const issueShape = z.object({ path: z.string(), bt: z.string(), severity: z.string(), message: z.string() });
 const formatEnum = z.enum(FORMAT_IDS).describe(`Output syntax. ${FORMAT_LIST}.`);
 
@@ -75,24 +71,37 @@ function sourceOf(a: { xml?: string | undefined; pdfBase64?: string | undefined 
   return bytes;
 }
 
+const plainLanguageShape = z.object({
+  summary: z.string().describe('What the rule requires, in plain language.'),
+  why: z.string().describe('Why the rule exists or why it typically fires.'),
+  fix: z.string().describe('How to change the invoice so the rule passes.'),
+});
+
 const ruleResultShape = z.object({
-  ruleId: z.string(), severity: z.enum(['error', 'fatal', 'warning', 'info']), message: z.string(),
-  fields: z.array(z.string()), xpath: z.string(), ruleSet: z.string(),
-  plainLanguage: z.object({ summary: z.string(), why: z.string(), fix: z.string() }).optional(),
+  ruleId: z.string().describe('Rule id from the publisher, e.g. BR-CO-15 or BR-DE-15.'),
+  severity: z.enum(['error', 'fatal', 'warning', 'info']).describe("error and fatal fail the invoice; warning and info do not. Effective level after the publisher's own re-levelling."),
+  message: z.string().describe("The publisher's own message for this rule."),
+  fields: z.array(z.string()).describe('BT and BG ids named in the official message, in order.'),
+  xpath: z.string().describe('Where in the XML the rule fired.'),
+  ruleSet: z.string().describe('Id of the rule set the rule belongs to (see ruleSets).'),
+  plainLanguage: plainLanguageShape.optional().describe('Plain-language explanation and fix, present for common rules.'),
 });
 
 export function registerTools(server: McpServer): void {
   server.registerTool('create_invoice', {
     title: 'Create an e-invoice (XML)',
     description:
-      'Turns a structured invoice into e-invoice XML: plain EN 16931 CII or UBL, XRechnung (CII or UBL), or Peppol BIS Billing 3.0. '
-      + 'Use it when the user wants an invoice document that a machine can read. Pass the invoice as a JSON OBJECT (not a string); each field of the input schema says which EN 16931 BT/BG it is. '
-      + 'ALL money fields end in "Minor" and are INTEGERS in minor units (EUR 12.34 = 1234); never send decimals. Do not send totals or the VAT breakdown: they are computed. '
-      + 'Document-level problems are returned as an error listing every bad field (path, BT id, message); fix them all and call again. '
-      + 'Call validate_invoice on the result to check it against the official rule sets. For a PDF use create_invoice_pdf. '
-      + NOT_SUPPORTED,
+      'Builds e-invoice XML from structured invoice data: EN 16931 CII or UBL, XRechnung (CII or UBL) or Peppol BIS Billing 3.0, chosen by `format`. '
+      + 'Use it for a new invoice that software will read. For a printable PDF with the XML inside, use create_invoice_pdf; to change the syntax of an invoice you already have, use convert_invoice. '
+      + 'Pass `invoice` as a JSON object, not a string. Every money field ends in "Minor" and is an integer in minor units (EUR 12.34 = 1234); totals and the VAT breakdown are computed, so do not send them. '
+      + 'If fields are missing or wrong it returns an error listing every problem (path, BT id, message) and produces nothing; fix them all and call again. '
+      + 'It runs locally and does not send the invoice anywhere. It does not run the official rule sets: call validate_invoice on the XML before it goes out.',
     inputSchema: { invoice: invoiceSchema.describe('The invoice. Required: number, issueDate, currency, seller, buyer, lines.'), format: formatEnum },
-    outputSchema: { xml: z.string(), format: z.enum(FORMAT_IDS), warnings: z.array(z.string()).describe('Non-fatal findings, e.g. a missing XRechnung precondition.') },
+    outputSchema: {
+      xml: z.string().describe('The e-invoice XML, ready to send or to pass to validate_invoice.'),
+      format: z.enum(FORMAT_IDS).describe('The syntax that was written.'),
+      warnings: z.array(z.string()).describe('Non-fatal findings, e.g. a missing XRechnung precondition.'),
+    },
     annotations: { title: 'Create an e-invoice (XML)', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   }, (a) => guard(async () => {
     const r = createXml(a.invoice as Invoice, a.format);
@@ -105,11 +114,11 @@ export function registerTools(server: McpServer): void {
   server.registerTool('create_invoice_pdf', {
     title: 'Create a Factur-X / ZUGFeRD PDF',
     description:
-      'Creates a human-readable PDF/A-3b invoice with the machine-readable XML embedded (Factur-X / ZUGFeRD hybrid). Same invoice input as create_invoice. '
-      + '`profile`: "en16931" (default; Factur-X/ZUGFeRD EN 16931), "xrechnung" (ZUGFeRD XRECHNUNG, for German public sector) or "extended". `template` picks the page layout and `language` the language of the printed labels ("en" default, "de" German, "fr" French; the embedded XML is the same in every language). '
-      + 'Without `outputPath` the PDF comes back base64-encoded in structuredContent.pdfBase64 (it can be large). With `outputPath` the file is written instead (nothing is returned inline): '
-      + 'the path must end in .pdf and stay inside the server\'s working directory, and an existing file is refused unless `overwrite` is true. '
-      + 'The output is deterministic: the same invoice gives the same bytes. Check it with validate_invoice (pass pdfBase64). ' + NOT_SUPPORTED,
+      'Builds a Factur-X / ZUGFeRD invoice: a PDF/A-3b page a person can read, with the EN 16931 XML embedded for software. '
+      + 'Use it when the invoice goes to a person or by e-mail. For XML only, such as an XRechnung uploaded to a German public-sector portal, use create_invoice. '
+      + 'Takes the same `invoice` object as create_invoice, money in integer minor units. `language` changes only the printed labels; the embedded XML is identical in every language. '
+      + 'By default the PDF comes back as base64, which can be large; pass `outputPath` to write the file instead. Writing stays inside the server\'s working directory and never replaces an existing file unless `overwrite` is true. '
+      + 'The same input always gives the same bytes, and nothing is sent anywhere. Check the result with validate_invoice (pass pdfBase64).',
     inputSchema: {
       invoice: invoiceSchema.describe('The invoice. Required: number, issueDate, currency, seller, buyer, lines.'),
       profile: z.enum(PDF_PROFILES).optional().describe('Factur-X / ZUGFeRD profile. Default en16931.'),
@@ -119,8 +128,12 @@ export function registerTools(server: McpServer): void {
       overwrite: z.boolean().optional().describe('Allow replacing an existing file at outputPath. Default false.'),
     },
     outputSchema: {
-      profile: z.enum(PDF_PROFILES), xmlFilename: z.string().describe('Name of the embedded XML attachment.'), conformanceLevel: z.string(),
-      byteLength: z.number(), sha256: z.string(), warnings: z.array(z.string()),
+      profile: z.enum(PDF_PROFILES).describe('The Factur-X / ZUGFeRD profile written.'),
+      xmlFilename: z.string().describe('Name of the embedded XML attachment.'),
+      conformanceLevel: z.string().describe('Conformance level declared in the PDF metadata, e.g. EN 16931.'),
+      byteLength: z.number().describe('Size of the PDF in bytes.'),
+      sha256: z.string().describe('SHA-256 of the PDF bytes, hex; equal for equal input.'),
+      warnings: z.array(z.string()).describe('Non-fatal findings about the invoice data.'),
       pdfBase64: z.string().optional().describe('The PDF, base64. Absent when outputPath was given.'),
       outputPath: z.string().optional().describe('Absolute path written, when outputPath was given.'),
     },
@@ -154,28 +167,47 @@ export function registerTools(server: McpServer): void {
   server.registerTool('validate_invoice', {
     title: 'Validate an e-invoice',
     description:
-      'Checks an e-invoice against the official rule sets, locally: XSD plus the EN 16931 Schematron, plus XRechnung (KoSIT) or Peppol BIS when the document declares it. '
-      + 'Input: `xml` (CII, UBL Invoice or CreditNote) OR `pdfBase64` (a Factur-X/ZUGFeRD PDF; the embedded XML is validated). Syntax and profile are detected from the document (see `detected`). '
-      + '`country` "FR" adds the French CTC rules (CII only); "DE" reports whether the profile is acceptable for German B2B (MINIMUM and BASIC WL are not). '
-      + '`valid` is true only when no error-level rule failed and XSD passed. `ruleSets` lists exactly what ran: say so when reporting, never claim more than ran. '
-      + 'Each entry of `failures` has the publisher\'s message and, for common rules, a plainLanguage explanation with a fix. `advisories` are warnings that do not fail the invoice. '
-      + NOT_SUPPORTED,
+      'Checks an e-invoice against the official rule sets on this machine: the XSD, the EN 16931 Schematron from CEN, and the KoSIT XRechnung or Peppol BIS rules when the document declares them. '
+      + 'Use it before sending an invoice you created and when you receive one. To read the invoice\'s data use parse_invoice; to explain one failed rule in depth use explain_validation_rule. '
+      + 'Accepts XML or a Factur-X / ZUGFeRD PDF, whose embedded XML is checked; syntax and profile are detected from the document. '
+      + 'A `valid` result means the listed `ruleSets` passed, not that a tax authority or buyer will accept the invoice, so report which rule sets ran and never claim more. '
+      + 'Each failure carries the publisher\'s message and, for common rules, a plain-language fix. The check runs offline; nothing is uploaded.',
     inputSchema: {
       ...xmlOrPdfInput,
-      country: z.enum(['FR', 'DE']).optional().describe('Add a country layer on top of EN 16931.'),
+      country: z.enum(['FR', 'DE']).optional().describe('Add a country layer: "FR" runs the French CTC rules (CII only); "DE" reports whether the profile is acceptable for German B2B (MINIMUM and BASIC WL are not).'),
       profile: z.enum(['en16931', 'xrechnung', 'peppol']).optional().describe('Force the rule set instead of reading it from BT-24.'),
       xsd: z.boolean().optional().describe('Run XSD validation too. Default true.'),
     },
     outputSchema: {
-      valid: z.boolean(), origin: z.enum(['xml', 'pdf']), embeddedFilename: z.string().optional(),
+      valid: z.boolean().describe('True only when no error-level rule failed, the XSD did not fail, and no error-level notice was raised.'),
+      origin: z.enum(['xml', 'pdf']).describe('Whether the input was XML or a PDF.'),
+      embeddedFilename: z.string().optional().describe('PDF only: name of the embedded XML that was checked.'),
       detected: z.object({
-        syntax: z.string(), profile: z.string(), customizationId: z.string().optional(), businessProcess: z.string().optional(), variant: z.string().optional(),
-      }),
+        syntax: z.string().describe('cii, ubl-invoice or ubl-credit-note.'),
+        profile: z.string().describe('Profile read from BT-24: en16931, xrechnung, peppol, extended, minimum, basicwl or unknown.'),
+        customizationId: z.string().optional().describe('The BT-24 specification identifier as written in the document.'),
+        businessProcess: z.string().optional().describe('BT-23 business process, when present.'),
+        variant: z.string().optional().describe('XRechnung only: standard, extension or cvd.'),
+      }).describe('What the document declares about itself.'),
       firedCount: z.number().describe('Schematron rules that fired across all rule sets.'),
-      ruleSets: z.array(z.object({ id: z.string(), label: z.string(), source: z.string(), fired: z.number(), failed: z.number(), advisory: z.number() })),
-      xsd: z.object({ ran: z.boolean(), schema: z.string().optional(), valid: z.boolean().optional(), errors: z.array(z.string()), skippedReason: z.string().optional() }),
-      notices: z.array(z.object({ severity: z.string(), code: z.string(), message: z.string() })),
-      failures: z.array(ruleResultShape), advisories: z.array(ruleResultShape),
+      ruleSets: z.array(z.object({
+        id: z.string().describe('Rule set id, e.g. en16931-cii or xrechnung-cii.'),
+        label: z.string().describe('Human-readable name.'),
+        source: z.string().describe('Publisher and version of the official artefact that ran.'),
+        fired: z.number().describe('Rules of this set that applied to the document.'),
+        failed: z.number().describe('Error-level rules that failed.'),
+        advisory: z.number().describe('Warning or info rules that fired without failing the invoice.'),
+      })).describe('Exactly the rule sets that ran. Report these; do not claim checks that are not listed.'),
+      xsd: z.object({
+        ran: z.boolean().describe('Whether XSD validation ran.'),
+        schema: z.string().optional().describe('The XSD used.'),
+        valid: z.boolean().optional().describe('XSD verdict, when it ran.'),
+        errors: z.array(z.string()).describe('XSD errors, empty when valid.'),
+        skippedReason: z.string().optional().describe('Why XSD did not run, when it did not.'),
+      }).describe('XML Schema check.'),
+      notices: z.array(z.object({ severity: z.string(), code: z.string(), message: z.string() })).describe('Findings about the document that are not Schematron rules, e.g. an unrecognised profile, or (with country DE) a profile not acceptable for German B2B. An error-level notice makes valid false.'),
+      failures: z.array(ruleResultShape).describe('Error-level rules that failed; any entry makes valid false.'),
+      advisories: z.array(ruleResultShape).describe('Warning or info rules that fired; they do not make the invoice invalid.'),
     },
     annotations: { title: 'Validate an e-invoice', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   }, (a) => guard(async () => {
@@ -200,10 +232,17 @@ export function registerTools(server: McpServer): void {
   server.registerTool('convert_invoice', {
     title: 'Convert an e-invoice between syntaxes',
     description:
-      'Reads an existing e-invoice (CII, UBL, XRechnung or Peppol XML, or a Factur-X/ZUGFeRD PDF via pdfBase64) and writes it in another syntax. Pass `xml` OR `pdfBase64`, and `to`. '
-      + `Targets: ${FORMAT_LIST}. Fields the target syntax cannot carry are not invented, so run validate_invoice on the result. To get a PDF from an XML, parse_invoice then create_invoice_pdf. ` + NOT_SUPPORTED,
+      'Rewrites an existing e-invoice in another syntax, for example CII to UBL, or plain EN 16931 to XRechnung or Peppol BIS. '
+      + 'Use it when you already hold an invoice document. To build one from data use create_invoice; to get a PDF from XML use parse_invoice, then create_invoice_pdf. '
+      + 'Accepts XML or a Factur-X / ZUGFeRD PDF. Nothing is invented: a target such as XRechnung may need data the source lacks, so read `warnings` and run validate_invoice on the result. '
+      + 'Runs locally; nothing is sent anywhere.',
     inputSchema: { ...xmlOrPdfInput, to: formatEnum },
-    outputSchema: { xml: z.string(), format: z.enum(FORMAT_IDS), from: z.string().describe('Syntax of the source: cii, ubl-invoice or ubl-credit-note.'), warnings: z.array(z.string()) },
+    outputSchema: {
+      xml: z.string().describe('The invoice in the target syntax.'),
+      format: z.enum(FORMAT_IDS).describe('The syntax that was written.'),
+      from: z.string().describe('Syntax of the source: cii, ubl-invoice or ubl-credit-note.'),
+      warnings: z.array(z.string()).describe('Non-fatal findings, e.g. data the target requires that the source does not have.'),
+    },
     annotations: { title: 'Convert an e-invoice between syntaxes', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   }, (a) => guard(async () => {
     const r = await convert(sourceOf(a), a.to);
@@ -216,13 +255,15 @@ export function registerTools(server: McpServer): void {
   server.registerTool('parse_invoice', {
     title: 'Parse an e-invoice into JSON',
     description:
-      'Reads CII, UBL, XRechnung or Peppol XML (xml) or a Factur-X/ZUGFeRD PDF (pdfBase64) into the structured invoice model, the same shape create_invoice accepts. '
-      + 'Money is in integer minor units. Use it to inspect or edit a received invoice, or to re-issue it with create_invoice. For a PDF, `visibleTotals` says whether the totals printed on the page match the embedded XML. '
-      + 'It does not validate: call validate_invoice for that.',
+      'Reads an e-invoice (CII, UBL, XRechnung or Peppol XML, or a Factur-X / ZUGFeRD PDF) into the structured invoice object that create_invoice accepts, with money in integer minor units. '
+      + 'Use it to answer questions about a received invoice, to edit one, or to re-issue it with create_invoice. It does not check any rules, so use validate_invoice for that, and convert_invoice to change syntax directly. '
+      + 'For a PDF, `visibleTotals` shows whether the totals printed on the page match the embedded XML, which exposes a tampered or mismatched PDF. Runs locally.',
     inputSchema: xmlOrPdfInput,
     outputSchema: {
       invoice: z.object({}).passthrough().describe('The Invoice object, in the shape of the create_invoice input schema.'),
-      format: z.enum(['cii', 'ubl-invoice', 'ubl-credit-note']), origin: z.enum(['xml', 'pdf']), embeddedFilename: z.string().optional(),
+      format: z.enum(['cii', 'ubl-invoice', 'ubl-credit-note']).describe('Syntax of the source document.'),
+      origin: z.enum(['xml', 'pdf']).describe('Whether the input was XML or a PDF.'),
+      embeddedFilename: z.string().optional().describe('PDF only: name of the embedded XML that was read.'),
       visibleTotals: z.object({}).passthrough().optional().describe('PDF only: comparison of the printed totals with the embedded XML.'),
     },
     annotations: { title: 'Parse an e-invoice into JSON', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
@@ -237,13 +278,19 @@ export function registerTools(server: McpServer): void {
   server.registerTool('get_country_requirements', {
     title: 'E-invoicing requirements for a country',
     description:
-      'Returns what the sourced dataset says about e-invoicing in one country: mandates, dates, thresholds, required formats, official sources. '
-      + `\`country\` is an ISO 3166-1 alpha-2 code. Supported: ${SUPPORTED_COUNTRIES.join(', ')}. \`conformoSupport\` says, per required format, whether THIS toolkit can generate, read and validate it (FatturaPA, KSeF and Facturae: no). `
-      + 'Items with status "unverified" are not confirmed from an official source: say so. This is information, not legal advice.',
+      'Looks up the e-invoicing rules for one country in a sourced dataset: B2G and B2B mandates for issuing and receiving, start dates, turnover thresholds, required formats and official sources. '
+      + 'Use it before create_invoice to decide which format a buyer in that country needs, or to answer when a mandate applies. It says nothing about a specific invoice; use validate_invoice to check one. '
+      + `Covers ${SUPPORTED_COUNTRIES.join(', ')}. \`conformoSupport\` says per format whether this server can create, read and validate it. `
+      + 'Entries marked unverified are not confirmed from an official source; say so. Information, not legal advice. Reads a bundled dataset; no network.',
     inputSchema: { country: z.string().length(2).describe('ISO 3166-1 alpha-2 country code, e.g. DE, FR.') },
     outputSchema: z.object({
-      country: z.string(),
-      conformoSupport: z.record(z.object({ generate: z.boolean(), read: z.boolean(), validate: z.boolean(), note: z.string() })),
+      country: z.string().describe('ISO 3166-1 alpha-2 code of the country returned.'),
+      conformoSupport: z.record(z.object({
+        generate: z.boolean().describe('This server can create the format.'),
+        read: z.boolean().describe('This server can read the format.'),
+        validate: z.boolean().describe('This server can validate the format.'),
+        note: z.string().describe('Limits that apply.'),
+      })).describe('Per required format, what this server can do with it.'),
     }).passthrough().describe('The sourced country record (mandates, dates, thresholds, sources) plus conformoSupport.'),
     annotations: { title: 'E-invoicing requirements for a country', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   }, (a) => guard(async () => {
@@ -256,13 +303,18 @@ export function registerTools(server: McpServer): void {
   server.registerTool('explain_validation_rule', {
     title: 'Explain a validation rule',
     description:
-      'Explains a validation rule id such as "BR-CO-15", "BR-DE-15", "PEPPOL-EN16931-R003" or "BR-FR-05" as returned by validate_invoice: the publisher\'s official wording from the compiled rule sets, plus a plain-language summary, why it exists and how to fix it where one exists. '
-      + 'If `found` is false the id is unknown here; do not guess an explanation.',
+      'Explains one validation rule id, such as BR-CO-15, BR-DE-15, PEPPOL-EN16931-R003 or BR-FR-05: the publisher\'s official wording from the compiled rule sets and, where available, a plain-language summary, the reason for the rule and how to fix it. '
+      + 'Use it after validate_invoice reports a rule you need to explain or fix, or when a user asks what a rule means. It does not check an invoice; call validate_invoice for that. '
+      + 'If `found` is false the id is unknown to these rule sets: say so and do not guess. Reads the bundled rule sets; no network.',
     inputSchema: { ruleId: z.string().min(1).describe('The rule id, e.g. BR-CO-15.') },
     outputSchema: {
-      ruleId: z.string(), found: z.boolean(),
-      official: z.array(z.object({ ruleSet: z.string(), text: z.string() })),
-      plainLanguage: z.object({ summary: z.string(), why: z.string(), fix: z.string() }).optional(),
+      ruleId: z.string().describe('The rule id as looked up.'),
+      found: z.boolean().describe('False when no compiled rule set knows this id.'),
+      official: z.array(z.object({
+        ruleSet: z.string().describe('Rule set containing the rule.'),
+        text: z.string().describe("The publisher's wording of the rule."),
+      })).describe('Official wording, one entry per rule set that defines the id.'),
+      plainLanguage: plainLanguageShape.optional().describe('Plain-language explanation, when one exists for this rule.'),
     },
     annotations: { title: 'Explain a validation rule', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   }, (a) => guard(async () => {

@@ -121,7 +121,7 @@ p.muted{color:var(--muted)}
 <tr><td><code>GET /v1/rules/:id</code></td><td>Explain a validation rule</td></tr>
 <tr><td><code>GET /healthz</code></td><td>Liveness</td></tr>
 </table>
-<p class="muted">Conformo produces, reads and checks documents. It does not transmit over Peppol, a PA, KSeF or SdI, and does not support FatturaPA, KSeF FA(3) or Facturae. A valid result means the listed rule sets passed, not that a tax authority accepts the invoice.</p>
+<p class="muted">Conformo produces, reads and checks documents. It does not transmit over Peppol, a PA, KSeF or SdI, and does not support FatturaPA or Facturae; it handles KSeF FA(3) only as domestic PLN invoices it writes and schema-checks (it cannot read them). A valid result means the listed rule sets passed, not that a tax authority accepts the invoice.</p>
 </main></body></html>
 `;
 
