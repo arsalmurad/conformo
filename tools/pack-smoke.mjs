@@ -64,9 +64,7 @@ for (const d of ['validator-page/dist', 'ui/dist', 'docs-site/dist']) {
   if (existsSync(dir)) leaks.push(...scanDir(dir).map((f) => `packages/${d}/${f}`));
 }
 if (leaks.length) {
-  console.error(`FAIL: ${leaks.length} local path / build-machine string(s) in what would be published:
-${leaks.slice(0, 40).join('
-')}`);
+  console.error(`FAIL: ${leaks.length} local path / build-machine string(s) in what would be published:\n${leaks.slice(0, 40).join('\n')}`);
   process.exit(1);
 }
 console.log(`ok   no local paths or build-machine names in ${Object.keys(tarballs).length} tarballs`);
