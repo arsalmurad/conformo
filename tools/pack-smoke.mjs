@@ -61,7 +61,7 @@ let leaks = [];
 for (const [name, tgz] of Object.entries(tarballs)) leaks.push(...scanTarball(tgz, name));
 for (const d of ['validator-page/dist', 'ui/dist', 'docs-site/dist']) {
   const dir = path.join(root, 'packages', d);
-  if (existsSync(dir)) leaks.push(...scanDir(dir).map((f) => `packages/${d}/${f}`));
+  if (existsSync(dir)) leaks.push(...scanDir(dir, undefined, d).map((f) => `packages/${d}/${f}`));
 }
 if (leaks.length) {
   console.error(`FAIL: ${leaks.length} local path / build-machine string(s) in what would be published:\n${leaks.slice(0, 40).join('\n')}`);

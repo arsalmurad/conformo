@@ -28,7 +28,12 @@ export const FORBIDDEN = [
 export const ALLOWED = [
   { pkg: '@conformo/mcp-server', file: 'package/README.md', labels: ['claude'] },
   { pkg: '@conformo/mcp-server', file: 'package/server.json', labels: ['claude'] },
-  { pkg: '@conformo/docs-site', file: /\.html?$/, labels: ['claude'] },
+  { pkg: '@conformo/mcp-server', file: 'package/src/server.js', labels: ['claude'] }, // a comment naming the MCP clients
+];
+
+/** Built site pages that name Claude Desktop / Claude Code as MCP clients (docs site only). */
+export const ALLOWED_SITE_FILES = [
+  { site: 'docs-site/dist', file: /^(index|mcp)\.html$/, labels: ['claude'] },
 ];
 
 function* tarEntries(buf) {
@@ -63,10 +68,12 @@ export function scanContent(name, data, allowLabels = []) {
       if (m) found.push(`${label}: ${what}: ...${text.slice(Math.max(0, m.index - 20), m.index + 40).replace(/[^\x20-\x7e]/g, '?')}...`);
     }
   };
-  inspect(name, data);
+  // A gzip stream is compressed noise to a text scan: look at what is inside it, not at the compressed bytes.
   if (isGzip(data)) {
-    try { inspect(`${name}!gunzip`, gunzipSync(data)); } catch { /* not a real gzip stream: already scanned raw */ }
-  }
+    let inner;
+    try { inner = gunzipSync(data); } catch { inner = undefined; }
+    inspect(inner ? `${name}!gunzip` : name, inner ?? data);
+  } else inspect(name, data);
   return found;
 }
 
@@ -82,14 +89,18 @@ export function scanTarball(file, pkgName) {
 }
 
 /** Scans a directory tree (built site output). */
-export function scanDir(dir, skip = (p) => /node_modules/.test(p)) {
+export function scanDir(dir, skip = (p) => /node_modules/.test(p), site = '') {
   const found = [];
   const walk = (d) => {
     for (const ent of readdirSync(d, { withFileTypes: true })) {
       const p = path.join(d, ent.name);
       if (skip(p)) continue;
       if (ent.isDirectory()) walk(p);
-      else if (statSync(p).size < 64 * 1024 * 1024) found.push(...scanContent(path.relative(dir, p).replaceAll('\\', '/'), readFileSync(p)));
+      else if (statSync(p).size < 64 * 1024 * 1024) {
+        const rel = path.relative(dir, p).replaceAll('\\', '/');
+        const allow = ALLOWED_SITE_FILES.filter((a) => a.site === site && a.file.test(rel)).flatMap((a) => a.labels);
+        found.push(...scanContent(rel, readFileSync(p), allow));
+      }
     }
   };
   walk(dir);
