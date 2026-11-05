@@ -11,7 +11,7 @@ Our runtime validator (the code `validate()` runs in Node and, minus XSD, in a b
 | kosit-xrechnung-config | 2026-08-31 (XRechnung 3.0.2) | `2530cd107c41` |
 | kosit-validator | 1.6.3 | `799e64befca9` |
 | cen-en16931 | validation-1.3.17 | `6e35e0ab8b09` |
-| peppol-bis-3 | 3.0.21 | `5df0eff7c8ef` |
+| peppol-bis-3 | 3.0.22 | `38d693d71d28` |
 | schxslt2 | 1.11.2 | `52519794505e` |
 | factur-x-wheel | 6.8 | `02b57dd57f59` |
 | xrechnung-testsuite | v2026-08-31 | `44c3905c69ca` |
@@ -40,7 +40,7 @@ Overall reference agreement: **1066/1066 (100.0%)**.
 
 Sources:
 - KoSIT XRechnung test suite: itplr-kosit/xrechnung-testsuite v2026-08-31
-- Peppol BIS Billing 3.0 examples: OpenPEPPOL/peppol-bis-invoice-3 3.0.21
+- Peppol BIS Billing 3.0 examples: OpenPEPPOL/peppol-bis-invoice-3 3.0.22
 - CEN EN 16931 example files: ConnectingEurope/eInvoicing-EN16931 validation-1.3.17
 - CEN EN 16931 rule unit tests (one failing document per rule): ConnectingEurope/eInvoicing-EN16931 validation-1.3.17
 
