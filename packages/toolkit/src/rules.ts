@@ -41,6 +41,6 @@ export function explainRule(ruleId: string): RuleExplanation {
     const m = re.exec(load(set));
     if (m) official.push({ ruleSet: set, text: m[1]!.replace(/\s+/g, ' ').trim() });
   }
-  const plainLanguage = getPlainLanguageMessage(id);
+  const plainLanguage = getPlainLanguageMessage(id, 'en', official[0]?.text);
   return { ruleId: id, found: official.length > 0 || !!plainLanguage, official, ...(plainLanguage ? { plainLanguage } : {}) };
 }

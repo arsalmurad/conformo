@@ -71,7 +71,7 @@ function leadingBracketId(message: string): string | undefined {
  * French CTC Schematron, which puts its id in `@id` instead) passes through
  * unchanged. */
 function stripLeadingBracketId(message: string): string {
-  return message.replace(/^\[[^\]]+\]-?\s*/, "");
+  return message.replace(/^\[[^\]]+\]\s*-?\s*/, "");
 }
 
 function toSeverity(flag: string | undefined): RuleResult["severity"] {

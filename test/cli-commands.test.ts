@@ -356,3 +356,28 @@ describe('child-process smoke (real CLI)', () => {
   }, 120_000);
 });
 
+
+describe('conformo validate: repeated hits of one rule are grouped in the text, not in --json', () => {
+  const neg = fx('negative/currency-id-on-amounts.xml');
+
+  it('prints one block for CII-DT-031 with the places, the plain-language text and no raw "- " artefact', async () => {
+    const r = await run(['validate', neg]);
+    expect(r.code).toBe(1);
+    expect(r.out.match(/CII-DT-031/g)!.length).toBe(1);
+    expect(r.out).toMatch(/\[FATAL\] CII-DT-031, 15 places: ChargeAmount \(lines 1, 2, 3\), LineTotalAmount \(lines 1, 2, 3\), /);
+    expect(r.out).toContain('LineTotalAmount (document level)');
+    expect(r.out.split('\n').find((l) => l.startsWith('[FATAL]'))).not.toContain('TaxTotalAmount');
+    expect(r.out).toMatch(/\n  currencyID should not be present\n/);
+    expect(r.out).toMatch(/What it means: An amount carries a currencyID attribute/);
+    expect(r.out).toMatch(/INVALID — \d+ rules checked, 15 failed/);
+  });
+
+  it('--json keeps one result per hit, each with element, path and line', async () => {
+    const r = await run(['validate', neg, '--json']);
+    const json = JSON.parse(r.out) as { results: { ruleId: string; element?: string; path?: string; line?: number; xpath: string }[] };
+    const hits = json.results.filter((x) => x.ruleId === 'CII-DT-031');
+    expect(hits).toHaveLength(15);
+    expect(hits.every((x) => x.element && x.path && x.xpath)).toBe(true);
+    expect(hits.some((x) => x.line === 3)).toBe(true);
+  });
+});

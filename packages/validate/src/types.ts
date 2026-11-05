@@ -18,8 +18,15 @@ export interface RuleResult {
   originalSeverity?: "error" | "fatal" | "warning" | "info";
   /** Which rule set produced this result, a key of RULESETS, e.g. "en16931-ubl" or "xrechnung-cii". */
   ruleSet: string;
-  /** Present only for rules with a hand-written plain-language translation (see src/messages). */
+  /** Present only for rules with a hand-written plain-language translation (see src/messages), or, for the syntax
+   * rules (CII-DT, CII-SR, UBL-CR, UBL-DT, UBL-SR), one built from the rule's family and the name it reports. */
   plainLanguage?: PlainLanguageMessage;
+  /** The offending element without namespaces, e.g. "LineTotalAmount" (an attribute reads "Element@attribute"). */
+  element?: string;
+  /** A short readable path, e.g. "line 1 > NetPriceProductTradePrice > ChargeAmount". `xpath` stays the exact location. */
+  path?: string;
+  /** 1-based invoice line number when the node is inside an invoice line. */
+  line?: number;
 }
 
 export interface PlainLanguageMessage {

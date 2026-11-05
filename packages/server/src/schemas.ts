@@ -60,6 +60,9 @@ const ruleResult = z.object({
   ruleId: z.string(), severity: z.enum(['error', 'fatal', 'warning', 'info']), fields: z.array(z.string()), xpath: z.string(), message: z.string(),
   originalSeverity: z.enum(['error', 'fatal', 'warning', 'info']).optional(), ruleSet: z.string(),
   plainLanguage: z.object({ summary: z.string(), why: z.string(), fix: z.string() }).optional(),
+  element: z.string().optional().describe('The offending element without namespaces, e.g. LineTotalAmount.'),
+  path: z.string().optional().describe('A short readable path, e.g. "line 1 > NetPriceProductTradePrice > ChargeAmount". xpath is the exact location.'),
+  line: z.number().int().optional().describe('1-based invoice line number when the node is inside an invoice line.'),
 });
 export const validationResponse = z.object({
   valid: z.boolean().describe('True only when no error-level rule failed and XSD (if it ran) passed. The HTTP status is 200 either way.'),

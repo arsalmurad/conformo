@@ -2,6 +2,8 @@ import { createBrowserValidator } from "./browser.js";
 import type { SaxonJSLike, ValidateOptions, ValidationResult } from "./types.js";
 
 export type { ValidateOptions, ValidationResult, RuleResult } from "./types.js";
+export { groupResults, describePlaces } from "./group.js";
+export type { RuleGroup } from "./group.js";
 
 /**
  * For a web page that serves the validator assets as static files under `${baseUrl}validator/`:

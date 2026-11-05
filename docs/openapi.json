@@ -2458,6 +2458,18 @@
                     "fix"
                   ],
                   "additionalProperties": false
+                },
+                "element": {
+                  "type": "string",
+                  "description": "The offending element without namespaces, e.g. LineTotalAmount."
+                },
+                "path": {
+                  "type": "string",
+                  "description": "A short readable path, e.g. \"line 1 > NetPriceProductTradePrice > ChargeAmount\". xpath is the exact location."
+                },
+                "line": {
+                  "type": "integer",
+                  "description": "1-based invoice line number when the node is inside an invoice line."
                 }
               },
               "required": [

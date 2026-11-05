@@ -8,7 +8,7 @@ import path from 'node:path';
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import {
-  checkInvoice, convert, createPdf, createXml, explainRule, getRequirements, parse, validate,
+  checkInvoice, convert, createPdf, createXml, explainRule, getRequirements, groupHeading, groupResults, parse, validate,
   FORMAT_DESCRIPTIONS, FORMAT_IDS, InvoiceInputError, PDF_LANGUAGES, PDF_PROFILES, SUPPORTED_COUNTRIES, ValidationInputError,
 } from '@conformo/toolkit';
 import type { Invoice } from '@conformo/toolkit';
@@ -84,7 +84,10 @@ const ruleResultShape = z.object({
   fields: z.array(z.string()).describe('BT and BG ids named in the official message, in order.'),
   xpath: z.string().describe('Where in the XML the rule fired.'),
   ruleSet: z.string().describe('Id of the rule set the rule belongs to (see ruleSets).'),
-  plainLanguage: plainLanguageShape.optional().describe('Plain-language explanation and fix, present for common rules.'),
+  plainLanguage: plainLanguageShape.optional().describe('Plain-language explanation and fix, present for common rules and for the syntax rules (CII-DT, CII-SR, UBL-CR, UBL-DT, UBL-SR).'),
+  element: z.string().optional().describe('The offending element without namespaces, e.g. LineTotalAmount.'),
+  path: z.string().optional().describe('A short readable path, e.g. "line 1 > NetPriceProductTradePrice > ChargeAmount". xpath is the exact location.'),
+  line: z.number().int().optional().describe('1-based invoice line number when the node is inside an invoice line.'),
 });
 
 export function registerTools(server: McpServer): void {
@@ -218,7 +221,8 @@ export function registerTools(server: McpServer): void {
       `${r.valid ? 'VALID' : 'INVALID'}: ${r.detected.syntax} / ${r.detected.profile}; rule sets run: ${r.ruleSets.map((s) => s.id).join(', ') || '(none)'}; ${r.firedCount} rules fired, ${failures.length} failed, ${advisories.length} advisory.`,
       r.xsd.ran ? `XSD (${r.xsd.schema ?? '?'}): ${r.xsd.valid ? 'passed' : `FAILED: ${r.xsd.errors.slice(0, 5).join(' | ')}`}` : `XSD not run: ${r.xsd.skippedReason ?? 'disabled'}`,
       ...r.notices.map((n) => `Notice [${n.severity}] ${n.code}: ${n.message}`),
-      ...failures.map((f) => `[${f.severity.toUpperCase()}] ${f.ruleId}${f.fields.length ? ` (${f.fields.join(', ')})` : ''}: ${f.message}${f.plainLanguage ? `\n  Why: ${f.plainLanguage.why}\n  Fix: ${f.plainLanguage.fix}` : ''}`),
+      // Repeated hits of one rule are one entry ("CII-DT-031, 12 places: ..."); structuredContent keeps one entry per hit.
+      ...groupResults(failures).map((g) => `[${g.severity.toUpperCase()}] ${g.count > 1 ? groupHeading(g) : g.ruleId}${g.fields.length ? ` (${g.fields.join(', ')})` : ''}: ${g.message}${g.count === 1 && g.places[0]?.path ? ` [${g.places[0].path}]` : ''}${g.plainLanguage ? `\n  Why: ${g.plainLanguage.why}\n  Fix: ${g.plainLanguage.fix}` : ''}`),
     ];
     return {
       content: [text(lines.join('\n'))],

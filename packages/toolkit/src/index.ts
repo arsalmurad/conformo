@@ -24,7 +24,8 @@ export type { CountryRequirements } from './requirements.js';
 export { checkInvoice, InvoiceInputError } from '@conformo/core';
 export type { Invoice, InvoiceIssue } from '@conformo/core';
 export { ValidationInputError } from '@conformo/validate';
-export type { ValidationResult, ValidateOptions } from '@conformo/validate';
+export { groupResults, groupHeading, describePlaces } from '@conformo/validate';
+export type { ValidationResult, ValidateOptions, RuleGroup, RuleResult } from '@conformo/validate';
 
 export type InvoiceSource = string | Uint8Array;
 

@@ -1,6 +1,7 @@
 import { detectDocument } from "./detect.js";
 import { parseSvrl } from "./svrl.js";
 import { getPlainLanguageMessage } from "./messages/index.js";
+import { describeLocation } from "./location.js";
 import type {
   CompiledSchematron, DetectedDocument, Notice, Profile, RuleResult, RuleSetRun, RulesetLoader,
   SaxonJSLike, Syntax, ValidateOptions, ValidationResult, XsdRun, XsdRunner,
@@ -68,7 +69,15 @@ export function createEngine(deps: EngineDeps) {
     const { results, firedCount } = parseSvrl(principalResult);
     for (const r of results) {
       r.ruleSet = id;
-      r.plainLanguage = getPlainLanguageMessage(r.ruleId);
+      const pl = getPlainLanguageMessage(r.ruleId, "en", r.message);
+      if (pl) r.plainLanguage = pl;
+      const place = describeLocation(r.xpath);
+      if (place) {
+        r.element = place.element;
+        r.path = place.path;
+        if (place.line !== undefined) r.line = place.line;
+        if (r.fields.length === 0) r.fields = place.fields;
+      }
     }
     const failed = results.filter((r) => r.severity === "error" || r.severity === "fatal").length;
     const meta = info[id] ?? { label: id, source: "" };

@@ -1364,4 +1364,36 @@ export const en: Record<string, PlainLanguageMessage> = {
     why: "This category is a charged tax, not an exemption, so giving it an exemption reason contradicts the category.",
     fix: "Remove BT-120 and BT-121 from this breakdown group.",
   },
+  // --- Syntax rules that deserve their own wording (the rest of CII-DT/SR and UBL-CR/DT/SR are answered by family,
+  // see syntax.ts). Written from the tests in the CEN XSLT (validation-1.3.17). ---
+  "CII-DT-031": {
+    summary: "An amount carries a currencyID attribute where EN 16931 does not allow one.",
+    why: "The rule applies to every CII amount element (any ram:*Amount) except TaxTotalAmount. In EN 16931 CII only the VAT totals (TaxTotalAmount, BT-110 and BT-111) state their own currency; every other amount is in the invoice currency (BT-5). Some generators add currencyID to every amount, as UBL does, and this rule rejects that.",
+    fix: "Remove the currencyID attribute from every amount reported for this rule, for example write <ram:LineTotalAmount>100.00</ram:LineTotalAmount>. Keep currencyID only on TaxTotalAmount.",
+  },
+  "CII-DT-105": {
+    summary: "An attached document has no MIME type (BT-125-1).",
+    why: "A receiver needs the mimeCode attribute on the embedded binary object to know how to open the attachment.",
+    fix: "Add a mimeCode attribute to the AttachmentBinaryObject, for example mimeCode=\"application/pdf\".",
+  },
+  "CII-DT-106": {
+    summary: "An attached document has no file name (BT-125-2).",
+    why: "A receiver needs the filename attribute on the embedded binary object to save the attachment under a usable name.",
+    fix: "Add a filename attribute to the AttachmentBinaryObject, for example filename=\"timesheet.pdf\".",
+  },
+  "UBL-DT-01": {
+    summary: "An amount has more than two decimal places.",
+    why: "The rule applies to every UBL amount element except price amounts and price allowances or charges: EN 16931 amounts are written with at most two fraction digits.",
+    fix: "Round the amount to two decimal places (cents) in the XML. Only unit prices may carry more.",
+  },
+  "UBL-DT-06": {
+    summary: "An attached document has no MIME type (BT-125-1).",
+    why: "A receiver needs the mimeCode attribute on the embedded binary object to know how to open the attachment.",
+    fix: "Add a mimeCode attribute to the EmbeddedDocumentBinaryObject, for example mimeCode=\"application/pdf\".",
+  },
+  "UBL-DT-07": {
+    summary: "An attached document has no file name (BT-125-2).",
+    why: "A receiver needs the filename attribute on the embedded binary object to save the attachment under a usable name.",
+    fix: "Add a filename attribute to the EmbeddedDocumentBinaryObject, for example filename=\"timesheet.pdf\".",
+  },
 };

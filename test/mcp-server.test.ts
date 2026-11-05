@@ -171,6 +171,19 @@ function suite(label: string, connect: () => Promise<Harness>): void {
       expect(r.content[0]!.text).toMatch(/^INVALID/);
     }, 60_000);
 
+    it('validate_invoice groups repeated hits of one rule in its text and keeps one entry per hit in structuredContent', async () => {
+      const xml = fs.readFileSync(path.join(root, 'fixtures', 'negative', 'currency-id-on-amounts.xml'), 'utf8');
+      const r = await call(h, 'validate_invoice', { xml });
+      expect(r.isError).toBeFalsy();
+      const failures = r.structuredContent!.failures as { ruleId: string; element?: string; path?: string; message: string }[];
+      expect(failures).toHaveLength(15);
+      expect(failures.every((f) => f.ruleId === 'CII-DT-031' && f.element && f.path)).toBe(true);
+      const t = r.content[0]!.text;
+      expect(t.match(/CII-DT-031/g)!.length).toBe(1);
+      expect(t).toMatch(/\[FATAL\] CII-DT-031, 15 places: ChargeAmount \(lines 1, 2, 3\)/);
+      expect(t).toMatch(/Fix: Remove the currencyID attribute/);
+    }, 60_000);
+
     it('validate_invoice: not XML is an isError result; neither/both inputs are refused; country layers run', async () => {
       const notXml = await call(h, 'validate_invoice', { xml: 'this is not xml' });
       expect(notXml.isError).toBe(true);
