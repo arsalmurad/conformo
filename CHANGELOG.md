@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.2.4 (2026-11-10)
+
+Packages: @conformo/formats 0.2.1, @conformo/validate 0.2.2, @conformo/toolkit 0.2.3, @conformo/cli 0.2.3, @conformo/mcp-server 0.2.4, @conformo/server 0.2.4.
+
+- **Unknown XRechnung identifiers are now rejected, like the official KoSIT validator does.** KoSIT picks its rule set by comparing BT-24 character for
+  character with its known identifiers. A document whose BT-24 names XRechnung but is not exactly one of them (for example
+  `urn:xoev-de:kosit:standard:xrechnung_3.0`, the same with the older `urn:cen.eu:en16931:2017#compliant#` prefix, or the correct identifier with a space
+  at the end) finds no rule set there and is rejected. Conformo used to treat such a file as XRechnung 3.0, show only a BR-DE-21 warning and call it valid. It now
+  reports an error, `XRECHNUNG-ID-UNKNOWN`, which names the identifier it found and the one KoSIT expects, and still runs all rule sets so the other findings
+  are listed. `conformo explain XRECHNUNG-ID-UNKNOWN` explains it. The extension identifier is not accepted on a UBL CreditNote, because KoSIT has no extension scenario for that
+  document type. Plain EN 16931, Peppol and Factur-X / ZUGFeRD identifiers are not affected. A BT-24 that does not name XRechnung at all still only gets the
+  existing warning; `docs/KNOWN-GAPS.md` says why.
+- **Notice for a wrong Leitweg-ID check digit.** KoSIT and Mustang do not check the two check digits at the end of a Leitweg-ID (ISO/IEC 7064 MOD 97-10). When
+  BT-10 has the shape of a Leitweg-ID and the digits are wrong, the result now carries a `LEITWEG-CHECK-DIGITS` warning that names the digits it should have.
+  It is a Conformo check, not a KoSIT rule, and it never changes the verdict. Nothing is said when BT-10 is not shaped like a Leitweg-ID. The shape test now follows the
+  format specification (the optional fine address may be empty and letters may be in either case).
+- **`conformo explain BR-DE-21`** now has a plain explanation and lists both XRechnung rule sets (it fired on CII too, but only the UBL one was shown). The
+  official wording of a rule is no longer cut off at its first quotation mark.
+- **The conformance corpus now includes scenario-selection cases.** Until now every official test invoice carried a correct BT-24, so the comparison with KoSIT
+  only covered the rules, not the choice of rule set. A generated corpus of wrong identifiers, whitespace, letter case and the extension identifier on a CreditNote
+  (CII, UBL Invoice, UBL CreditNote; 30 files) is now compared with KoSIT as well. KoSIT's "no scenario" counts as a rejection there. Agreement is 30 of 30, and 100% on the official test invoices as before.
+
 ## 0.2.3 (2026-11-06)
 
 Packages: @conformo/validate 0.2.1, @conformo/parse 0.2.2, @conformo/toolkit 0.2.2, @conformo/cli 0.2.2, @conformo/mcp-server 0.2.3, @conformo/server 0.2.3.

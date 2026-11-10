@@ -1,6 +1,6 @@
 {
   "name": "@conformo/formats",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Serializes the EN 16931 invoice model to Factur-X/ZUGFeRD (CII), UBL 2.1, XRechnung and Peppol BIS XML.",
   "author": "Muhammad Arsal Murad",
   "license": "Apache-2.0",
