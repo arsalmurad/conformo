@@ -98,6 +98,19 @@ export function existingBranchAction(branchOnOrigin, prUrl) {
   return prUrl ? 'skip' : 'reuse';
 }
 
+/**
+ * Check out a branch an earlier run pushed, brought up to date with main, so that pushing to it is a fast-forward (no
+ * force) and the pull request's diff is only what this run changes. The merge prefers main's side on a conflict: the
+ * manifest and docs/CONFORMANCE.md are rewritten afterwards from main's state anyway. Call it before touching files.
+ */
+export function baseOnPushedBranch(branch, cwd = root) {
+  const g = (...args) => must('git', ['-c', `user.name=${AUTHOR.name}`, '-c', `user.email=${AUTHOR.email}`, ...args], { cwd });
+  if (g('rev-parse', '--is-shallow-repository') === 'true') g('fetch', '--no-tags', '--unshallow', 'origin');
+  g('fetch', '--no-tags', 'origin', `${branch}:refs/remotes/origin/${branch}`, '+refs/heads/main:refs/remotes/origin/main');
+  g('checkout', '-B', branch, `origin/${branch}`);
+  g('merge', '--no-edit', '-X', 'theirs', 'origin/main');
+}
+
 export function summarySection(conformanceMd) {
   const m = conformanceMd.match(/## Summary\n([\s\S]*?Overall reference agreement:[^\n]*)/);
   return m ? m[1].trim() : '';
@@ -211,7 +224,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     }
     if (action === 'reuse') {
       console.log(`${branch} exists on origin but has no pull request (an earlier run could not open it): running the gates again and opening it`);
-      must('git', ['fetch', 'origin', branch]);
+      baseOnPushedBranch(branch, root);
       reuseBranch = true;
     }
   }
@@ -229,10 +242,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   if (process.env.GITHUB_STEP_SUMMARY) writeFileSync(process.env.GITHUB_STEP_SUMMARY, `## ${pr.title}\n\n${pr.body}\n`, { flag: 'a' });
   if (!publish) process.exit(0);
 
-  git('checkout', '-B', branch);
-  // Reusing a pushed branch: move the branch to its remote tip but keep the files just produced, so the push is a
-  // fast-forward (no force) and a commit is only made if the result differs from what is already there.
-  if (reuseBranch) git('reset', '--soft', `origin/${branch}`);
+  if (!reuseBranch) git('checkout', '-b', branch);
   git('add', 'tools/artefacts.manifest.json', ...(conformanceRan ? ['docs/CONFORMANCE.md'] : []));
   if (reuseBranch && run('git', ['diff', '--cached', '--quiet']).status === 0) console.log('the pushed branch already holds exactly this result');
   else git('commit', '-m', `${pr.title}\n\n${changes.map((c) => `${c.id}: ${c.from} -> ${c.to}`).join('\n')}`);
