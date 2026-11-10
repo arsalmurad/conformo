@@ -1,4 +1,4 @@
-import { detectDocument } from "./detect.js";
+import { detectDocument, isUnknownXrechnungId, KOSIT_XRECHNUNG_IDS } from "./detect.js";
 import { parseSvrl } from "./svrl.js";
 import { getPlainLanguageMessage } from "./messages/index.js";
 import { describeLocation } from "./location.js";
@@ -100,6 +100,21 @@ export function createEngine(deps: EngineDeps) {
         message: detected.customizationId
           ? `BT-24 "${detected.customizationId}" is not a profile Conformo recognises; only the plain EN 16931 rules were applied.`
           : "BT-24 (specification identifier) is missing; only the plain EN 16931 rules were applied.",
+      });
+    }
+    // Same test as the KoSIT validator's scenarios: exact text equality on BT-24. An id that names XRechnung but is not
+    // one of them finds no scenario there and the file is rejected, so it must not end up "valid" here. The rule sets
+    // still run, so everything else is reported too.
+    const rawId = detected.customizationIdRaw ?? detected.customizationId;
+    if (isUnknownXrechnungId(detected.syntax, rawId)) {
+      const expected = detected.syntax === "ubl-creditnote"
+        ? `"${KOSIT_XRECHNUNG_IDS.standard}"`
+        : `"${KOSIT_XRECHNUNG_IDS.standard}" (for the XRechnung extension: "${KOSIT_XRECHNUNG_IDS.extension}")`;
+      notices.push({
+        severity: "error", code: "XRECHNUNG-ID-UNKNOWN",
+        message: `BT-24 is ${JSON.stringify(rawId)}. It names XRechnung, but it is not an identifier the official KoSIT validator knows. ` +
+          `For XRechnung 3.0 it expects exactly ${expected}. For any other value it finds no matching scenario and rejects the file. ` +
+          "The rule sets were still run, so the other findings are listed as usual.",
       });
     }
     if (profile === "minimum" || profile === "basicwl") {

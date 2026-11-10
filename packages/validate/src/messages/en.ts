@@ -1396,4 +1396,14 @@ export const en: Record<string, PlainLanguageMessage> = {
     why: "A receiver needs the filename attribute on the embedded binary object to save the attachment under a usable name.",
     fix: "Add a filename attribute to the EmbeddedDocumentBinaryObject, for example filename=\"timesheet.pdf\".",
   },
+  "BR-DE-21": {
+    summary: "The Specification identifier (BT-24) does not have the exact form of the XRechnung identifier.",
+    why: "XRechnung receivers and the official KoSIT validator pick the rule set from BT-24. Only the published identifiers are recognised.",
+    fix: "Set BT-24 to \"urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0\" for XRechnung 3.0, or to the extension identifier if you use the XRechnung extension. Older forms such as \"urn:xoev-de:kosit:standard:xrechnung_3.0\" are not recognised.",
+  },
+  "XRECHNUNG-ID-UNKNOWN": {
+    summary: "BT-24 names XRechnung, but it is not one of the identifiers the official KoSIT validator has a scenario for.",
+    why: "The KoSIT validator compares BT-24 character for character (whitespace included) with its known identifiers. If none matches, it finds no scenario and rejects the file. This is a Conformo check that mirrors that behaviour; it is not a Schematron rule.",
+    fix: "Set BT-24 (UBL: cbc:CustomizationID, CII: GuidelineSpecifiedDocumentContextParameter/ID) to exactly \"urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0\", or to the extension identifier \"urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0#conformant#urn:xeinkauf.de:kosit:extension:xrechnung_3.0\" (not available for a UBL CreditNote). Remove any leading or trailing space. The old form \"urn:xoev-de:kosit:standard:xrechnung_3.0\" (XRechnung 3.0.0 and earlier) is no longer recognised.",
+  },
 };

@@ -15,7 +15,7 @@ export interface RuleExplanation {
 }
 
 const artefacts = fileURLToPath(new URL('../../validate/artefacts/', import.meta.url));
-const SETS = ['en16931-ubl', 'en16931-cii', 'xrechnung-ubl', 'peppol-ubl', 'fr-ctc'];
+const SETS = ['en16931-ubl', 'en16931-cii', 'xrechnung-ubl', 'xrechnung-cii', 'peppol-ubl', 'fr-ctc'];
 const texts = new Map<string, string>();
 
 function load(set: string): string {
@@ -35,11 +35,11 @@ const escapeRe = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 /** "BR-CO-15" -> the publishers' wording from the compiled rule sets plus our plain-language explanation. */
 export function explainRule(ruleId: string): RuleExplanation {
   const id = ruleId.trim();
-  const re = new RegExp(`\\[${escapeRe(id)}\\][-\\s]*([^"\\\\<]{5,600})`);
+  const re = new RegExp(`\\[${escapeRe(id)}\\][-\\s]*((?:[^"\\\\<]|\\\\"){5,600})`);
   const official: RuleExplanation['official'] = [];
   for (const set of SETS) {
     const m = re.exec(load(set));
-    if (m) official.push({ ruleSet: set, text: m[1]!.replace(/\s+/g, ' ').trim() });
+    if (m) official.push({ ruleSet: set, text: m[1]!.replace(/\\"/g, '"').replace(/\s+/g, ' ').trim() });
   }
   const plainLanguage = getPlainLanguageMessage(id, 'en', official[0]?.text);
   return { ruleId: id, found: official.length > 0 || !!plainLanguage, official, ...(plainLanguage ? { plainLanguage } : {}) };

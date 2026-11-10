@@ -56,6 +56,8 @@ export interface DetectedDocument {
   syntax: Syntax;
   /** BT-24, verbatim, when present. */
   customizationId?: string;
+  /** BT-24 exactly as written; only set when it differs from `customizationId` (surrounding whitespace). */
+  customizationIdRaw?: string;
   /** BT-23, verbatim, when present. */
   businessProcess?: string;
   profile: Profile;
