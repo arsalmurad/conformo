@@ -171,6 +171,15 @@ function suite(label: string, connect: () => Promise<Harness>): void {
       expect(r.content[0]!.text).toMatch(/^INVALID/);
     }, 60_000);
 
+    it('validate_invoice counts a Conformo check apart from the official rules in its text and in structuredContent.summary', async () => {
+      const created = await call(h, 'create_invoice', { invoice: fixture('xrechnung-public-sector.json'), format: 'xrechnung-cii' });
+      const xml = (created.structuredContent!.xml as string).replace('urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0', 'urn:xoev-de:kosit:standard:xrechnung_3.0');
+      const r = await call(h, 'validate_invoice', { xml });
+      expect(r.content[0]!.text).toMatch(/^INVALID — \d+ official rules checked, 0 failed, \d+ advisory; 1 Conformo check failed \(XRECHNUNG-ID-UNKNOWN\)\./);
+      expect(r.structuredContent!.summary.conformoErrors[0].code).toBe('XRECHNUNG-ID-UNKNOWN');
+      expect(r.structuredContent!.summary.official.failed).toBe(0);
+    }, 60_000);
+
     it('validate_invoice groups repeated hits of one rule in its text and keeps one entry per hit in structuredContent', async () => {
       const xml = fs.readFileSync(path.join(root, 'fixtures', 'negative', 'currency-id-on-amounts.xml'), 'utf8');
       const r = await call(h, 'validate_invoice', { xml });

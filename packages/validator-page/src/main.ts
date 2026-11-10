@@ -1,6 +1,6 @@
 import { extractEmbeddedXml, detectXmlFormat } from '@conformo/parse';
 import type { Invoice } from '@conformo/core';
-import { describePlaces, groupResults } from '@conformo/validate/page';
+import { describePlaces, groupResults, summarizeResult } from '@conformo/validate/page';
 import type { RuleGroup, RuleResult, ValidationResult } from '@conformo/validate/page';
 import { validateInvoiceXml } from './browserValidator.js';
 // The same field-level, plain-language wording as the app (English and German), so both say the same thing about the
@@ -48,6 +48,8 @@ const S = {
     notInvoice: 'This is not an e-invoice we can read',
     notInvoiceSub: 'Use a ZUGFeRD or Factur-X PDF, or an XRechnung, CII or UBL XML file.',
     xsd: 'The file does not match the official XML schema.',
+    conformoCheck: 'Conformo check',
+    notes: 'Notes from Conformo (not part of the official rules)',
     technical: 'Technical details',
     rule: 'Rule',
     places: (n: number) => `${n} places`,
@@ -89,6 +91,8 @@ const S = {
     notInvoice: 'Das ist keine lesbare E-Rechnung',
     notInvoiceSub: 'Verwenden Sie ein ZUGFeRD- oder Factur-X-PDF oder eine XRechnung-, CII- oder UBL-XML-Datei.',
     xsd: 'Die Datei entspricht nicht dem offiziellen XML-Schema.',
+    conformoCheck: 'Conformo-Prüfung',
+    notes: 'Hinweise von Conformo (nicht Teil der offiziellen Regeln)',
     technical: 'Technische Details',
     rule: 'Regel',
     places: (n: number) => `${n} Stellen`,
@@ -203,14 +207,17 @@ function render(): void {
   const failures = r.results.filter((x) => x.severity === 'error' || x.severity === 'fatal');
   const advisories = r.results.filter((x) => x.severity === 'warning' || x.severity === 'info');
   const xsdFailed = r.xsd.ran && r.xsd.valid === false;
-  const count = failures.length + (xsdFailed ? 1 : 0);
+  // Conformo's own error checks (e.g. XRECHNUNG-ID-UNKNOWN) reject the file too, so they are counted and listed like rule failures.
+  const conformoErrors = r.notices.filter((n) => n.severity === 'error');
+  const conformoNotes = r.notices.filter((n) => n.severity !== 'error');
+  const count = failures.length + (xsdFailed ? 1 : 0) + conformoErrors.length;
   if (r.valid) {
     result.className = 'seal seal-ok'; mark.textContent = '✓';
     title.textContent = t.accepted(std); sub.textContent = `${name ? `${t.loaded(name)}. ` : ''}${t.acceptedSub}`;
   } else {
     result.className = 'seal seal-bad'; mark.textContent = String(count);
     title.textContent = t.rejected(count); sub.textContent = t.rejectedSub(std);
-    fixes.innerHTML = (xsdFailed ? `<li class="vp-fix"><p class="vp-fix-text">${esc(t.xsd)}</p></li>` : '') + groupResults(failures).map((g) => fixItem(failures.find((x) => x.ruleId === g.ruleId && x.ruleSet === g.ruleSet && x.severity === g.severity)!, invoice, r.ruleSets.some((x) => x.id.startsWith('xrechnung')), g.count > 1 ? g : undefined)).join('');
+    fixes.innerHTML = (xsdFailed ? `<li class="vp-fix"><p class="vp-fix-text">${esc(t.xsd)}</p></li>` : '') + conformoErrors.map((n) => `<li class="vp-fix"><p class="vp-fix-text">${esc(n.message)}</p><p class="vp-fix-rule">${esc(t.conformoCheck)} ${esc(n.code)}</p></li>`).join('') + groupResults(failures).map((g) => fixItem(failures.find((x) => x.ruleId === g.ruleId && x.ruleSet === g.ruleSet && x.severity === g.severity)!, invoice, r.ruleSets.some((x) => x.id.startsWith('xrechnung')), g.count > 1 ? g : undefined)).join('');
   }
   tech.hidden = false;
   const sets = r.ruleSets.map((s) => `<li>${esc(s.label)} (${esc(s.source)}): ${esc(t.fired(s.fired, s.failed))}</li>`).join('');
@@ -218,7 +225,10 @@ function render(): void {
   const adv = advisories.length
     ? `<p>${esc(t.warnings)}:</p><ul>${groupResults(advisories).map((g) => `<li><strong>${esc(g.ruleId)}</strong> ${esc(g.message)}${g.count > 1 ? ` (${esc(t.places(g.count))}: ${esc(describePlaces(g))})` : ''}</li>`).join('')}</ul>`
     : '';
-  techBody.innerHTML = `<p>${esc(t.ruleSets)}:</p><ul>${sets}${xsd}</ul>${adv}`;
+  const notes = conformoNotes.length
+    ? `<p>${esc(t.notes)}:</p><ul>${conformoNotes.map((n) => `<li><strong>${esc(n.code)}</strong> ${esc(n.message)}</li>`).join('')}</ul>`
+    : '';
+  techBody.innerHTML = `<p>${esc(t.ruleSets)}:</p><ul>${sets}${xsd}</ul>${adv}${notes}`;
 }
 
 function set(state: typeof last): void {
@@ -241,6 +251,7 @@ async function check(xml: string, name?: string): Promise<void> {
   try {
     const country = countrySelect.value as 'FR' | 'DE' | '';
     const r = await validateInvoiceXml(xml, country ? { country } : {});
+    r.summary = summarizeResult(r);
     let invoice: Invoice | undefined;
     try { invoice = detectXmlFormat(xml).invoice; } catch { invoice = undefined; }
     if (mine === run) {

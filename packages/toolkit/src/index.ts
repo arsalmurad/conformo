@@ -4,7 +4,7 @@
  */
 import { detectXmlFormat, extractEmbeddedXml, inspectPdfContainer, readInvoiceFromPdf } from '@conformo/parse';
 import type { PdfInvoiceResult } from '@conformo/parse';
-import { validate as validateXmlText } from '@conformo/validate';
+import { summarizeResult, validate as validateXmlText } from '@conformo/validate';
 import type { ValidateOptions, ValidationResult } from '@conformo/validate';
 import { totals } from '@conformo/core';
 import type { Invoice } from '@conformo/core';
@@ -28,8 +28,8 @@ export type { CountryRequirements } from './requirements.js';
 export { checkInvoice, InvoiceInputError } from '@conformo/core';
 export type { Invoice, InvoiceIssue } from '@conformo/core';
 export { ValidationInputError } from '@conformo/validate';
-export { groupResults, groupHeading, describePlaces } from '@conformo/validate';
-export type { ValidationResult, ValidateOptions, RuleGroup, RuleResult } from '@conformo/validate';
+export { groupResults, groupHeading, describePlaces, summarizeResult } from '@conformo/validate';
+export type { ValidationResult, ValidateOptions, RuleGroup, RuleResult, ResultSummary } from '@conformo/validate';
 
 export type InvoiceSource = string | Uint8Array;
 
@@ -60,6 +60,7 @@ export async function validate(input: InvoiceSource, options: ValidateOptions = 
   result.notices.push(...leitwegNotices(xml));
   // PDF container: what the file says about itself (XMP schema and version, file name), as notices; never affects `valid`.
   if (origin === 'pdf' && typeof input !== 'string') result.notices.push(...containerNotices(await inspectPdfContainer(input), result.detected));
+  result.summary = summarizeResult(result);
   return { ...result, origin, ...(embeddedFilename ? { embeddedFilename } : {}) };
 }
 

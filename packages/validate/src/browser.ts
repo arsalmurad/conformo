@@ -8,6 +8,8 @@ export type {
 export { ValidationInputError } from "./types.js";
 export { detectDocument, profileFromCustomizationId } from "./detect.js";
 export { planRulesets } from "./engine.js";
+export { summarizeResult } from "./summary.js";
+export type { ResultSummary } from "./summary.js";
 
 export interface BrowserValidatorOptions {
   /** The `SaxonJS` global left by loading `SaxonJS2.rt.js` (runtime-only build: see tools/fetch-artefacts.mjs). */

@@ -1,3 +1,5 @@
+import type { ResultSummary } from "./summary.js";
+
 /** A rule violation as reported by the Schematron, translated into a shape a
  * caller can render without knowing SVRL. */
 export interface RuleResult {
@@ -117,6 +119,9 @@ export interface ValidationResult {
   ruleSets: RuleSetRun[];
   xsd: XsdRun;
   notices: Notice[];
+  /** The verdict in numbers, Conformo's own checks counted apart from the official rules. Set by validate(); the
+   * toolkit sets it again once it has added its own notices. */
+  summary?: ResultSummary;
 }
 
 /** The subset of the SaxonJS API (identical between the `saxon-js` Node package and the browser

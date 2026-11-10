@@ -1,4 +1,4 @@
-import { groupHeading, groupResults, validate } from "@conformo/toolkit";
+import { groupHeading, groupResults, summarizeResult, validate } from "@conformo/toolkit";
 import type { ValidatedDocument } from "@conformo/toolkit";
 import { bool, parseArgs, str, UsageError } from "../args.js";
 import { line, readInput } from "../io.js";
@@ -105,7 +105,7 @@ export async function validateCommand(argv: string[], io: Io): Promise<number> {
     }
   }
 
-  io.out(`\n${result.valid ? "VALID" : "INVALID"} — ${result.firedCount} rules checked, ${failures.length} failed, ${advisory.length} advisory.\n`);
+  io.out(`\n${summarizeResult(result).text}\n`);
   return result.valid ? 0 : 1;
 }
 

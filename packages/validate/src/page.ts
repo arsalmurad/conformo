@@ -3,6 +3,8 @@ import type { SaxonJSLike, ValidateOptions, ValidationResult } from "./types.js"
 
 export type { ValidateOptions, ValidationResult, RuleResult } from "./types.js";
 export { groupResults, describePlaces } from "./group.js";
+export { summarizeResult } from "./summary.js";
+export type { ResultSummary } from "./summary.js";
 export type { RuleGroup } from "./group.js";
 
 /**

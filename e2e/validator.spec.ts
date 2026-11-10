@@ -62,3 +62,11 @@ test('German: the verdict and the fix are in German', async ({ page }) => {
   await expect(page.getByRole('heading', { name: '1 Problem führt zur Ablehnung' })).toBeVisible({ timeout: 20_000 });
   await expect(page.locator('#fixes')).toContainText('Tragen Sie die Leitweg-ID Ihres Kunden ein.');
 });
+
+test('an XRechnung identifier KoSIT does not know is counted as a problem and listed, not shown as "0 problems"', async ({ page }) => {
+  const oldId = good.replace(/(<cbc:CustomizationID>)[^<]*(<\/cbc:CustomizationID>)/, '$1urn:xoev-de:kosit:standard:xrechnung_3.0$2');
+  await page.goto(VALIDATOR);
+  await choose(page, 'old-id.xml', oldId);
+  await expect(page.getByRole('heading', { name: '1 problem will get this invoice rejected' })).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator('#fixes')).toContainText('XRECHNUNG-ID-UNKNOWN');
+});

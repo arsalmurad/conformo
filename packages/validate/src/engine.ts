@@ -2,6 +2,7 @@ import { detectDocument, isUnknownXrechnungId, KOSIT_XRECHNUNG_IDS } from "./det
 import { parseSvrl } from "./svrl.js";
 import { getPlainLanguageMessage } from "./messages/index.js";
 import { describeLocation } from "./location.js";
+import { summarizeResult } from "./summary.js";
 import type {
   CompiledSchematron, DetectedDocument, Notice, Profile, RuleResult, RuleSetRun, RulesetLoader,
   SaxonJSLike, Syntax, ValidateOptions, ValidationResult, XsdRun, XsdRunner,
@@ -168,9 +169,11 @@ export function createEngine(deps: EngineDeps) {
 
     const failures = results.filter((r) => r.severity === "error" || r.severity === "fatal");
     const valid = failures.length === 0 && xsd.valid !== false && !notices.some((n) => n.severity === "error");
-    return {
+    const outcome: ValidationResult = {
       valid, firedCount: runs.reduce((s, r) => s + r.fired, 0), results, detected, ruleSets: runs, xsd, notices,
     };
+    outcome.summary = summarizeResult(outcome);
+    return outcome;
   }
 
   return { validate };

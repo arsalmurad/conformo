@@ -76,6 +76,11 @@ export const validationResponse = z.object({
   ruleSets: z.array(z.object({ id: z.string(), label: z.string(), source: z.string(), fired: z.number(), failed: z.number(), advisory: z.number() })).describe('Exactly the rule sets that ran. Never claim more than this list.'),
   xsd: z.object({ ran: z.boolean(), schema: z.string().optional(), valid: z.boolean().optional(), errors: z.array(z.string()), skippedReason: z.string().optional() }),
   notices: z.array(z.object({ severity: z.enum(['error', 'warning', 'info']), code: z.string(), message: z.string() })),
+  summary: z.object({
+    official: z.object({ checked: z.number(), failed: z.number(), advisory: z.number() }).describe('What the official rule sets report.'),
+    conformoErrors: z.array(z.object({ code: z.string(), message: z.string() })).describe("Conformo's own checks that failed (error-level notices), counted apart from the official rules."),
+    xsdFailed: z.boolean(), text: z.string().describe('The one-line verdict, e.g. "INVALID - 89 official rules checked, 0 failed, 0 advisory; 1 Conformo check failed (XRECHNUNG-ID-UNKNOWN)."'),
+  }).optional().describe('The verdict in numbers, with Conformo checks counted apart from the official rule sets.'),
 });
 const totalsCheck = z.object({ matches: z.boolean(), differences: z.array(z.string()) }).describe('Whether the totals stated in the document equal the totals recomputed from its lines.');
 export const convertResponse = z.object({ xml: z.string(), from: z.enum(['cii', 'ubl-invoice', 'ubl-credit-note']), to: formatEnum, warnings: z.array(z.string()), totalsCheck });

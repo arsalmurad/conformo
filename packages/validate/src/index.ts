@@ -18,6 +18,8 @@ export { describeLocation } from "./location.js";
 export type { ResultPlace } from "./location.js";
 export { detectDocument, profileFromCustomizationId, KOSIT_XRECHNUNG_IDS, isUnknownXrechnungId } from "./detect.js";
 export { planRulesets } from "./engine.js";
+export { summarizeResult } from "./summary.js";
+export type { ResultSummary } from "./summary.js";
 
 const artefactsDir = fileURLToPath(new URL("../artefacts/", import.meta.url));
 

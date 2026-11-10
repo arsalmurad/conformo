@@ -8,7 +8,7 @@ import path from 'node:path';
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import {
-  checkInvoice, convert, createPdf, createXml, explainRule, getRequirements, groupHeading, groupResults, parse, validate,
+  checkInvoice, convert, createPdf, createXml, explainRule, getRequirements, groupHeading, groupResults, parse, summarizeResult, validate,
   FORMAT_DESCRIPTIONS, FORMAT_IDS, InvoiceInputError, PDF_LANGUAGES, PDF_PROFILES, SUPPORTED_COUNTRIES, ValidationInputError,
 } from '@conformo/toolkit';
 import type { Invoice } from '@conformo/toolkit';
@@ -209,6 +209,12 @@ export function registerTools(server: McpServer): void {
         skippedReason: z.string().optional().describe('Why XSD did not run, when it did not.'),
       }).describe('XML Schema check.'),
       notices: z.array(z.object({ severity: z.string(), code: z.string(), message: z.string() })).describe('Findings about the document that are not Schematron rules, e.g. an unrecognised profile, or (with country DE) a profile not acceptable for German B2B. An error-level notice makes valid false.'),
+      summary: z.object({
+        official: z.object({ checked: z.number(), failed: z.number(), advisory: z.number() }).describe('What the official rule sets report.'),
+        conformoErrors: z.array(z.object({ code: z.string(), message: z.string() })).describe("Conformo's own checks that failed (error-level notices), counted apart from the official rules."),
+        xsdFailed: z.boolean().describe('The XML schema check ran and failed.'),
+        text: z.string().describe('The one-line verdict.'),
+      }).describe('The verdict in numbers, with Conformo checks counted apart from the official rule sets.'),
       failures: z.array(ruleResultShape).describe('Error-level rules that failed; any entry makes valid false.'),
       advisories: z.array(ruleResultShape).describe('Warning or info rules that fired; they do not make the invoice invalid.'),
     },
@@ -217,8 +223,9 @@ export function registerTools(server: McpServer): void {
     const r = await validate(sourceOf(a), { ...(a.country ? { country: a.country } : {}), ...(a.profile ? { profile: a.profile } : {}), ...(a.xsd !== undefined ? { xsd: a.xsd } : {}) });
     const failures = r.results.filter((x) => x.severity === 'error' || x.severity === 'fatal');
     const advisories = r.results.filter((x) => x.severity === 'warning' || x.severity === 'info');
+    const summary = summarizeResult(r);
     const lines = [
-      `${r.valid ? 'VALID' : 'INVALID'}: ${r.detected.syntax} / ${r.detected.profile}; rule sets run: ${r.ruleSets.map((s) => s.id).join(', ') || '(none)'}; ${r.firedCount} rules fired, ${failures.length} failed, ${advisories.length} advisory.`,
+      `${summary.text} ${r.detected.syntax} / ${r.detected.profile}; rule sets run: ${r.ruleSets.map((s) => s.id).join(', ') || '(none)'}.`,
       r.xsd.ran ? `XSD (${r.xsd.schema ?? '?'}): ${r.xsd.valid ? 'passed' : `FAILED: ${r.xsd.errors.slice(0, 5).join(' | ')}`}` : `XSD not run: ${r.xsd.skippedReason ?? 'disabled'}`,
       ...r.notices.map((n) => `Notice [${n.severity}] ${n.code}: ${n.message}`),
       // Repeated hits of one rule are one entry ("CII-DT-031, 12 places: ..."); structuredContent keeps one entry per hit.
@@ -228,7 +235,7 @@ export function registerTools(server: McpServer): void {
       content: [text(lines.join('\n'))],
       structuredContent: {
         valid: r.valid, origin: r.origin, ...(r.embeddedFilename ? { embeddedFilename: r.embeddedFilename } : {}),
-        detected: r.detected, firedCount: r.firedCount, ruleSets: r.ruleSets, xsd: r.xsd, notices: r.notices, failures, advisories,
+        detected: r.detected, firedCount: r.firedCount, ruleSets: r.ruleSets, xsd: r.xsd, notices: r.notices, summary, failures, advisories,
       },
     };
   }));
