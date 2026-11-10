@@ -1,6 +1,7 @@
 import { extractEmbeddedXml, detectXmlFormat } from '@conformo/parse';
 import type { Invoice } from '@conformo/core';
-import type { RuleResult, ValidationResult } from '@conformo/validate/page';
+import { describePlaces, groupResults } from '@conformo/validate/page';
+import type { RuleGroup, RuleResult, ValidationResult } from '@conformo/validate/page';
 import { validateInvoiceXml } from './browserValidator.js';
 // The same field-level, plain-language wording as the app (English and German), so both say the same thing about the
 // same rule. Imported from the app's source: one table, two pages.
@@ -49,6 +50,7 @@ const S = {
     xsd: 'The file does not match the official XML schema.',
     technical: 'Technical details',
     rule: 'Rule',
+    places: (n: number) => `${n} places`,
     ruleSets: 'Rule sets that ran',
     fired: (f: number, x: number) => `${f} rules applied, ${x} failed`,
     xsdNotRun: 'XML schema (XSD) not checked in the browser',
@@ -89,6 +91,7 @@ const S = {
     xsd: 'Die Datei entspricht nicht dem offiziellen XML-Schema.',
     technical: 'Technische Details',
     rule: 'Regel',
+    places: (n: number) => `${n} Stellen`,
     ruleSets: 'Geprüfte Regelwerke',
     fired: (f: number, x: number) => `${f} Regeln angewendet, ${x} nicht erfüllt`,
     xsdNotRun: 'XML-Schema (XSD) wird im Browser nicht geprüft',
@@ -151,7 +154,7 @@ function esc(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-function fixItem(rule: RuleResult, invoice: Invoice | undefined, xrechnung: boolean): string {
+function fixItem(rule: RuleResult, invoice: Invoice | undefined, xrechnung: boolean, group?: RuleGroup): string {
   const t = S[lang];
   let field: string | undefined;
   let text = rule.plainLanguage?.summary ?? rule.message;
@@ -169,7 +172,7 @@ function fixItem(rule: RuleResult, invoice: Invoice | undefined, xrechnung: bool
     ${field ? `<p class="vp-fix-field">${esc(field)}</p>` : ''}
     <p class="vp-fix-text">${esc(text)}</p>
     ${fix ? `<p class="vp-fix-how">${esc(fix)}</p>` : ''}
-    <p class="vp-fix-rule">${esc(t.rule)} ${esc(rule.ruleId)}${rule.message !== text ? ` · ${esc(rule.message)}` : ''}</p>
+    <p class="vp-fix-rule">${esc(t.rule)} ${esc(rule.ruleId)}${group ? ` · ${esc(t.places(group.count))}: ${esc(describePlaces(group))}` : rule.path ? ` · ${esc(rule.path)}` : ''}${rule.message !== text ? ` · ${esc(rule.message)}` : ''}</p>
   </li>`;
 }
 
@@ -207,13 +210,13 @@ function render(): void {
   } else {
     result.className = 'seal seal-bad'; mark.textContent = String(count);
     title.textContent = t.rejected(count); sub.textContent = t.rejectedSub(std);
-    fixes.innerHTML = (xsdFailed ? `<li class="vp-fix"><p class="vp-fix-text">${esc(t.xsd)}</p></li>` : '') + failures.map((f) => fixItem(f, invoice, r.ruleSets.some((x) => x.id.startsWith('xrechnung')))).join('');
+    fixes.innerHTML = (xsdFailed ? `<li class="vp-fix"><p class="vp-fix-text">${esc(t.xsd)}</p></li>` : '') + groupResults(failures).map((g) => fixItem(failures.find((x) => x.ruleId === g.ruleId && x.ruleSet === g.ruleSet && x.severity === g.severity)!, invoice, r.ruleSets.some((x) => x.id.startsWith('xrechnung')), g.count > 1 ? g : undefined)).join('');
   }
   tech.hidden = false;
   const sets = r.ruleSets.map((s) => `<li>${esc(s.label)} (${esc(s.source)}): ${esc(t.fired(s.fired, s.failed))}</li>`).join('');
   const xsd = r.xsd.ran ? `<li>XSD ${esc(r.xsd.schema ?? '')}: ${r.xsd.valid ? 'OK' : esc(r.xsd.errors.join('; '))}</li>` : `<li>${esc(t.xsdNotRun)}</li>`;
   const adv = advisories.length
-    ? `<p>${esc(t.warnings)}:</p><ul>${advisories.map((a) => `<li><strong>${esc(a.ruleId)}</strong> ${esc(a.message)}</li>`).join('')}</ul>`
+    ? `<p>${esc(t.warnings)}:</p><ul>${groupResults(advisories).map((g) => `<li><strong>${esc(g.ruleId)}</strong> ${esc(g.message)}${g.count > 1 ? ` (${esc(t.places(g.count))}: ${esc(describePlaces(g))})` : ''}</li>`).join('')}</ul>`
     : '';
   techBody.innerHTML = `<p>${esc(t.ruleSets)}:</p><ul>${sets}${xsd}</ul>${adv}`;
 }

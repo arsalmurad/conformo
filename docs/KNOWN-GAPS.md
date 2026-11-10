@@ -18,6 +18,7 @@ What is not done or not verified, and why. Nothing here is hidden elsewhere.
 - **Extension-only terms** such as the XRechnung extension's third-party payment (BG-DEX-09) are not modelled. Converting such a document reports the total difference.
 - **Hungarian-style national rounding of VAT** is not implemented. A document stating VAT that differs from the computed value by more than one minor unit is
   converted with a warning (`parse().totalsCheck`).
+- **Other unknown BT-24 values are not rejected.** An identifier that does not name XRechnung (for example `urn:example:foo`) gets the plain EN 16931 rules and a `PROFILE-UNKNOWN` warning, and the document can still be valid. The official KoSIT validator finds no scenario for such a value and rejects it. Conformo does not copy that, because it also supports Peppol BIS and Factur-X / ZUGFeRD identifiers that KoSIT has no scenario for, and a national CIUS can carry its own identifier. Identifiers that name XRechnung (`xrechnung`, `xeinkauf` or `kosit`) are rejected like KoSIT does (`XRECHNUNG-ID-UNKNOWN`).
 - **The French CTC rules** are a pinned third-party artefact (factur-x 6.8, FNFE-MPE) that was not cross-checked against a second source in the conformance run.
 
 ## Verification gaps (v0.2 build environment)

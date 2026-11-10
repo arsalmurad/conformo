@@ -1,4 +1,4 @@
-import { validate } from "@conformo/toolkit";
+import { groupHeading, groupResults, validate } from "@conformo/toolkit";
 import type { ValidatedDocument } from "@conformo/toolkit";
 import { bool, parseArgs, str, UsageError } from "../args.js";
 import { line, readInput } from "../io.js";
@@ -86,15 +86,23 @@ export async function validateCommand(argv: string[], io: Io): Promise<number> {
   }
   for (const n of result.notices) io.out(line(`Notice [${n.severity}] ${n.code}: ${n.message}`));
 
-  for (const r of [...failures, ...advisory]) {
-    io.out(`\n[${SEVERITY_LABEL[r.severity]}] ${r.ruleId}${r.fields.length ? ` (${r.fields.join(", ")})` : ""}\n`);
-    io.out(line(`  ${r.message}`));
-    if (r.plainLanguage) {
-      io.out(line(`  What it means: ${r.plainLanguage.summary}`));
-      io.out(line(`  Why:           ${r.plainLanguage.why}`));
-      io.out(line(`  How to fix:    ${r.plainLanguage.fix}`));
+  // One block per rule: repeated hits of one rule are grouped ("CII-DT-031, 12 places: ..."). --json keeps one entry per hit.
+  for (const g of groupResults([...failures, ...advisory])) {
+    const fields = g.fields.length ? ` (${g.fields.join(", ")})` : "";
+    io.out(`\n[${SEVERITY_LABEL[g.severity]}] ${g.count > 1 ? groupHeading(g) : g.ruleId}${g.count > 1 ? "" : fields}\n`);
+    io.out(line(`  ${g.message}`));
+    if (g.plainLanguage) {
+      io.out(line(`  What it means: ${g.plainLanguage.summary}`));
+      io.out(line(`  Why:           ${g.plainLanguage.why}`));
+      io.out(line(`  How to fix:    ${g.plainLanguage.fix}`));
     }
-    if (r.xpath) io.out(line(`  Location: ${r.xpath}`));
+    if (g.count === 1) {
+      const p = g.places[0]!;
+      if (p.path) io.out(line(`  Where: ${p.path}`));
+      if (p.xpath) io.out(line(`  Location: ${p.xpath}`));
+    } else {
+      io.out(line(`  Fields: ${g.fields.length ? g.fields.join(", ") : "-"}; use --json for the exact location of every place.`));
+    }
   }
 
   io.out(`\n${result.valid ? "VALID" : "INVALID"} — ${result.firedCount} rules checked, ${failures.length} failed, ${advisory.length} advisory.\n`);

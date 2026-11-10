@@ -15,7 +15,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { gunzipSync } from "node:zlib";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import { buildCII, buildUBL } from "@conformo/formats";
+import { buildCII, buildUBL, buildXRechnungCII, buildXRechnungUBL } from "@conformo/formats";
 import { createBrowserValidator } from "@conformo/validate/browser";
 import type { SaxonJSLike } from "@conformo/validate";
 import type { Invoice } from "@conformo/core";
@@ -88,6 +88,26 @@ describe.skipIf(skip)("the validator inside a browser environment (happy-dom, no
     expect(result.ruleSets.map((r) => r.id)).toEqual(["en16931-ubl", "xrechnung-ubl"]);
     expect(result.xsd.ran).toBe(false); // documented limitation, reported rather than hidden
     expect(result.xsd.skippedReason).toMatch(/browser/);
+  });
+
+// SaxonJS computes xs:integer with doubles; the IBAN mod-97 check of the KoSIT rules needs up to 34 digits. The
+  // compile step patches the cast to xs:decimal (tools/rulesets-config.mjs, runtimePatches). Same pair of checks as in
+  // test/validate.test.ts, here through the browser runtime (SaxonJS2.rt.js) on both syntaxes.
+  it("a valid IBAN gives no BR-DE-19 / BR-DE-20 and an invalid one does, in the browser runtime", async () => {
+    const mk = (iban: string, code: "58" | "59"): Invoice => {
+      const inv = JSON.parse(JSON.stringify(xrechnung)) as Invoice;
+      inv.payment = code === "58"
+        ? { meansCode: "58", reference: inv.number, iban, accountName: inv.seller.name }
+        : { meansCode: "59", reference: inv.number, directDebit: { mandateId: "MANDAT-2026-1", creditorId: "DE98ZZZ09999999999", debitedAccountIban: iban } };
+      return inv;
+    };
+    const ids = async (xml: string) => (await browserValidate()(xml)).results.map((r) => r.ruleId);
+    for (const build of [buildXRechnungCII, buildXRechnungUBL]) {
+      expect(await ids(build(mk("DE89370400440532013000", "58")))).not.toContain("BR-DE-19");
+      expect(await ids(build(mk("DE89370400440532013001", "58")))).toContain("BR-DE-19");
+      expect(await ids(build(mk("DE89370400440532013000", "59")))).not.toContain("BR-DE-20");
+      expect(await ids(build(mk("DE89370400440532013001", "59")))).toContain("BR-DE-20");
+    }
   });
 
   // Regression: the browser entry used to skip the guard the Node entry point has always had, so

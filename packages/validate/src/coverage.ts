@@ -14,12 +14,15 @@ import fs from 'node:fs';
 import { gunzipSync } from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 import { en } from './messages/en.js';
+import { getPlainLanguageMessage } from './messages/index.js';
 
 export interface CoverageReport {
   totalRules: number;
   writtenRules: number;
   percent: number;
   missingRuleIds: string[];
+  /** The syntax-binding rules (CII-DT, CII-SR, UBL-CR, UBL-DT, UBL-SR): answered by hand-written entry or by family. */
+  syntax: { totalRules: number; withMessage: number; percent: number; missingRuleIds: string[] };
 }
 
 export class MissingSefError extends Error {
@@ -41,5 +44,15 @@ export function computeCoverage(sefPaths: string[] = ['en16931-cii', 'en16931-ub
   const writtenCount = allRuleIds.size - missing.length;
   const percent = Math.round((writtenCount / allRuleIds.size) * 1000) / 10;
 
-  return { totalRules: allRuleIds.size, writtenRules: writtenCount, percent, missingRuleIds: missing };
+  // Syntax rules: each id with the publisher's sentence, so the family resolver can be asked the same way the engine asks.
+  const syntaxText = new Map<string, string>();
+  for (const m of sef.matchAll(/\[((?:CII|UBL)-(?:DT|SR|CR)-\d+[a-z]*)\][-\s]*([^"\\<]{3,300})/g)) if (!syntaxText.has(m[1]!)) syntaxText.set(m[1]!, m[2]!.replace(/\s+/g, ' ').trim());
+  const syntaxMissing = [...syntaxText].filter(([id, text]) => !getPlainLanguageMessage(id, 'en', text)).map(([id]) => id).sort();
+  const syntaxTotal = syntaxText.size;
+  const syntaxPercent = syntaxTotal ? Math.round(((syntaxTotal - syntaxMissing.length) / syntaxTotal) * 1000) / 10 : 0;
+
+  return {
+    totalRules: allRuleIds.size, writtenRules: writtenCount, percent, missingRuleIds: missing,
+    syntax: { totalRules: syntaxTotal, withMessage: syntaxTotal - syntaxMissing.length, percent: syntaxPercent, missingRuleIds: syntaxMissing },
+  };
 }

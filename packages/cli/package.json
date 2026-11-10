@@ -1,6 +1,6 @@
 {
   "name": "@conformo/cli",
-  "version": "0.2.1",
+  "version": "0.2.3",
   "description": "Command-line validate and parse for EN 16931 electronic invoices (Factur-X/ZUGFeRD, CII, UBL, XRechnung).",
   "author": "Muhammad Arsal Murad",
   "license": "Apache-2.0",
@@ -27,8 +27,8 @@
   },
   "dependencies": {
     "@conformo/core": "^0.2.0",
-    "@conformo/parse": "^0.2.0",
-    "@conformo/toolkit": "^0.2.0",
-    "@conformo/validate": "^0.2.0"
+    "@conformo/parse": "^0.2.2",
+    "@conformo/toolkit": "^0.2.3",
+    "@conformo/validate": "^0.2.2"
   }
 }

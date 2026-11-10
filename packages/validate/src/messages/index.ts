@@ -1,5 +1,6 @@
 import type { PlainLanguageMessage } from "../types.js";
 import { en } from "./en.js";
+import { syntaxMessage } from "./syntax.js";
 
 /** Locale data lives one file per language beside this one (see en.ts); this
  * is the only place that knows which locale is "current". Only "en" exists
@@ -15,7 +16,9 @@ function baseRuleId(ruleId: string): string {
   return ruleId.split(/[_/]/)[0]!.replace(/-(?:LEGALID|GLOBALID)$/, "");
 }
 
-export function getPlainLanguageMessage(ruleId: string, locale = "en"): PlainLanguageMessage | undefined {
+/** The hand-written entry for the rule, else (for the syntax rules CII-DT/SR, UBL-CR/DT/SR) a message built from the
+ * rule's family and the official sentence, when the caller passes that sentence. */
+export function getPlainLanguageMessage(ruleId: string, locale = "en", officialMessage?: string): PlainLanguageMessage | undefined {
   const table = locales[locale] ?? locales.en!;
-  return table[ruleId] ?? table[baseRuleId(ruleId)];
+  return table[ruleId] ?? table[baseRuleId(ruleId)] ?? syntaxMessage(ruleId, officialMessage);
 }

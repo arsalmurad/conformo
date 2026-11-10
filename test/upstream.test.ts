@@ -189,8 +189,16 @@ describe('upstream-bump', () => {
   });
   it('reads KoSIT agreement from the generated conformance report', () => {
     const md = readFileSync(path.join(here, '../docs/CONFORMANCE.md'), 'utf-8');
-    expect(bump.kositAgreement(md)).toMatchObject({ known: true, full: true });
-    expect(bump.kositAgreement(md.replace('| n/a | 86/86 (100.0%) |', '| n/a | 85/86 (98.8%) |'))).toMatchObject({ full: false, agree: 113, total: 114 });
+    const whole = bump.kositAgreement(md);
+    expect(whole).toMatchObject({ known: true, full: true });
+    // One KoSIT disagreement in the first corpus (86 files) flips "full" to false and costs exactly one file of agreement.
+    expect(bump.kositAgreement(md.replace('| n/a | 86/86 (100.0%) |', '| n/a | 85/86 (98.8%) |'))).toMatchObject({ full: false, agree: whole.agree - 1, total: whole.total });
+  });
+  it('a pushed branch without a pull request is reused, not skipped', () => {
+    expect(bump.existingBranchAction(false, '')).toBe('new');
+    expect(bump.existingBranchAction(true, 'https://github.com/o/r/pull/4')).toBe('skip');
+    // The 5 Nov run pushed upstream/peppol-bis-3-3.0.22 but GitHub refused the PR; later runs must not call that handled.
+    expect(bump.existingBranchAction(true, '')).toBe('reuse');
   });
   it('a failed gate makes a draft "[needs work]" PR naming the step', () => {
     const changes = [{ id: 'cen-en16931', from: 'validation-1.3.17', to: 'validation-1.3.18' }];

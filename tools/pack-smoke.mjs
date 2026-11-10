@@ -9,6 +9,7 @@ import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdir
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { scanDir, scanTarball } from './path-leak-scan.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
@@ -52,6 +53,21 @@ for (const p of pkgs) {
   const out = sh(npm, ['pack', '--pack-destination', work, '--json'], { cwd: path.join(root, 'packages', p.dir, 'dist') });
   tarballs[p.json.name] = path.join(work, JSON.parse(out)[0].filename);
 }
+
+// No absolute local path or build-machine name may ship: scan every file of every tarball (and the content of every .gz
+// inside) and the built output of the three sites that exists. See tools/path-leak-scan.mjs for the patterns and the
+// small allowlist (the MCP server README names Claude Desktop / Claude Code as clients).
+let leaks = [];
+for (const [name, tgz] of Object.entries(tarballs)) leaks.push(...scanTarball(tgz, name));
+for (const d of ['validator-page/dist', 'ui/dist', 'docs-site/dist']) {
+  const dir = path.join(root, 'packages', d);
+  if (existsSync(dir)) leaks.push(...scanDir(dir, undefined, d).map((f) => `packages/${d}/${f}`));
+}
+if (leaks.length) {
+  console.error(`FAIL: ${leaks.length} local path / build-machine string(s) in what would be published:\n${leaks.slice(0, 40).join('\n')}`);
+  process.exit(1);
+}
+console.log(`ok   no local paths or build-machine names in ${Object.keys(tarballs).length} tarballs`);
 
 const proj = path.join(work, 'project');
 mkdirSync(proj);

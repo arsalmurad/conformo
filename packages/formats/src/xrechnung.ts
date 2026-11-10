@@ -20,7 +20,8 @@ import { buildUBL } from './ubl.js';
  * check digits themselves, letters mapped A=10 ... Z=35, exactly as for an IBAN.
  * This reproduces the published examples 992-90009-96 and 04011000-1234512345-06.
  */
-const LEITWEG = /^(\d{2,12})(?:-([0-9A-Za-z]{1,30}))?-(\d{2})$/;
+// Pattern of the Leitweg-ID Formatspezifikation v2.0.2: ^[0-9]{2,12}(-[0-9A-Z]{0,30})?-[0-9]{2}$, letters case-insensitive.
+const LEITWEG = /^([0-9]{2,12})(?:-([0-9A-Z]{0,30}))?-([0-9]{2})$/i;
 
 export function leitwegCheckDigits(idWithoutCheckDigits: string): string {
   const digits = [...idWithoutCheckDigits.replace(/-/g, '').toUpperCase()]
@@ -30,6 +31,14 @@ export function leitwegCheckDigits(idWithoutCheckDigits: string): string {
 
 /** True when the string has the Leitweg-ID shape, whether or not its check digits are right. */
 export const looksLikeLeitwegId = (s: string): boolean => LEITWEG.test(s);
+
+/** For something shaped like a Leitweg-ID whose check digits are wrong: the digits it should have had. Otherwise undefined. */
+export function leitwegWrongCheckDigits(s: string): { given: string; expected: string } | undefined {
+  const m = LEITWEG.exec(s);
+  if (!m) return undefined;
+  const expected = leitwegCheckDigits(`${m[1]}${m[2] ?? ''}`);
+  return expected === m[3] ? undefined : { given: m[3]!, expected };
+}
 
 /** True only when the shape is right AND the check digits agree. */
 export function isValidLeitwegId(s: string): boolean {
@@ -57,10 +66,12 @@ export function checkXRechnung(invoice: Invoice): XRechnungIssue[] {
 
   if (!invoice.buyerReference) {
     add('error', 'BR-DE-15', 'buyerReference (BT-10) is mandatory. For public-sector buyers it is the Leitweg-ID.');
-  } else if (looksLikeLeitwegId(invoice.buyerReference) && !isValidLeitwegId(invoice.buyerReference)) {
-    add('warning', 'BR-DE-15',
-      `buyerReference "${invoice.buyerReference}" has the Leitweg-ID shape but its check digits are wrong ` +
-      `(expected ${leitwegCheckDigits(invoice.buyerReference.replace(/-\d{2}$/, ''))}).`);
+  } else {
+    const wrong = leitwegWrongCheckDigits(invoice.buyerReference);
+    if (wrong) {
+      add('warning', 'BR-DE-15',
+        `buyerReference "${invoice.buyerReference}" has the Leitweg-ID shape but its check digits are wrong (expected ${wrong.expected}).`);
+    }
   }
   const c = invoice.seller.contact;
   if (!c?.name) add('error', 'BR-DE-2/5', 'seller.contact.name (BT-41) is mandatory: BG-6 must be present.');

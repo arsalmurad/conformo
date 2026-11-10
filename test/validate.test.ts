@@ -153,3 +153,43 @@ describe("validate(): UBL, XRechnung and Peppol from the document itself", () =>
 function fixture(name: string): Invoice {
   return JSON.parse(readFileSync(new URL(`../fixtures/${name}`, import.meta.url), "utf-8")) as Invoice;
 }
+
+// SaxonJS computes xs:integer with doubles, so the KoSIT IBAN check (mod 97 on a rearranged digit string of up to 34
+// digits) used to reject valid IBANs with a false BR-DE-19 / BR-DE-20 warning. The compile step patches the cast to
+// xs:decimal (tools/rulesets-config.mjs, runtimePatches); these tests prove both outcomes on both syntaxes.
+describe("validate(): IBAN checks in the XRechnung rules (BR-DE-19, BR-DE-20)", () => {
+  const VALID = ["DE89370400440532013000", "DE02120300000000202051", "GR1601101250000000012300695", "MT84MALT011000012345MTLCAST001S", "LC55HEMM000100010012001200023015"];
+  const INVALID = ["DE89370400440532013001", "LC55HEMM000100010012001200023016"];
+  const withPayment = (iban: string, code: "58" | "59"): Invoice => {
+    const inv = fixture("xrechnung-public-sector.json");
+    inv.payment = code === "58"
+      ? { meansCode: "58", reference: inv.number, iban, accountName: inv.seller.name }
+      : { meansCode: "59", reference: inv.number, directDebit: { mandateId: "MANDAT-2026-1", creditorId: "DE98ZZZ09999999999", debitedAccountIban: iban } };
+    return inv;
+  };
+  const ids = async (xml: string): Promise<string[]> => (await validate(xml, { xsd: false })).results.map((r) => r.ruleId);
+
+  for (const [syntax, build] of [["CII", buildXRechnungCII], ["UBL", buildXRechnungUBL]] as const) {
+    it(`${syntax}: a valid IBAN gives no BR-DE-19 (code 58) and no BR-DE-20 (code 59)`, async () => {
+      for (const iban of VALID) {
+        expect(await ids(build(withPayment(iban, "58"))), iban).not.toContain("BR-DE-19");
+        expect(await ids(build(withPayment(iban, "59"))), iban).not.toContain("BR-DE-20");
+      }
+    });
+
+    it(`${syntax}: an invalid IBAN gives BR-DE-19 (code 58) and BR-DE-20 (code 59)`, async () => {
+      for (const iban of INVALID) {
+        expect(await ids(build(withPayment(iban, "58"))), iban).toContain("BR-DE-19");
+        expect(await ids(build(withPayment(iban, "59"))), iban).toContain("BR-DE-20");
+      }
+    });
+  }
+
+  it("the other means codes are not affected: a bad IBAN with code 30 raises neither rule", async () => {
+    const inv = withPayment("DE89370400440532013001", "58");
+    inv.payment!.meansCode = "30";
+    const found = await ids(buildXRechnungCII(inv));
+    expect(found).not.toContain("BR-DE-19");
+    expect(found).not.toContain("BR-DE-20");
+  });
+});

@@ -12,7 +12,11 @@ export type {
 } from "./types.js";
 export { ValidationInputError } from "./types.js";
 export { getPlainLanguageMessage } from "./messages/index.js";
-export { detectDocument, profileFromCustomizationId } from "./detect.js";
+export { groupResults, describePlaces, groupHeading } from "./group.js";
+export type { RuleGroup } from "./group.js";
+export { describeLocation } from "./location.js";
+export type { ResultPlace } from "./location.js";
+export { detectDocument, profileFromCustomizationId, KOSIT_XRECHNUNG_IDS, isUnknownXrechnungId } from "./detect.js";
 export { planRulesets } from "./engine.js";
 
 const artefactsDir = fileURLToPath(new URL("../artefacts/", import.meta.url));

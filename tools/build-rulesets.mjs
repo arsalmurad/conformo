@@ -16,7 +16,7 @@ import { gzipSync } from "node:zlib";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { artefactDir, ensureGroups, manifest } from "./fetch-artefacts.mjs";
-import { PEPPOL_XSL, rulesetSources, TMP_DIR } from "./rulesets-config.mjs";
+import { PEPPOL_XSL, patchedSource, rulesetSources, TMP_DIR } from "./rulesets-config.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const out = path.join(root, "packages/validate/artefacts");
@@ -48,12 +48,17 @@ const report = {};
 for (const [id, r] of Object.entries(RULESETS)) {
   const sef = path.join(tmp, `${id}.sef.json`);
   console.log(`compiling ${id}`);
-  run([`-xsl:${r.xslt}`, `-export:${sef}`, "-nogo"]);
+  // Compile a patched copy with a fixed public base URI (see runtimePatches): no absolute local path in the output.
+  const { text, applied } = patchedSource(id, readFileSync(r.xslt, "utf-8"));
+  const src = path.join(tmp, `${id}.patched.xsl`);
+  writeFileSync(src, text);
+  if (applied.length) console.log(`  runtime patches: ${applied.join(", ")}`);
+  run([`-xsl:${src}`, `-export:${sef}`, "-nogo"]);
   const buf = readFileSync(sef);
   // Ship gzip only (about 7x smaller unpacked). Node gunzips on load; pages are served compressed by their host anyway.
   writeFileSync(path.join(out, `${id}.sef.json.gz`), gzipSync(buf, { level: 9 }));
   rmSync(path.join(out, `${id}.sef.json`), { force: true });
-  report[id] = { label: r.label, source: r.source, bytes: buf.length, gzipBytes: gzipSync(buf, { level: 9 }).length, sha256: sha(buf) };
+  report[id] = { label: r.label, source: r.source, patches: applied, bytes: buf.length, gzipBytes: gzipSync(buf, { level: 9 }).length, sha256: sha(buf) };
 }
 
 // Official XSDs, copied verbatim. UBL 2.1 and CII D16B come from the KoSIT bundle (the same files the KoSIT

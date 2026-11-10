@@ -1364,4 +1364,51 @@ export const en: Record<string, PlainLanguageMessage> = {
     why: "This category is a charged tax, not an exemption, so giving it an exemption reason contradicts the category.",
     fix: "Remove BT-120 and BT-121 from this breakdown group.",
   },
+  // --- Syntax rules that deserve their own wording (the rest of CII-DT/SR and UBL-CR/DT/SR are answered by family,
+  // see syntax.ts). Written from the tests in the CEN XSLT (validation-1.3.17). ---
+  "CII-DT-031": {
+    summary: "An amount carries a currencyID attribute where EN 16931 does not allow one.",
+    why: "The rule applies to every CII amount element (any ram:*Amount) except TaxTotalAmount. In EN 16931 CII only the VAT totals (TaxTotalAmount, BT-110 and BT-111) state their own currency; every other amount is in the invoice currency (BT-5). Some generators add currencyID to every amount, as UBL does, and this rule rejects that.",
+    fix: "Remove the currencyID attribute from every amount reported for this rule, for example write <ram:LineTotalAmount>100.00</ram:LineTotalAmount>. Keep currencyID only on TaxTotalAmount.",
+  },
+  "CII-DT-105": {
+    summary: "An attached document has no MIME type (BT-125-1).",
+    why: "A receiver needs the mimeCode attribute on the embedded binary object to know how to open the attachment.",
+    fix: "Add a mimeCode attribute to the AttachmentBinaryObject, for example mimeCode=\"application/pdf\".",
+  },
+  "CII-DT-106": {
+    summary: "An attached document has no file name (BT-125-2).",
+    why: "A receiver needs the filename attribute on the embedded binary object to save the attachment under a usable name.",
+    fix: "Add a filename attribute to the AttachmentBinaryObject, for example filename=\"timesheet.pdf\".",
+  },
+  "UBL-DT-01": {
+    summary: "An amount has more than two decimal places.",
+    why: "The rule applies to every UBL amount element except price amounts and price allowances or charges: EN 16931 amounts are written with at most two fraction digits.",
+    fix: "Round the amount to two decimal places (cents) in the XML. Only unit prices may carry more.",
+  },
+  "UBL-DT-06": {
+    summary: "An attached document has no MIME type (BT-125-1).",
+    why: "A receiver needs the mimeCode attribute on the embedded binary object to know how to open the attachment.",
+    fix: "Add a mimeCode attribute to the EmbeddedDocumentBinaryObject, for example mimeCode=\"application/pdf\".",
+  },
+  "UBL-DT-07": {
+    summary: "An attached document has no file name (BT-125-2).",
+    why: "A receiver needs the filename attribute on the embedded binary object to save the attachment under a usable name.",
+    fix: "Add a filename attribute to the EmbeddedDocumentBinaryObject, for example filename=\"timesheet.pdf\".",
+  },
+  "BR-DE-21": {
+    summary: "The Specification identifier (BT-24) does not have the exact form of the XRechnung identifier.",
+    why: "XRechnung receivers and the official KoSIT validator pick the rule set from BT-24. Only the published identifiers are recognised.",
+    fix: "Set BT-24 to \"urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0\" for XRechnung 3.0, or to the extension identifier if you use the XRechnung extension. Older forms such as \"urn:xoev-de:kosit:standard:xrechnung_3.0\" are not recognised.",
+  },
+  "XRECHNUNG-ID-UNKNOWN": {
+    summary: "BT-24 names XRechnung, but it is not one of the identifiers the official KoSIT validator has a scenario for.",
+    why: "The KoSIT validator compares BT-24 character for character (whitespace included) with its known identifiers. If none matches, it finds no scenario and rejects the file. This is a Conformo check that mirrors that behaviour; it is not a Schematron rule.",
+    fix: "Set BT-24 (UBL: cbc:CustomizationID, CII: GuidelineSpecifiedDocumentContextParameter/ID) to exactly \"urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0\", or to the extension identifier \"urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0#conformant#urn:xeinkauf.de:kosit:extension:xrechnung_3.0\" (not available for a UBL CreditNote). Remove any leading or trailing space. The old form \"urn:xoev-de:kosit:standard:xrechnung_3.0\" (XRechnung 3.0.0 and earlier) is no longer recognised.",
+  },
+  "LEITWEG-CHECK-DIGITS": {
+    summary: "BT-10 looks like a Leitweg-ID, but its last two digits (the check digits) do not match the rest of the number.",
+    why: "The Leitweg-ID format specification defines the check digits (ISO/IEC 7064 MOD 97-10, as for an IBAN) so that typing mistakes can be found. A wrong one usually means a mistyped ID, and the invoice may not reach the right public body. The KoSIT validator and Mustang do not check this; it is a Conformo check and never changes the verdict.",
+    fix: "Compare the Leitweg-ID with the one the public body gave you, and correct the number or its check digits. If BT-10 is not a Leitweg-ID, ignore the notice.",
+  },
 };
