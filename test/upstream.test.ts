@@ -120,7 +120,10 @@ function recordedGetters(overrides: Record<string, unknown> = {}) {
 
 describe('checkAll', () => {
   it('reports every artefact with the right status', async () => {
-    const results = await up.checkAll(manifest, recordedGetters());
+    // The responses were recorded on 2026-11-02, when schxslt2 was pinned at 1.11.2 (1.11.3 was the newest). Keep that
+    // pin for this test, so that moving the real pin does not change what these recorded responses mean.
+    const asRecorded = { ...manifest, artefacts: { ...manifest.artefacts, schxslt2: { ...manifest.artefacts.schxslt2, version: '1.11.2' } } };
+    const results = await up.checkAll(asRecorded, recordedGetters());
     const by = Object.fromEntries(results.map((r: { artefact: string }) => [r.artefact, r]));
     expect(Object.keys(by).sort()).toEqual(Object.keys(manifest.artefacts).sort());
     expect(by['kosit-xrechnung-config'].status).toBe('current');
