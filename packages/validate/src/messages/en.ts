@@ -1406,6 +1406,16 @@ export const en: Record<string, PlainLanguageMessage> = {
     why: "The KoSIT validator compares BT-24 character for character (whitespace included) with its known identifiers. If none matches, it finds no scenario and rejects the file. This is a Conformo check that mirrors that behaviour; it is not a Schematron rule.",
     fix: "Set BT-24 (UBL: cbc:CustomizationID, CII: GuidelineSpecifiedDocumentContextParameter/ID) to exactly \"urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0\", or to the extension identifier \"urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0#conformant#urn:xeinkauf.de:kosit:extension:xrechnung_3.0\" (not available for a UBL CreditNote). Remove any leading or trailing space. The old form \"urn:xoev-de:kosit:standard:xrechnung_3.0\" (XRechnung 3.0.0 and earlier) is no longer recognised.",
   },
+  "XSD-INVALID": {
+    summary: "The file does not match the official XML schema (XSD) for its profile, and no business rule failed.",
+    why: "The schema defines which elements may appear, in which order and how often. A file that breaks it is rejected before any business rule is looked at. For MINIMUM and BASIC WL it is the only check Conformo runs, because it has no Schematron for those profiles. This is a Conformo entry that points to the schema result; the full list of schema errors is in xsd.errors.",
+    fix: "Read the first schema error in the message: it names the element that is missing, unexpected or out of order. Compare it with the profile you chose (MINIMUM and BASIC WL allow far fewer elements than EN 16931) and fix the generator or the profile.",
+  },
+  "PROFILE-XSD-ONLY": {
+    summary: "For this profile only the XML schema (XSD) was checked.",
+    why: "Conformo runs no official Schematron for the Factur-X MINIMUM and BASIC WL profiles, so no business rules were checked. The verdict is the XSD result. These profiles are also not EN 16931 invoices.",
+    fix: "Nothing to fix. Do not read VALID for these profiles as a full rule check.",
+  },
   "LEITWEG-CHECK-DIGITS": {
     summary: "BT-10 looks like a Leitweg-ID, but its last two digits (the check digits) do not match the rest of the number.",
     why: "The Leitweg-ID format specification defines the check digits (ISO/IEC 7064 MOD 97-10, as for an IBAN) so that typing mistakes can be found. A wrong one usually means a mistyped ID, and the invoice may not reach the right public body. The KoSIT validator and Mustang do not check this; it is a Conformo check and never changes the verdict.",

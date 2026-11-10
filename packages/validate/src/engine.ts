@@ -124,6 +124,12 @@ export function createEngine(deps: EngineDeps) {
         message: `The ${profile === "minimum" ? "MINIMUM" : "BASIC WL"} profile is not an EN 16931 invoice. ` +
           "It is not accepted as an e-invoice for German B2B (from 2027) and no EN 16931 rules were run.",
       });
+      // Conformo has no Schematron for these Factur-X profiles (see docs/KNOWN-GAPS.md): say so, so that the verdict is
+      // read as "the XSD result", never as a complete rule check.
+      notices.push({
+        severity: "info", code: "PROFILE-XSD-ONLY",
+        message: `No official Schematron was run for the ${profile === "minimum" ? "MINIMUM" : "BASIC WL"} profile; only the XML schema (XSD) was checked, so the verdict is the XSD result.`,
+      });
     }
     if (profile === "extended") {
       notices.push({
@@ -168,6 +174,15 @@ export function createEngine(deps: EngineDeps) {
     }
 
     const failures = results.filter((r) => r.severity === "error" || r.severity === "fatal");
+    // A schema failure is only in `xsd.errors`. When no rule failed either, nothing in results or notices said why the
+    // verdict is false, so add that entry (e.g. MINIMUM and BASIC WL, where no Schematron runs).
+    if (xsd.valid === false && failures.length === 0) {
+      const shown = (xsd.errors[0] ?? "").replace(/^Schemas validity error\s*:\s*/i, "").slice(0, 400);
+      notices.push({
+        severity: "error", code: "XSD-INVALID",
+        message: `The XML does not match the ${xsd.schema ?? "official"} schema${xsd.errors.length > 1 ? ` (${xsd.errors.length} errors; the first is shown, all are in xsd.errors)` : ""}: ${shown}`,
+      });
+    }
     const valid = failures.length === 0 && xsd.valid !== false && !notices.some((n) => n.severity === "error");
     const outcome: ValidationResult = {
       valid, firedCount: runs.reduce((s, r) => s + r.fired, 0), results, detected, ruleSets: runs, xsd, notices,

@@ -45,4 +45,5 @@ PyPI, and blocked everything else. Consequences:
   determinism tests.
 - **The app does not offer VAT category K** (intra-EU supply of goods): EN 16931 then also needs the delivery date and
   deliver-to country (BR-IC-11/12), which the form does not ask for yet. The library and CLI support K.
+- **No Schematron for the Factur-X MINIMUM and BASIC WL profiles.** Only their XSD is checked, so a VALID there is the XSD result and not a business-rule check. Every such result carries the notice `PROFILE-XSD-ONLY`, and a schema failure carries the error notice `XSD-INVALID` (it used to leave `valid: false` with no entry in `results` or `notices`). The official Factur-X 1.09.2 Schematron for these profiles is not pinned yet; adding it needs a pinned artefact with its SHA-256, a licence check and a run against the Factur-X samples. The EXTENDED profile is XSD only for the same reason (`EXTENDED-NOT-CHECKED`).
 - **Conformo's own notices are in English only**, also on the German validator page: the notice text (for example the Leitweg-ID or XRECHNUNG-ID-UNKNOWN message) is shown as written. The labels around it are translated.
