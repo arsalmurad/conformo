@@ -29,6 +29,11 @@ When KoSIT, CEN or OpenPeppol publish a new release:
    conformance table. If any step fails, the pull request is a draft marked "[needs work]" with the failing step and
    its log. Nothing is merged automatically.
 
+Opening the pull request needs the repository setting Settings > Actions > General > "Allow GitHub Actions to create
+and approve pull requests". With it off, GitHub refuses the pull request, the run goes red and the pushed branch stays.
+The next daily run finds that branch without a pull request, runs the gates again and opens the pull request from it.
+A branch that already has a pull request (open, merged or closed) is left alone.
+
 KoSIT publishes its validator configuration and its test suite together, with the same date, so Conformo updates
 them together.
 

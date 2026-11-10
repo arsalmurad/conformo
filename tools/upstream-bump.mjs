@@ -87,6 +87,17 @@ export function kositAgreement(conformanceMd) {
   return { known: total > 0, agree, total, full: total > 0 && agree === total };
 }
 
+/**
+ * What to do when the branch for this release is already on origin. Only an existing pull request (open, merged or
+ * closed) means the update was handled. A branch without one, as left by a run whose `gh pr create` was refused, is
+ * reused: the gates run again and the pull request is opened from it. Skipping it silently left the run green and the
+ * update unproposed for days.
+ */
+export function existingBranchAction(branchOnOrigin, prUrl) {
+  if (!branchOnOrigin) return 'new';
+  return prUrl ? 'skip' : 'reuse';
+}
+
 export function summarySection(conformanceMd) {
   const m = conformanceMd.match(/## Summary\n([\s\S]*?Overall reference agreement:[^\n]*)/);
   return m ? m[1].trim() : '';
@@ -189,9 +200,20 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   if (changes.length === 0) { console.log(`${unit}: already at the newest upstream release, nothing to do`); process.exit(0); }
   const primary = changes[0];
   const branch = `upstream/${primary.id}-${primary.to}`;
-  if (publish && run('git', ['ls-remote', '--exit-code', '--heads', 'origin', branch]).status === 0) {
-    console.log(`${branch} already exists on origin: an update PR for this release was opened before, not opening another`);
-    process.exit(0);
+  let reuseBranch = false;
+  if (publish) {
+    const onOrigin = run('git', ['ls-remote', '--exit-code', '--heads', 'origin', branch]).status === 0;
+    const prUrl = onOrigin ? run('gh', ['pr', 'list', '--head', branch, '--state', 'all', '--json', 'url', '--jq', '.[0].url // empty']).stdout.trim() : '';
+    const action = existingBranchAction(onOrigin, prUrl);
+    if (action === 'skip') {
+      console.log(`${branch} already exists on origin and has a pull request (${prUrl}), not opening another`);
+      process.exit(0);
+    }
+    if (action === 'reuse') {
+      console.log(`${branch} exists on origin but has no pull request (an earlier run could not open it): running the gates again and opening it`);
+      must('git', ['fetch', 'origin', branch]);
+      reuseBranch = true;
+    }
   }
   writeFileSync(MANIFEST, JSON.stringify(manifest, null, 2) + '\n');
   console.log(`re-pinned: ${changes.map((c) => `${c.id} ${c.from} -> ${c.to}`).join(', ')}`);
@@ -207,9 +229,13 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   if (process.env.GITHUB_STEP_SUMMARY) writeFileSync(process.env.GITHUB_STEP_SUMMARY, `## ${pr.title}\n\n${pr.body}\n`, { flag: 'a' });
   if (!publish) process.exit(0);
 
-  git('checkout', '-b', branch);
+  git('checkout', '-B', branch);
+  // Reusing a pushed branch: move the branch to its remote tip but keep the files just produced, so the push is a
+  // fast-forward (no force) and a commit is only made if the result differs from what is already there.
+  if (reuseBranch) git('reset', '--soft', `origin/${branch}`);
   git('add', 'tools/artefacts.manifest.json', ...(conformanceRan ? ['docs/CONFORMANCE.md'] : []));
-  git('commit', '-m', `${pr.title}\n\n${changes.map((c) => `${c.id}: ${c.from} -> ${c.to}`).join('\n')}`);
+  if (reuseBranch && run('git', ['diff', '--cached', '--quiet']).status === 0) console.log('the pushed branch already holds exactly this result');
+  else git('commit', '-m', `${pr.title}\n\n${changes.map((c) => `${c.id}: ${c.from} -> ${c.to}`).join('\n')}`);
   git('push', 'origin', branch);
   const bodyFile = path.join(root, 'out/upstream-pr-body.md');
   writeFileSync(bodyFile, pr.body);

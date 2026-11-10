@@ -194,6 +194,12 @@ describe('upstream-bump', () => {
     // One KoSIT disagreement in the first corpus (86 files) flips "full" to false and costs exactly one file of agreement.
     expect(bump.kositAgreement(md.replace('| n/a | 86/86 (100.0%) |', '| n/a | 85/86 (98.8%) |'))).toMatchObject({ full: false, agree: whole.agree - 1, total: whole.total });
   });
+  it('a pushed branch without a pull request is reused, not skipped', () => {
+    expect(bump.existingBranchAction(false, '')).toBe('new');
+    expect(bump.existingBranchAction(true, 'https://github.com/o/r/pull/4')).toBe('skip');
+    // The 5 Nov run pushed upstream/peppol-bis-3-3.0.22 but GitHub refused the PR; later runs must not call that handled.
+    expect(bump.existingBranchAction(true, '')).toBe('reuse');
+  });
   it('a failed gate makes a draft "[needs work]" PR naming the step', () => {
     const changes = [{ id: 'cen-en16931', from: 'validation-1.3.17', to: 'validation-1.3.18' }];
     const ok = bump.prText({ unit: 'cen-en16931', changes, gates: bump.GATES.map(([name]: [string]) => ({ name, ok: true })), conformanceMd: readFileSync(path.join(here, '../docs/CONFORMANCE.md'), 'utf-8') });
