@@ -1406,4 +1406,9 @@ export const en: Record<string, PlainLanguageMessage> = {
     why: "The KoSIT validator compares BT-24 character for character (whitespace included) with its known identifiers. If none matches, it finds no scenario and rejects the file. This is a Conformo check that mirrors that behaviour; it is not a Schematron rule.",
     fix: "Set BT-24 (UBL: cbc:CustomizationID, CII: GuidelineSpecifiedDocumentContextParameter/ID) to exactly \"urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0\", or to the extension identifier \"urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0#conformant#urn:xeinkauf.de:kosit:extension:xrechnung_3.0\" (not available for a UBL CreditNote). Remove any leading or trailing space. The old form \"urn:xoev-de:kosit:standard:xrechnung_3.0\" (XRechnung 3.0.0 and earlier) is no longer recognised.",
   },
+  "LEITWEG-CHECK-DIGITS": {
+    summary: "BT-10 looks like a Leitweg-ID, but its last two digits (the check digits) do not match the rest of the number.",
+    why: "The Leitweg-ID format specification defines the check digits (ISO/IEC 7064 MOD 97-10, as for an IBAN) so that typing mistakes can be found. A wrong one usually means a mistyped ID, and the invoice may not reach the right public body. The KoSIT validator and Mustang do not check this; it is a Conformo check and never changes the verdict.",
+    fix: "Compare the Leitweg-ID with the one the public body gave you, and correct the number or its check digits. If BT-10 is not a Leitweg-ID, ignore the notice.",
+  },
 };

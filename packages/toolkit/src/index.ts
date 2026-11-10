@@ -10,12 +10,14 @@ import { totals } from '@conformo/core';
 import type { Invoice } from '@conformo/core';
 import { child, children, descend, parseXml, text } from '@conformo/parse';
 import { containerNotices } from './container.js';
+import { leitwegNotices } from './leitweg.js';
 import { createXml, FORMAT_IDS } from './formats.js';
 import type { CreatedXml, FormatId } from './formats.js';
 
 export { createXml, serialize, FORMAT_IDS, FORMAT_DESCRIPTIONS } from './formats.js';
 export type { CreatedXml, FormatId } from './formats.js';
 export { containerNotices } from './container.js';
+export { leitwegNotices } from './leitweg.js';
 export { createPdf, PDF_PROFILES, PDF_LANGUAGES } from './pdf.js';
 export type { PdfLanguage } from './pdf.js';
 export type { CreatedPdf, CreatePdfOptions } from './pdf.js';
@@ -55,6 +57,7 @@ export interface ValidatedDocument extends ValidationResult {
 export async function validate(input: InvoiceSource, options: ValidateOptions = {}): Promise<ValidatedDocument> {
   const { xml, origin, embeddedFilename } = await xmlOf(input);
   const result = await validateXmlText(xml, options);
+  result.notices.push(...leitwegNotices(xml));
   // PDF container: what the file says about itself (XMP schema and version, file name), as notices; never affects `valid`.
   if (origin === 'pdf' && typeof input !== 'string') result.notices.push(...containerNotices(await inspectPdfContainer(input), result.detected));
   return { ...result, origin, ...(embeddedFilename ? { embeddedFilename } : {}) };
