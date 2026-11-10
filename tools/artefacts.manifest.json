@@ -35,11 +35,11 @@
     "peppol-bis-3": {
       "kind": "git",
       "group": "build",
-      "version": "3.0.21",
+      "version": "3.0.22",
       "source": "https://github.com/OpenPEPPOL/peppol-bis-invoice-3",
       "repo": "https://github.com/OpenPEPPOL/peppol-bis-invoice-3",
-      "tag": "3.0.21",
-      "commit": "5df0eff7c8efafd7c79c0dacce55082d175db759",
+      "tag": "3.0.22",
+      "commit": "38d693d71d28d813781323a6ca97324edcc4d239",
       "licence": "see repository (not redistributed; fetched at build time)"
     },
     "schxslt2": {
