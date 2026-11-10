@@ -35,8 +35,11 @@ mkdirSync(tmp, { recursive: true });
 const kosit = artefactDir("kosit-xrechnung-config") + "/resources";
 const cen = artefactDir("cen-en16931");
 // Peppol: Schematron source -> XSLT via SchXslt2 (compiled to SEF once, then run by SaxonJS).
-const transpileXsl = path.join(artefactDir("schxslt2"), "schxslt2-1.11.2/transpile.xsl");
-const transpileSef = path.join(tmp, "schxslt2-transpile.sef.json");
+// The folder and the cached SEF are named after the pinned version, so a re-pin neither breaks the path nor reuses a SEF
+// compiled from the previous version.
+const schxslt2Version = manifest.artefacts.schxslt2.version;
+const transpileXsl = path.join(artefactDir("schxslt2"), `schxslt2-${schxslt2Version}/transpile.xsl`);
+const transpileSef = path.join(tmp, `schxslt2-${schxslt2Version}-transpile.sef.json`);
 const peppolXsl = PEPPOL_XSL;
 if (!existsSync(transpileSef)) run([`-xsl:${transpileXsl}`, `-export:${transpileSef}`, "-nogo"]);
 run([`-s:${artefactDir("peppol-bis-3")}/rules/sch/PEPPOL-EN16931-UBL.sch`, `-xsl:${transpileSef}`, `-o:${peppolXsl}`]);
