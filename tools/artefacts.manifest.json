@@ -45,10 +45,10 @@
     "schxslt2": {
       "kind": "http",
       "group": "build",
-      "version": "1.11.2",
-      "source": "https://repo1.maven.org/maven2/name/dmaus/schxslt/schxslt2/1.11.2/",
-      "url": "https://repo1.maven.org/maven2/name/dmaus/schxslt/schxslt2/1.11.2/schxslt2-1.11.2.zip",
-      "sha256": "52519794505e4f97f78f0589977ab788ca9619323151cd9c27a2f30c446d7ae1",
+      "version": "1.11.3",
+      "source": "https://repo1.maven.org/maven2/name/dmaus/schxslt/schxslt2/1.11.3/",
+      "url": "https://repo1.maven.org/maven2/name/dmaus/schxslt/schxslt2/1.11.3/schxslt2-1.11.3.zip",
+      "sha256": "8afe545678c2360c56dea24a5b3471e7417e136bc756516ceeec4151557c070a",
       "extract": "zip",
       "note": "Schematron-to-XSLT compiler. Pinned from Maven Central, whose published .sha256 matches the pin. The original pin pointed at Codeberg, which is unreachable from some networks."
     },

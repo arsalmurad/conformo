@@ -12,7 +12,7 @@ Our runtime validator (the code `validate()` runs in Node and, minus XSD, in a b
 | kosit-validator | 1.6.3 | `799e64befca9` |
 | cen-en16931 | validation-1.3.17 | `6e35e0ab8b09` |
 | peppol-bis-3 | 3.0.21 | `5df0eff7c8ef` |
-| schxslt2 | 1.11.2 | `52519794505e` |
+| schxslt2 | 1.11.3 | `8afe545678c2` |
 | factur-x-wheel | 6.8 | `02b57dd57f59` |
 | xrechnung-testsuite | v2026-08-31 | `44c3905c69ca` |
 | saxonjs-runtime | 2.7 | `13cbd2e6eb0a` |
