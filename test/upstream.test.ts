@@ -1,6 +1,8 @@
 // tools/check-upstream.mjs, tools/upstream-bump.mjs and tools/upstream-issues.mjs, against responses recorded from
 // each publisher on 2026-11-02 (test/upstream-fixtures). No live network: `fetch` is never called for real.
-import { readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -199,6 +201,38 @@ describe('upstream-bump', () => {
     expect(bump.existingBranchAction(true, 'https://github.com/o/r/pull/4')).toBe('skip');
     // The 5 Nov run pushed upstream/peppol-bis-3-3.0.22 but GitHub refused the PR; later runs must not call that handled.
     expect(bump.existingBranchAction(true, '')).toBe('reuse');
+  });
+  it('a reused branch is brought up to date with main, so the push is a fast-forward and the PR holds only the new change', () => {
+    const git = (cwd: string, ...a: string[]) => execFileSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@example.com', ...a], { cwd, encoding: 'utf-8' }).trim();
+    const tmp = mkdtempSync(path.join(os.tmpdir(), 'bump-'));
+    const origin = path.join(tmp, 'origin.git');
+    const seed = path.join(tmp, 'seed');
+    git(tmp, 'init', '-q', '--bare', '-b', 'main', origin);
+    git(tmp, 'clone', '-q', origin, seed);
+    git(seed, 'checkout', '-q', '-b', 'main');
+    writeFileSync(path.join(seed, 'pin.txt'), '3.0.21\n');
+    writeFileSync(path.join(seed, 'conf.md'), 'a\n');
+    git(seed, 'add', '.'); git(seed, 'commit', '-q', '-m', 'one'); git(seed, 'push', '-q', 'origin', 'main');
+    // the earlier run's branch, cut from the old main
+    git(seed, 'checkout', '-q', '-b', 'upstream/x-3.0.22');
+    writeFileSync(path.join(seed, 'pin.txt'), '3.0.22\n');
+    writeFileSync(path.join(seed, 'conf.md'), 'old-run\n');
+    git(seed, 'commit', '-q', '-am', 'bump'); git(seed, 'push', '-q', 'origin', 'upstream/x-3.0.22');
+    // main moves on, also touching the file both sides changed
+    git(seed, 'checkout', '-q', 'main');
+    writeFileSync(path.join(seed, 'other.txt'), 'later work\n');
+    writeFileSync(path.join(seed, 'conf.md'), 'main-newer\n');
+    git(seed, 'add', '.'); git(seed, 'commit', '-q', '-m', 'two'); git(seed, 'push', '-q', 'origin', 'main');
+    // the workflow's fresh checkout of main
+    const work = path.join(tmp, 'work');
+    git(tmp, 'clone', '-q', '--branch', 'main', origin, work);
+    bump.baseOnPushedBranch('upstream/x-3.0.22', work);
+    expect(git(work, 'rev-parse', '--abbrev-ref', 'HEAD')).toBe('upstream/x-3.0.22');
+    expect(readFileSync(path.join(work, 'other.txt'), 'utf-8')).toBe('later work\n');
+    expect(readFileSync(path.join(work, 'pin.txt'), 'utf-8')).toBe('3.0.22\n');
+    expect(readFileSync(path.join(work, 'conf.md'), 'utf-8')).toBe('main-newer\n'); // main wins on the regenerated file
+    expect(git(work, 'merge-base', '--is-ancestor', 'origin/upstream/x-3.0.22', 'HEAD') ?? '').toBe(''); // push is a fast-forward
+    expect(git(work, 'merge-base', '--is-ancestor', 'origin/main', 'HEAD') ?? '').toBe(''); // and it contains main
   });
   it('a failed gate makes a draft "[needs work]" PR naming the step', () => {
     const changes = [{ id: 'cen-en16931', from: 'validation-1.3.17', to: 'validation-1.3.18' }];
