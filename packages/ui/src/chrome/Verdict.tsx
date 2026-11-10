@@ -22,7 +22,7 @@ interface Props {
  */
 export function Verdict({ audience, validation, visible, labelFor, onGo }: Props) {
   const { t, lang } = useI18n();
-  const { problems, accepted, checking, ready, ruleSets } = validation;
+  const { problems, accepted, checking, ready, ruleSets, notices } = validation;
   const [expanded, setExpanded] = useState(false);
   // Three at a time: the seal sits above the preview, and a long list would push the document off the screen.
   const shownList = expanded ? visible : visible.slice(0, 3);
@@ -63,13 +63,23 @@ export function Verdict({ audience, validation, visible, labelFor, onGo }: Props
             {expanded ? t.verdict.showLess : t.verdict.showMore(visible.length - 3)}
           </button>
         )}
-        {(ruleSets.length > 0 || problems.some((p) => p.ruleId)) && (
+        {(ruleSets.length > 0 || problems.some((p) => p.ruleId) || notices.length > 0) && (
           <details className="seal-tech">
             <summary>{t.verdict.technical}</summary>
             {ruleSets.length > 0 && (
               <p>
                 {t.verdict.ruleSets}: {ruleSets.map((r) => `${r.label} (${r.source})`).join(' · ')}
               </p>
+            )}
+            {notices.length > 0 && (
+              <>
+                <p>{t.verdict.notes}:</p>
+                <ul>
+                  {notices.map((n) => (
+                    <li key={n.code}><code>{n.code}</code> {n.message}</li>
+                  ))}
+                </ul>
+              </>
             )}
             {problems.length > 0 && (
               <ul>

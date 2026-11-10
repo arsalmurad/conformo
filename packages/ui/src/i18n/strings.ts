@@ -162,6 +162,7 @@ const en = {
     showLess: 'Show fewer',
     rule: 'Rule',
     ruleSets: 'Rule sets',
+    notes: 'Notes from Conformo (not part of the official rules)',
   },
   autosave: {
     title: 'Encrypted autosave',
@@ -352,6 +353,7 @@ const de: Strings = {
     showLess: 'Weniger anzeigen',
     rule: 'Regel',
     ruleSets: 'Regelwerke',
+    notes: 'Hinweise von Conformo (nicht Teil der offiziellen Regeln)',
   },
   autosave: {
     title: 'Verschlüsselt speichern',

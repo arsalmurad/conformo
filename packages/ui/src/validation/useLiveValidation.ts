@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Invoice } from '@conformo/core';
 import { buildCII, checkInvoice } from '@conformo/formats';
-import type { ValidationResult } from '@conformo/validate/browser';
+import { leitwegNotices } from '@conformo/parse';
+import type { Notice, ValidationResult } from '@conformo/validate/browser';
 import type { Audience } from '../audience.js';
 import { validateInvoiceXml } from './browserValidator.js';
 import { clientProblems, mergeProblems, problemsFromInput, problemsFromRules, sortProblems, type Problem } from './problems.js';
@@ -23,11 +24,13 @@ export interface LiveValidation {
   accepted: boolean;
   /** The rule sets that ran, for the technical details. */
   ruleSets: ValidationResult['ruleSets'];
+  /** Findings that are not Schematron rules, e.g. the Leitweg-ID check-digit warning. Shown under the technical details. */
+  notices: Notice[];
   /** The validator's own assets failed to load (offline before first visit, a broken deploy). */
   unavailable?: string;
 }
 
-const EMPTY: LiveValidation = { checking: true, ready: false, problems: [], accepted: false, ruleSets: [] };
+const EMPTY: LiveValidation = { checking: true, ready: false, problems: [], accepted: false, ruleSets: [], notices: [] };
 
 export function useLiveValidation(invoice: Invoice, audience: Audience): LiveValidation {
   const [result, setResult] = useState<LiveValidation>(EMPTY);
@@ -50,10 +53,10 @@ export function useLiveValidation(invoice: Invoice, audience: Audience): LiveVal
         const v = await validateInvoiceXml(xml, audience.country ? { country: audience.country } : {});
         const rules = problemsFromRules(v.results, invoice);
         const problems = sortProblems(mergeProblems(client, rules));
-        outcome = { checking: false, ready: true, problems, accepted: v.valid && problems.length === 0, ruleSets: v.ruleSets };
+        outcome = { checking: false, ready: true, problems, accepted: v.valid && problems.length === 0, ruleSets: v.ruleSets, notices: [...v.notices, ...leitwegNotices(xml)] };
       } catch (err) {
         console.warn('live validation failed:', err);
-        outcome = { checking: false, ready: true, problems: quick, accepted: false, ruleSets: [], unavailable: err instanceof Error ? err.message : String(err) };
+        outcome = { checking: false, ready: true, problems: quick, accepted: false, ruleSets: [], notices: [], unavailable: err instanceof Error ? err.message : String(err) };
       }
       if (myGeneration === generation.current) setResult(outcome);
     }, DEBOUNCE_MS);

@@ -63,6 +63,17 @@ test('German: the verdict and the fix are in German', async ({ page }) => {
   await expect(page.locator('#fixes')).toContainText('Tragen Sie die Leitweg-ID Ihres Kunden ein.');
 });
 
+test('a Leitweg-ID with wrong check digits shows the Conformo notice under technical details, and the verdict stays accepted', async ({ page }) => {
+  const wrong = good.replace(/<cbc:BuyerReference>[^<]*<\/cbc:BuyerReference>/, '<cbc:BuyerReference>04011000-1234512-06</cbc:BuyerReference>');
+  await page.goto(VALIDATOR);
+  await choose(page, 'leitweg.xml', wrong);
+  await expect(page.getByRole('heading', { name: 'Accepted under XRechnung 3.0' })).toBeVisible({ timeout: 20_000 });
+  const tech = page.locator('#tech');
+  await tech.locator('summary').click();
+  await expect(tech).toContainText('LEITWEG-CHECK-DIGITS');
+  await expect(tech).toContainText('they should be 68, not 06');
+});
+
 test('an XRechnung identifier KoSIT does not know is counted as a problem and listed, not shown as "0 problems"', async ({ page }) => {
   const oldId = good.replace(/(<cbc:CustomizationID>)[^<]*(<\/cbc:CustomizationID>)/, '$1urn:xoev-de:kosit:standard:xrechnung_3.0$2');
   await page.goto(VALIDATOR);

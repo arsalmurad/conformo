@@ -1,6 +1,9 @@
 import { leitwegWrongCheckDigits } from '@conformo/formats';
-import { child, descend, parseXml, text } from '@conformo/parse';
-import type { Notice } from '@conformo/validate';
+import { child, descend, text } from './xml/query.js';
+import { parseXml } from './xml/parseXml.js';
+
+/** The same shape as @conformo/validate's Notice. Declared here so that parse needs no dependency on validate. */
+export interface LeitwegNotice { severity: 'warning'; code: 'LEITWEG-CHECK-DIGITS'; message: string }
 
 /** BT-10 as written in the document, or undefined when absent or the XML cannot be read. */
 function buyerReferenceOf(xml: string): string | undefined {
@@ -20,7 +23,7 @@ function buyerReferenceOf(xml: string): string | undefined {
  * (ISO/IEC 7064 MOD 97-10, Leitweg-ID Formatspezifikation) are wrong, say so and give the digits it should have.
  * KoSIT and Mustang do not check them. A warning: it never changes `valid`. Nothing is said when BT-10 is not shaped like a Leitweg-ID.
  */
-export function leitwegNotices(xml: string): Notice[] {
+export function leitwegNotices(xml: string): LeitwegNotice[] {
   const ref = buyerReferenceOf(xml);
   const wrong = ref ? leitwegWrongCheckDigits(ref) : undefined;
   if (!ref || !wrong) return [];

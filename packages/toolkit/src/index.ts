@@ -2,7 +2,7 @@
  * @conformo/toolkit: the whole Node API in one place. Everything the CLI, the MCP server and the HTTP API do is a call
  * to one of these functions, so the three cannot drift apart.
  */
-import { detectXmlFormat, extractEmbeddedXml, inspectPdfContainer, readInvoiceFromPdf } from '@conformo/parse';
+import { detectXmlFormat, extractEmbeddedXml, inspectPdfContainer, leitwegNotices, readInvoiceFromPdf } from '@conformo/parse';
 import type { PdfInvoiceResult } from '@conformo/parse';
 import { summarizeResult, validate as validateXmlText } from '@conformo/validate';
 import type { ValidateOptions, ValidationResult } from '@conformo/validate';
@@ -10,14 +10,13 @@ import { totals } from '@conformo/core';
 import type { Invoice } from '@conformo/core';
 import { child, children, descend, parseXml, text } from '@conformo/parse';
 import { containerNotices } from './container.js';
-import { leitwegNotices } from './leitweg.js';
 import { createXml, FORMAT_IDS } from './formats.js';
 import type { CreatedXml, FormatId } from './formats.js';
 
 export { createXml, serialize, FORMAT_IDS, FORMAT_DESCRIPTIONS } from './formats.js';
 export type { CreatedXml, FormatId } from './formats.js';
 export { containerNotices } from './container.js';
-export { leitwegNotices } from './leitweg.js';
+export { leitwegNotices } from '@conformo/parse';
 export { createPdf, PDF_PROFILES, PDF_LANGUAGES } from './pdf.js';
 export type { PdfLanguage } from './pdf.js';
 export type { CreatedPdf, CreatePdfOptions } from './pdf.js';

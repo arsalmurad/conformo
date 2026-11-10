@@ -1,6 +1,7 @@
 import { extractEmbeddedXml, detectXmlFormat } from '@conformo/parse';
 import type { Invoice } from '@conformo/core';
 import { describePlaces, groupResults, summarizeResult } from '@conformo/validate/page';
+import { leitwegNotices } from '@conformo/parse';
 import type { RuleGroup, RuleResult, ValidationResult } from '@conformo/validate/page';
 import { validateInvoiceXml } from './browserValidator.js';
 // The same field-level, plain-language wording as the app (English and German), so both say the same thing about the
@@ -251,6 +252,8 @@ async function check(xml: string, name?: string): Promise<void> {
   try {
     const country = countrySelect.value as 'FR' | 'DE' | '';
     const r = await validateInvoiceXml(xml, country ? { country } : {});
+    // The same Conformo-own check as in Node: a Leitweg-ID with wrong check digits in BT-10 (a warning, never changes the verdict).
+    r.notices.push(...leitwegNotices(xml));
     r.summary = summarizeResult(r);
     let invoice: Invoice | undefined;
     try { invoice = detectXmlFormat(xml).invoice; } catch { invoice = undefined; }

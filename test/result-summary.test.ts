@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { buildCII } from "@conformo/formats";
-import { summarizeResult, validate } from "@conformo/toolkit";
+import { leitwegNotices } from "@conformo/parse";
+import { leitwegNotices as leitwegNoticesFromToolkit, summarizeResult, validate } from "@conformo/toolkit";
 import type { Invoice } from "@conformo/core";
 import { main } from "../packages/cli/src/main.js";
 import type { Io } from "../packages/cli/src/io.js";
@@ -57,5 +58,16 @@ describe("the verdict line counts Conformo's own checks apart from the official 
     expect(json.valid).toBe(false);
     for (const k of ["valid", "firedCount", "results", "detected", "ruleSets", "xsd", "notices"]) expect(json, k).toHaveProperty(k);
     expect(json.summary.conformoErrors[0].code).toBe("XRECHNUNG-ID-UNKNOWN");
+  });
+});
+
+describe("the Leitweg notice lives in @conformo/parse, so the browser pages can use it without the toolkit", () => {
+  const wrong = buildCII({ ...base, buyerReference: "04011000-1234512-06" } as Invoice, { profile: "xrechnung" });
+  it("is the same function the toolkit exports", () => {
+    expect(leitwegNoticesFromToolkit).toBe(leitwegNotices);
+    expect(leitwegNotices(wrong).map((n) => n.code)).toEqual(["LEITWEG-CHECK-DIGITS"]);
+    expect(leitwegNotices(wrong)[0]!.message).toContain("68");
+    expect(leitwegNotices(goodXml)).toEqual([]);
+    expect(leitwegNotices("not xml")).toEqual([]);
   });
 });

@@ -6,6 +6,7 @@ export * from './ubl/readUBL.js';
 export * from './detect.js';
 export * from './pdf/extractXml.js';
 export * from './pdf/container.js';
+export * from './leitweg.js';
 export * from './pdf/visibleTotals.js';
 export * from './pdf/readPdf.js';
 export * from './export/csv.js';

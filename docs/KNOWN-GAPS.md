@@ -45,3 +45,4 @@ PyPI, and blocked everything else. Consequences:
   determinism tests.
 - **The app does not offer VAT category K** (intra-EU supply of goods): EN 16931 then also needs the delivery date and
   deliver-to country (BR-IC-11/12), which the form does not ask for yet. The library and CLI support K.
+- **Conformo's own notices are in English only**, also on the German validator page: the notice text (for example the Leitweg-ID or XRECHNUNG-ID-UNKNOWN message) is shown as written. The labels around it are translated.
