@@ -1,7 +1,34 @@
-# Releasing v0.2.0
+# Releasing
 
-Nothing has been pushed, published or deployed by the session that prepared this. Run these yourself, in order, from the repository root, on a machine
-with network access to the hosts in `tools/artefacts.manifest.json` (including `downloads.saxonica.com`, which the preparation sandbox could not reach).
+## How a release works
+
+A release is a tag. Pushing `vX.Y.Z` runs `.github/workflows/release.yml`, which runs the gates, publishes every package whose version is not on npm yet,
+checks that each version is on npm, publishes `@conformo/mcp-server` to the official MCP Registry when its version changed, and creates the GitHub Release
+from the CHANGELOG section. There is no npm token anywhere: npm trusts the workflow by OIDC (trusted publishing), and each package is published with provenance.
+
+1. Bump the versions of the packages that changed (`packages/*/package.json`; for `@conformo/mcp-server` also `version` and `packages[0].version` in `packages/mcp-server/server.json`).
+   Internal dependency ranges follow the sibling version. Run `npm install --package-lock-only --ignore-scripts` and `npm run openapi:generate`.
+2. Add a `## X.Y.Z (date)` section to `CHANGELOG.md`. The GitHub Release body is that section.
+3. Run the gates locally: `npm run typecheck`, `npm run schematron:compile`, `npm test`, `npm run conformance -- --strict`, `npm run docs:build`, `npm run pack:smoke`.
+4. Commit, push `main`, and wait for the `ci` and `deploy` runs to go green.
+5. Push the tag on that commit: `git tag vX.Y.Z && git push origin vX.Y.Z`. The tag has to be on `main`; the workflow refuses it otherwise.
+
+That is all. Watch it with `gh run watch`. If it fails after some packages were published, fix the cause and publish the tag again: delete it on GitHub
+(`git push origin :refs/tags/vX.Y.Z`), move it to the fixed commit, push it. Versions already on npm are skipped.
+The workflow has no manual trigger on purpose: npm checks the name of the calling workflow, and a manual or reusable workflow can make that check fail.
+
+### One-time setup on npmjs.com
+
+For each published package (`@conformo/core`, `formats`, `pdf`, `parse`, `compliance-data`, `validate`, `schema`, `toolkit`, `cli`, `mcp-server`, `server`):
+Settings, Trusted publisher, GitHub Actions. Organization or user `arsalmurad`, Repository `conformo`, Workflow filename `release.yml`, Environment empty,
+and under Allowed actions tick `npm publish`. npm does not check the form when it is saved, and a new configuration expires if its first publish does not
+happen within 2 days. Afterwards, Publishing access can be set to "Require two-factor authentication and disallow tokens"; that does not affect trusted publishers.
+
+The MCP Registry needs no secret: `mcp-publisher login github-oidc` uses the job's OIDC token for the `io.github.arsalmurad` namespace.
+
+## Fallback: releasing by hand
+
+Only if the workflow cannot be used. Needs an npm login that can publish (a passkey cannot be answered from a non-interactive shell, so run the publish in a normal terminal).
 
 ## 0. Get the branch and prove it on a real machine
 
