@@ -336,6 +336,7 @@ lines.push('## Pinned inputs', '', '| Artefact | Version | Pin |', '|---|---|---
 for (const [id, a] of Object.entries(manifest.artefacts) as [string, { version: string; sha256?: string; commit?: string }][]) {
   lines.push(`| ${id} | ${a.version} | \`${(a.sha256 ?? a.commit ?? '').slice(0, 12)}\` |`);
 }
+lines.push('', 'The KoSIT configuration is named by its release (tag `vYYYY-MM-DD`). The date its own files print for it (`scenarios.xml`, and the validator\'s start-up line) is the build date of the bundle and can be a few days later, for example release 2026-08-31 and build date 2026-09-02. Both are the same bundle; the release name is the version we pin and quote.');
 lines.push('', '## How to read this', '',
   '- **Reference agreement**: for every file, the rule sets our engine chose (from the root element and BT-24) are run by Saxon-HE on the *same publisher XSLT*; XSD by lxml. We require the same failed rule ids, the same advisory rule ids and the same number of fired rules per rule set, and the same XSD verdict.',
   '- **KoSIT agreement**: the official KoSIT validator (java, validator-configuration-xrechnung) says ACCEPTABLE or not; compared where KoSIT has a scenario for the document (XRechnung and plain EN 16931). Our `valid` must equal KoSIT\'s acceptance.',

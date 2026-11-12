@@ -35,6 +35,23 @@ Veröffentlicht die KoSIT, die CEN oder OpenPeppol ein neues Release, passiert F
 Die KoSIT veröffentlicht Prüfkonfiguration und Testsuite gemeinsam und mit demselben Datum. Conformo aktualisiert
 beide deshalb auch immer zusammen.
 
+Die KoSIT-Konfiguration trägt als Version ihr Release-Datum: Release 2026-08-31 (Tag `v2026-08-31`, Zip
+`xrechnung-3.0.2-validator-configuration-2026-08-31.zip`). Der KoSIT-Validator gibt beim Start das Build-Datum
+desselben Pakets aus: Build-Datum 2026-09-02. Conformo nennt den Release-Namen, 2026-08-31; beide Daten gehören zu ein
+und demselben Paket.
+
+## Einen Update-Pull-Request mergen
+
+Die Commits auf dem Branch stammen vom Maintainer, ein normaler Squash-Merge übernimmt aber den Autor des Pull
+Requests, und das ist hier `github-actions[bot]`. Damit die Historie unter dem Namen des Maintainers bleibt, gibt es
+zwei Wege:
+
+- `gh pr merge <Nummer> --squash --author-email hello@arsalmurad.com`
+- oder auf der Pull-Request-Seite „Rebase and merge“ wählen; das behält die Commits des Branches mit ihrem Autor.
+
+Der Weg über `--author-email` wurde noch nicht benutzt; prüfen Sie den Autor des ersten damit erzeugten Commits. Die
+E-Mail-Adresse muss beim mergenden GitHub-Konto bestätigt sein.
+
 ## Die Release-Regel
 
 Eine neue Regelversion wird nur ausgeliefert, wenn Conformo zu 100 % mit dem offiziellen KoSIT-Validator

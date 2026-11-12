@@ -1,6 +1,6 @@
 {
   "name": "@conformo/validate",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Validates EN 16931 electronic invoices against the official CEN Schematron (plus country CIUS rules), in Node or a browser.",
   "author": "Muhammad Arsal Murad",
   "license": "Apache-2.0",

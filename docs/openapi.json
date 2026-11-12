@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Conformo HTTP API",
-    "version": "0.2.4",
+    "version": "0.2.5",
     "description": "Stateless HTTP API over @conformo/toolkit: create, validate, convert and parse EN 16931 e-invoices. No accounts, no sessions, nothing written to disk. There is no authentication: put it behind a TLS reverse proxy with auth before exposing it. Conformo only produces, reads and checks documents. It does not transmit anything (no Peppol access point, no French PA/PDP, no KSeF, no SdI) and does not support FatturaPA or Facturae; it handles KSeF FA(3) only as domestic PLN invoices it writes and schema-checks (it cannot read them). A valid result means the rule sets listed in `ruleSets` passed, not that a tax authority accepts the invoice. The server stores nothing.",
     "license": {
       "name": "Apache-2.0",
@@ -843,7 +843,7 @@
                 },
                 "example": {
                   "status": "ok",
-                  "version": "0.2.4"
+                  "version": "0.2.5"
                 }
               }
             }

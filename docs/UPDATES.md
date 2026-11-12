@@ -37,6 +37,22 @@ A branch that already has a pull request (open, merged or closed) is left alone.
 KoSIT publishes its validator configuration and its test suite together, with the same date, so Conformo updates
 them together.
 
+The KoSIT configuration is named by its release date: release 2026-08-31 (tag `v2026-08-31`, zip
+`xrechnung-3.0.2-validator-configuration-2026-08-31.zip`). The KoSIT validator prints the build date of the same bundle
+at start-up: build date 2026-09-02. Conformo quotes the release name, 2026-08-31; the two dates belong to one and the
+same bundle.
+
+## Merging an update pull request
+
+The branch commits are authored by the maintainer, but a plain squash merge takes the author of the pull request, which
+for these pull requests is `github-actions[bot]`. To keep the history under the maintainer's name, merge one of two ways:
+
+- `gh pr merge <number> --squash --author-email hello@arsalmurad.com`
+- or choose "Rebase and merge" on the pull request page, which keeps the branch commits and their author.
+
+The `--author-email` route has not been used yet; check the author of the first commit it produces. The email has to be
+one that is verified on the GitHub account that merges.
+
 ## The release rule
 
 A new rule version ships only at 100% agreement with the official KoSIT validator, measured on the full KoSIT test

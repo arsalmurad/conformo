@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.2.5 (2026-11-12)
+
+Packages: @conformo/parse 0.2.3, @conformo/validate 0.2.3, @conformo/toolkit 0.2.4, @conformo/cli 0.2.4, @conformo/mcp-server 0.2.5, @conformo/server 0.2.5.
+
+- **Peppol BIS 3.0.22 rules.** The Peppol BIS Billing 3.0 rule set compiled into `@conformo/validate` is now version 3.0.22 (it was 3.0.21), built with SchXslt2 1.11.3.
+  Agreement with the official KoSIT validator on the official test invoices stays at 100%, measured on the full test suite before the update was merged.
+- **The verdict line counts Conformo's own checks apart from the official rules.** A file rejected only by a Conformo check (for example `XRECHNUNG-ID-UNKNOWN`) used to read
+  "INVALID, 0 failed", and the browser validator page showed it as 0 problems. The line now says how many official rules were checked and failed, and names any failed
+  Conformo checks and a failed XML schema check separately. The CLI prints it as its last line, the MCP `validate_invoice` text starts with it, and the browser validator page counts
+  and lists those checks as problems to fix. The JSON result, the MCP structured result and the API response only gain a `summary` field.
+- **MINIMUM and BASIC WL say plainly that only the XSD ran.** Conformo has no Schematron for these two Factur-X profiles, so the verdict is the XSD result. The result now carries the
+  info notice `PROFILE-XSD-ONLY` to say so. A file that fails the XSD without failing any rule used to be `valid: false` with the reason only in `xsd.errors`; it now also carries the error
+  notice `XSD-INVALID` with the first schema error, so an invalid verdict always has an explanation. `conformo explain` covers both codes, and `docs/KNOWN-GAPS.md` lists the gap.
+- **The Leitweg-ID check-digit notice also shows on the validator page and in the app.** It only appeared in Node and in the CLI before. The code now lives in `@conformo/parse`,
+  which the browser pages already bundle, and `@conformo/toolkit` re-exports it, so there is one implementation. The notice is listed under the technical details, as a note, and never
+  changes the verdict. Conformo's own notices stay in English.
+
 ## 0.2.4 (2026-11-10)
 
 Packages: @conformo/formats 0.2.1, @conformo/validate 0.2.2, @conformo/toolkit 0.2.3, @conformo/cli 0.2.3, @conformo/mcp-server 0.2.4, @conformo/server 0.2.4.
